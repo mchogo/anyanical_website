@@ -74,17 +74,17 @@ export const App = () => {
   return (
     <div className="min-h-screen bg-slate-950 pt-16 text-slate-100">
       <FloatingNav currentRoute={route} />
-      <Header
-        connectionStatus={connectionStatus}
-        tickCount={tickCount}
-        lastUpdatedAt={lastUpdatedAt}
-        currentTime={new Date(now)}
-        isWeekendMode={isWeekendMode}
-      />
       {toolPageId ? (
         <ToolPage pageId={toolPageId} prices={prices} />
       ) : (
         <main>
+          <Header
+            connectionStatus={connectionStatus}
+            tickCount={tickCount}
+            lastUpdatedAt={lastUpdatedAt}
+            currentTime={new Date(now)}
+            isWeekendMode={isWeekendMode}
+          />
           <MarketBoard prices={prices} now={now} isWeekendMode={isWeekendMode} />
           <ChartSection />
           <ExplainerSections />

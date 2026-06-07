@@ -59,7 +59,7 @@ const toolPages: Array<{
   {
     id: 'strategy',
     title: '戦略',
-    description: '週末相場から月曜の取引計画へ',
+    description: 'サブスク、Discord、コピトレ、半裁量EAの導線',
     href: '#/tools/strategy',
   },
   {
