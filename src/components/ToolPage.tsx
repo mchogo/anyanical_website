@@ -9,7 +9,6 @@ import {
   ParticipationGuidePage,
   StrategyGuidePage,
 } from './BrandPages';
-import { EXTERNAL_LINKS } from '../config/navigation';
 import type { MarketPrice } from '../config/markets';
 
 export type ToolPageId =
@@ -95,69 +94,144 @@ const renderTool = (pageId: ToolPageId, prices: Record<string, MarketPrice>) => 
   }
 };
 
+const nextActions: Record<
+  ToolPageId,
+  Array<{
+    title: string;
+    body: string;
+    href: string;
+    external?: boolean;
+  }>
+> = {
+  'currency-strength': [
+    {
+      title: '経済指標を確認',
+      body: '通貨の強弱が出ている理由を、直近イベントと合わせて確認します。',
+      href: '#/tools/economic-calendar',
+    },
+    {
+      title: 'Discordで見方を追う',
+      body: '日々の目線やチャート解説をコミュニティ導線から確認します。',
+      href: '#/tools/community',
+    },
+  ],
+  'economic-calendar': [
+    {
+      title: 'EA稼働前チェック',
+      body: '重要指標前後のスプレッド、停止条件、ロットを確認します。',
+      href: '#/tools/ea-checklist',
+    },
+    {
+      title: '戦略ページへ',
+      body: 'サブスク、コピトレ、半裁量EAへの導線を確認します。',
+      href: '#/tools/strategy',
+    },
+  ],
+  'gap-watch': [
+    {
+      title: '相場ボードへ戻る',
+      body: '週末perp価格、チャート、注意事項をまとめて確認します。',
+      href: '#/',
+    },
+    {
+      title: '参加方法を見る',
+      body: 'note加入、申請フォーム、運用リンクを確認します。',
+      href: '#/tools/participation',
+    },
+  ],
+  'ea-checklist': [
+    {
+      title: '半裁量EAの導入手順',
+      body: '指定リンク口座、認証フォーム、MT5設置まで確認します。',
+      href: '#/tools/strategy',
+    },
+    {
+      title: '参加方法へ',
+      body: 'noteメンバーシップ、申請、各種リンクを確認します。',
+      href: '#/tools/participation',
+    },
+  ],
+  strategy: [
+    {
+      title: 'noteメンバーシップへ',
+      body: '加入方法、募集状況、申請フォームを確認します。',
+      href: '#/tools/participation',
+    },
+    {
+      title: 'Discordコミュニティ',
+      body: '限定チャンネル、インジ、EA関連の見方を確認します。',
+      href: '#/tools/community',
+    },
+  ],
+  community: [
+    {
+      title: '参加方法を見る',
+      body: 'note加入、Discord権限付与、TradingView ID申請へ進みます。',
+      href: '#/tools/participation',
+    },
+    {
+      title: '戦略ページへ',
+      body: 'サブスク、コピトレ、半裁量EAの導線を確認します。',
+      href: '#/tools/strategy',
+    },
+  ],
+  participation: [
+    {
+      title: 'Discordコミュニティ',
+      body: '参加後に見るチャンネル構成と限定導線を確認します。',
+      href: '#/tools/community',
+    },
+    {
+      title: 'EAチェック',
+      body: '口座認証、EA設置、稼働前チェックを確認します。',
+      href: '#/tools/ea-checklist',
+    },
+  ],
+};
+
 export const ToolPage = ({ pageId, prices }: ToolPageProps) => {
   const page = toolPages.find((toolPage) => toolPage.id === pageId) ?? toolPages[0];
+  const actions = nextActions[pageId];
 
   return (
     <main>
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-          <div>
-            <a
-              href="#/"
-              className="text-sm font-semibold text-cyan-200 hover:text-cyan-100"
-            >
-              相場ボードへ戻る
-            </a>
-            <p className="mt-5 text-sm font-semibold text-cyan-200">Trading tools</p>
-            <h1 className="mt-1 text-3xl font-bold text-white">{page.title}</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-400">{page.description}</p>
-          </div>
-        </div>
-
-        <nav className="mb-8 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {toolPages.map((toolPage) => {
-            const isActive = toolPage.id === pageId;
-
-            return (
-              <a
-                key={toolPage.id}
-                href={toolPage.href}
-                className={`rounded-lg border p-4 text-sm transition ${
-                  isActive
-                    ? 'border-cyan-300/40 bg-cyan-300/10'
-                    : 'border-white/10 bg-white/[0.035] hover:border-cyan-300/30 hover:bg-cyan-300/10'
-                }`}
-              >
-                <p className="font-bold text-white">{toolPage.title}</p>
-                <p className="mt-2 leading-6 text-slate-500">{toolPage.description}</p>
-              </a>
-            );
-          })}
-        </nav>
-
-        <div className="mb-8 rounded-lg border border-emerald-300/20 bg-emerald-300/10 p-4">
-          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-            <div>
-              <p className="text-sm font-semibold text-emerald-200">その他リンク</p>
-              <p className="mt-1 text-sm text-slate-400">
-                {EXTERNAL_LINKS[0].description}
-              </p>
-            </div>
-            <a
-              href={EXTERNAL_LINKS[0].href}
-              rel="noopener noreferrer"
-              target="_blank"
-              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-emerald-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-emerald-200"
-            >
-              lit.link/anyafx
-            </a>
-          </div>
+        <div className="max-w-4xl">
+          <p className="text-sm font-semibold text-cyan-200">Anyanical tools</p>
+          <h1 className="mt-1 text-3xl font-bold text-white">{page.title}</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-400">{page.description}</p>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
         {renderTool(pageId, prices)}
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+        <div className="rounded-lg border border-white/10 bg-white/[0.035] p-5">
+          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+            <div>
+              <p className="text-sm font-semibold text-cyan-200">Next</p>
+              <h2 className="mt-1 text-xl font-bold text-white">次に見る導線</h2>
+            </div>
+            <p className="text-sm text-slate-500">目的に近いページへ移動します。</p>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {actions.map((action) => (
+              <a
+                key={action.href}
+                href={action.href}
+                rel={action.external ? 'noopener noreferrer' : undefined}
+                target={action.external ? '_blank' : undefined}
+                className="rounded-lg border border-white/10 bg-slate-950/40 p-4 text-sm transition hover:border-cyan-300/40 hover:bg-cyan-300/10"
+              >
+                <p className="font-bold text-white">{action.title}</p>
+                <p className="mt-2 leading-6 text-slate-500">{action.body}</p>
+              </a>
+            ))}
+          </div>
+        </div>
       </section>
     </main>
   );
