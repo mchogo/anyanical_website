@@ -53,7 +53,7 @@ Cloudflare側の画面でDeploy commandが必須の場合は、Pages deployで `
 
 Cloudflareの画面が `wrangler.jsonc` を読む場合に備えて、`pages_build_output_dir` も `./dist` に指定しています。
 
-SPAとして動かすため、`assets.not_found_handling` は `single-page-application` にしています。
+Pages projectsでは `assets` フィールドがサポートされないため、`wrangler.jsonc` には入れません。
 
 ## デプロイ前チェック
 
