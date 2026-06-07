@@ -72,7 +72,8 @@ export const App = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-24 text-slate-100">
+    <div className="min-h-screen bg-slate-950 pt-16 text-slate-100">
+      <FloatingNav currentRoute={route} />
       <Header
         connectionStatus={connectionStatus}
         tickCount={tickCount}
@@ -90,7 +91,6 @@ export const App = () => {
           <Disclaimer />
         </main>
       )}
-      <FloatingNav currentRoute={route} />
     </div>
   );
 };

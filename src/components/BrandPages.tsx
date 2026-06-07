@@ -13,24 +13,24 @@ const EA_DISTRIBUTION_CHANNEL_URL =
 
 const strategyCards = [
   {
-    title: 'Gold weekend bias',
-    body: '週末ニュースでXAUUSD相当のperpが動いたとき、月曜の窓開け、東京時間の初動、ロンドン勢の追随を分けて見ます。',
+    title: '相場の見方がまとまる',
+    body: 'Xでは流しにくい細かい目線、チャートの読み方、エントリー前に見るポイントをまとめて確認できます。',
   },
   {
-    title: 'BTC risk sentiment',
-    body: 'BTCUSDは週末も流動性があり、リスクオン・リスクオフの先行反応として確認しやすい銘柄です。',
+    title: '限定チャンネルで追える',
+    body: 'Discord内の限定チャンネルで、日々のチャート、インジ、bot、EAまわりの情報を整理して追えるようにします。',
   },
   {
-    title: 'USDJPY macro watch',
-    body: 'ドル円は要人発言、金利観測、地政学ヘッドラインの影響を受けやすいため、金や指数と並べて確認します。',
+    title: '自分の判断材料が増える',
+    body: '答えを丸投げする場所ではなく、自分で相場を見て判断するための材料や補助ツールへの入口として使えます。',
   },
 ];
 
 const strategySteps = [
-  '週末ボードで金・指数・ドル円・BTCの変化率を確認',
-  'TradingViewチャートで節目、前週高安、ギャップ候補を確認',
-  '経済指標ページで月曜から水曜までの重要イベントを確認',
-  'EA稼働前にスプレッド、ロット、最大ポジション、停止条件を確認',
+  'noteメンバーシップで限定記事や参加案内を確認',
+  'Discord限定チャンネルで日々の目線やチャート解説を追う',
+  'オリジナルインジやbot/EA関連の案内を必要に応じて確認',
+  'コピートレードや半裁量EAは資金量とリスク条件を確認して検討',
 ];
 
 const strategyOfferCards = [
@@ -283,11 +283,13 @@ const faqItems = [
 export const StrategyGuidePage = () => (
   <section className="space-y-6">
     <section className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-5">
-      <p className="text-sm font-semibold text-cyan-200">Strategy guide</p>
-      <h2 className="mt-2 text-2xl font-bold text-white">週末相場から月曜の取引計画へ</h2>
+      <p className="text-sm font-semibold text-cyan-200">Membership value</p>
+      <h2 className="mt-2 text-2xl font-bold text-white">
+        ただ眺めるだけで終わらせないための導線
+      </h2>
       <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">
-        週末のperp価格は公式市場の価格ではありません。ただ、ニュースに対する市場参加者の反応を見る材料になります。
-        金、BTC、ドル円、指数を並べて、月曜にどこを確認するかを決めるためのページです。
+        相場ボードやチャートは、見るだけでは使い切れません。noteメンバーシップ、Discord限定チャンネル、コピートレード、半裁量EAを組み合わせて、
+        相場の見方、補助ツール、運用前チェックまでつなげられるようにしています。
       </p>
     </section>
 
@@ -337,7 +339,7 @@ export const StrategyGuidePage = () => (
     </section>
 
     <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
-      <h3 className="text-lg font-bold text-white">確認フロー</h3>
+      <h3 className="text-lg font-bold text-white">活用フロー</h3>
       <ol className="mt-4 grid gap-3 md:grid-cols-2">
         {strategySteps.map((step, index) => (
           <li
