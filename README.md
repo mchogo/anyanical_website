@@ -99,6 +99,19 @@ npm run build
 
 ---
 
+## Cloudflare Deploy
+
+Cloudflare Workers側でDeploy commandが必須の画面を使う場合:
+
+```text
+Build command: npm run build
+Deploy command: npx wrangler deploy
+```
+
+`wrangler.jsonc` が `dist/` を静的アセットとして配信します。
+
+---
+
 ## 注意事項
 
 本アプリの価格表示は情報提供のみを目的とした参考値です。公式スポット価格、CME/NYSE/東証/OTC FX、各社CFD価格とは差が生じる場合があります。

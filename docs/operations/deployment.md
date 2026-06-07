@@ -40,6 +40,19 @@ dist/
 
 ハッシュルーティングのため、`#/tools/...` のページは追加rewriteなしで動作します。
 
+## Cloudflare Workers Static Assets例
+
+Cloudflare側の画面でDeploy commandが必須の場合は、Workers Static Assetsとしてデプロイします。
+
+| 項目           | 値                    |
+| -------------- | --------------------- |
+| Build command  | `npm run build`       |
+| Deploy command | `npx wrangler deploy` |
+
+`wrangler.jsonc` で `assets.directory` を `./dist` に指定しているため、Deploy commandへ `--assets=dist` を直接書く必要はありません。
+
+SPAとして動かすため、`assets.not_found_handling` は `single-page-application` にしています。
+
 ## デプロイ前チェック
 
 ```bash
