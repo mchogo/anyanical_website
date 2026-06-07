@@ -1,0 +1,93 @@
+import { useEffect, useState } from 'react';
+
+import { ChartSection } from './components/ChartSection';
+import { Disclaimer } from './components/Disclaimer';
+import { ExplainerSections } from './components/ExplainerSections';
+import { FloatingNav } from './components/FloatingNav';
+import { Header } from './components/Header';
+import { MarketBoard } from './components/MarketBoard';
+import { ToolPage, type ToolPageId } from './components/ToolPage';
+import { useHyperliquidMids } from './hooks/useHyperliquidMids';
+
+const isWeekendModeInJst = (timestamp: number) => {
+  const weekday = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Tokyo',
+    weekday: 'short',
+  }).format(timestamp);
+
+  return weekday === 'Sat' || weekday === 'Sun';
+};
+
+const toolPageIds: ToolPageId[] = [
+  'currency-strength',
+  'economic-calendar',
+  'gap-watch',
+  'ea-checklist',
+];
+
+const getRoute = () => window.location.hash.replace(/^#\/?/, '');
+
+const parseToolPageId = (route: string): ToolPageId | null => {
+  const match = route.match(/^tools\/([^/]+)$/);
+  const pageId = match?.[1];
+
+  if (toolPageIds.includes(pageId as ToolPageId)) {
+    return pageId as ToolPageId;
+  }
+
+  return null;
+};
+
+export const App = () => {
+  const { prices, connectionStatus, tickCount, lastUpdatedAt } = useHyperliquidMids();
+  const [now, setNow] = useState(() => Date.now());
+  const [route, setRoute] = useState(getRoute);
+  const isWeekendMode = isWeekendModeInJst(now);
+  const toolPageId = parseToolPageId(route);
+
+  useEffect(() => {
+    const timerId = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1_000);
+
+    return () => {
+      window.clearInterval(timerId);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      setRoute(getRoute());
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-slate-950 pb-24 text-slate-100">
+      <Header
+        connectionStatus={connectionStatus}
+        tickCount={tickCount}
+        lastUpdatedAt={lastUpdatedAt}
+        currentTime={new Date(now)}
+        isWeekendMode={isWeekendMode}
+      />
+      {toolPageId ? (
+        <ToolPage pageId={toolPageId} prices={prices} />
+      ) : (
+        <main>
+          <MarketBoard prices={prices} now={now} isWeekendMode={isWeekendMode} />
+          <ChartSection />
+          <ExplainerSections />
+          <Disclaimer />
+        </main>
+      )}
+      <FloatingNav currentRoute={route} />
+    </div>
+  );
+};
