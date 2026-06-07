@@ -110,8 +110,6 @@ Deploy command: npx wrangler pages deploy dist --project-name anyanicalwebsite
 
 `dist/` をCloudflare Pagesへアップロードします。`--project-name` はCloudflare側のプロジェクト名に合わせています。
 
-`wrangler.jsonc` はCloudflare Pages用に `pages_build_output_dir` のみを定義しています。
-
 ---
 
 ## 注意事項

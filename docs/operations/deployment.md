@@ -51,9 +51,7 @@ Cloudflare側の画面でDeploy commandが必須の場合は、Pages deployで `
 
 `dist/` をCloudflare Pagesへアップロードします。`--project-name` はCloudflare側のプロジェクト名に合わせています。
 
-Cloudflareの画面が `wrangler.jsonc` を読む場合に備えて、`pages_build_output_dir` も `./dist` に指定しています。
-
-Pages projectsでは `assets` フィールドがサポートされないため、`wrangler.jsonc` には入れません。
+`dist` と `--project-name` をコマンド側で明示するため、`wrangler.jsonc` は不要です。
 
 ## デプロイ前チェック
 
