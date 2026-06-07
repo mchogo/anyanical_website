@@ -4,6 +4,9 @@ const EXNESS_SIGNUP_URL = 'https://x.gd/CxfuR';
 const NOTE_MEMBERSHIP_URL = 'https://note.com/anyafx/membership';
 const MEMBERSHIP_FORM_URL =
   'https://docs.google.com/forms/d/e/1FAIpQLSc9odFoGLOGFGpCN_OsZewwzXhO61xdzBxY6bQk_NCsQHeq2Q/viewform?usp=dialog';
+const SEMI_AUTO_EA_FORM_URL = 'https://forms.gle/1EiRMR257pgQ9GDJ7';
+const EA_DISTRIBUTION_CHANNEL_URL =
+  'https://discord.com/channels/1152131321297129534/1488800327514718270';
 
 const strategyCards = [
   {
@@ -45,9 +48,55 @@ const strategyOfferCards = [
   {
     title: '半裁量EA',
     badge: 'Semi-auto EA',
-    body: '相場判断は人が行い、エントリー補助・決済補助・リスク管理をEAで支援する運用です。稼働前チェックとセットで使います。',
-    href: '#/tools/ea-checklist',
-    label: 'EAチェックへ',
+    body: '指定リンクで開設したExness口座を認証し、MT5へEAを設置して使う半裁量運用です。申請フォームと稼働前チェックを確認してください。',
+    href: '#/tools/strategy',
+    label: '導入手順を見る',
+  },
+];
+
+const semiAutoEaSetupSteps = [
+  {
+    title: 'Exness口座を指定リンクから開設',
+    body: 'このEAは指定リンクから開設された口座のみで動作します。Bondや他EAで使用中の対象アカウントがあれば、そのまま利用可能です。',
+    href: EXNESS_SIGNUP_URL,
+    label: '口座開設リンク',
+  },
+  {
+    title: '口座タイプとリスク設定を決める',
+    body: '基本目安は2000ドルに対して0.01ロット。スタンダード口座を標準とし、セント口座は練習向けですが約定が重くなる場合があります。',
+  },
+  {
+    title: '新EA専用フォームで口座認証を申請',
+    body: '口座開設後、新EA専用フォームから申請してください。セント口座専用EAの申請フォームとは別です。',
+    href: SEMI_AUTO_EA_FORM_URL,
+    label: '認証申請フォーム',
+  },
+  {
+    title: 'EAをダウンロードしてMT5へ設置',
+    body: '申請後、EA配布チャンネルからファイルを取得してMT5へ設置します。認証は基本的に申請から48時間以内が目安です。',
+    href: EA_DISTRIBUTION_CHANNEL_URL,
+    label: 'EA配布チャンネル',
+  },
+];
+
+const semiAutoEaRiskRows = [
+  {
+    account: 'スタンダード',
+    balance: '2000ドル〜',
+    lot: '0.01ロット',
+    note: '標準的な運用設定',
+  },
+  {
+    account: 'セント',
+    balance: '2,000セント',
+    lot: '0.01ロット',
+    note: '最初の練習向け',
+  },
+  {
+    account: 'セント',
+    balance: '20,000セント',
+    lot: '0.1ロット',
+    note: 'スタンダード移行前の中間設定',
   },
 ];
 
@@ -232,6 +281,77 @@ export const StrategyGuidePage = () => (
           </li>
         ))}
       </ol>
+    </section>
+
+    <section className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-5">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-semibold text-amber-200">Semi-auto EA</p>
+          <h3 className="mt-1 text-lg font-bold text-white">
+            半裁量EA 導入・セットアップ
+          </h3>
+        </div>
+        <p className="text-sm text-slate-400">
+          指定リンク口座、認証申請、MT5設置までの流れ
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-4">
+        {semiAutoEaSetupSteps.map((step, index) => (
+          <article
+            key={step.title}
+            className="rounded-lg border border-white/10 bg-slate-950/40 p-4"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-amber-300 text-sm font-bold text-slate-950">
+              {index + 1}
+            </span>
+            <h4 className="mt-4 text-base font-bold text-white">{step.title}</h4>
+            <p className="mt-3 text-sm leading-6 text-slate-400">{step.body}</p>
+            {'href' in step ? (
+              <a
+                href={step.href}
+                rel="nofollow noopener noreferrer"
+                target="_blank"
+                className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg bg-amber-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-200"
+              >
+                {step.label}
+              </a>
+            ) : null}
+          </article>
+        ))}
+      </div>
+
+      <div className="mt-5 overflow-x-auto rounded-lg border border-white/10 bg-slate-950/40">
+        <table className="min-w-[720px] w-full text-left text-sm">
+          <thead className="bg-white/[0.04] text-xs uppercase text-slate-500">
+            <tr>
+              <th className="px-4 py-3">口座タイプ</th>
+              <th className="px-4 py-3">資金目安</th>
+              <th className="px-4 py-3">ロット例</th>
+              <th className="px-4 py-3">特徴</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {semiAutoEaRiskRows.map((row) => (
+              <tr key={`${row.account}-${row.balance}`}>
+                <td className="px-4 py-4 font-semibold text-white">{row.account}</td>
+                <td className="px-4 py-4 text-slate-300">{row.balance}</td>
+                <td className="px-4 py-4 text-amber-200">{row.lot}</td>
+                <td className="px-4 py-4 text-slate-400">{row.note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <div className="rounded-lg border border-white/10 bg-slate-950/40 p-4 text-sm leading-6 text-slate-300">
+          基本は5分足稼働を想定し、1分足で高リターン、15分足で安定寄りなど調整できます。半裁量のため、トレード判断と検証が結果に直結します。
+        </div>
+        <div className="rounded-lg border border-red-300/20 bg-red-300/10 p-4 text-sm leading-6 text-red-100">
+          既存Exness口座のパートナー紐付け変更はできません。未紐付けの場合は、別メールアドレスまたはGmailエイリアスで指定リンクから新規登録してください。
+        </div>
+      </div>
     </section>
   </section>
 );

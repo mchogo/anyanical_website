@@ -41,6 +41,11 @@ const formatPercent = (value: number | null) => {
   return `${sign}${value.toFixed(2)}%`;
 };
 
+const EXNESS_SIGNUP_URL = 'https://x.gd/CxfuR';
+const SEMI_AUTO_EA_FORM_URL = 'https://forms.gle/1EiRMR257pgQ9GDJ7';
+const EA_DISTRIBUTION_CHANNEL_URL =
+  'https://discord.com/channels/1152131321297129534/1488800327514718270';
+
 const TradingViewScriptWidget = ({
   src,
   config,
@@ -232,7 +237,30 @@ export const GapWatchTool = ({ prices }: RelatedToolsProps) => (
 );
 
 export const EaChecklistTool = () => {
+  const setupSteps = [
+    {
+      title: '指定リンク口座',
+      body: 'Exness口座は指定リンクから開設。既存口座の紐付け変更はできません。',
+      href: EXNESS_SIGNUP_URL,
+      label: 'Exness口座開設',
+    },
+    {
+      title: '口座認証申請',
+      body: '新EA専用フォームから申請。セント口座専用EAフォームとは別です。',
+      href: SEMI_AUTO_EA_FORM_URL,
+      label: '認証フォーム',
+    },
+    {
+      title: 'EA設置',
+      body: '配布チャンネルからEAを取得し、MT5へ設置します。認証は48時間以内が目安です。',
+      href: EA_DISTRIBUTION_CHANNEL_URL,
+      label: '配布チャンネル',
+    },
+  ];
+
   const checklist = [
+    '指定リンクから開設したExness口座である',
+    '口座タイプと資金量に対するロット比率を決めた',
     '指標発表時刻と週明け流動性を確認した',
     '稼働するEAの対象銘柄とスプレッド条件を確認した',
     '最大ロット、最大ポジション数、損切り条件を確認した',
@@ -249,6 +277,26 @@ export const EaChecklistTool = () => {
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
           半裁量EA・全自動EAを動かす前に、相場環境と運用条件を確認するための簡易チェックです。
         </p>
+      </div>
+
+      <div className="mb-6 grid gap-4 lg:grid-cols-3">
+        {setupSteps.map((step) => (
+          <article
+            key={step.title}
+            className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-4"
+          >
+            <h3 className="text-base font-bold text-white">{step.title}</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-300">{step.body}</p>
+            <a
+              href={step.href}
+              rel="nofollow noopener noreferrer"
+              target="_blank"
+              className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg bg-amber-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-200"
+            >
+              {step.label}
+            </a>
+          </article>
+        ))}
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
