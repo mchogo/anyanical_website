@@ -38,11 +38,11 @@
 - 資金量、ロット比率、口座タイプの確認を促す
 - 利益保証や損失回避を示唆しない
 
-## その他リンク
+## リンク集
 
-| 用途                          | URL                       | 表示場所              |
-| ----------------------------- | ------------------------- | --------------------- |
-| サブスク / Discord / 各種案内 | `https://lit.link/anyafx` | 固定ナビ / 関連ツール |
+| 用途                              | URL                       | 表示場所              |
+| --------------------------------- | ------------------------- | --------------------- |
+| Discord / X / サブスク / 各種案内 | `https://lit.link/anyafx` | 固定ナビ / 関連ツール |
 
 ## noteメンバーシップ
 
@@ -69,11 +69,12 @@
 
 ## 外部Widget
 
-| 用途       | 提供元        | 実装場所                          |
-| ---------- | ------------- | --------------------------------- |
-| 実チャート | TradingView   | `src/components/ChartSection.tsx` |
-| 通貨強弱   | TradingView   | `src/components/RelatedTools.tsx` |
-| 経済指標   | Investing.com | `src/components/RelatedTools.tsx` |
+| 用途             | 提供元        | 実装場所                          |
+| ---------------- | ------------- | --------------------------------- |
+| 実チャート       | TradingView   | `src/components/ChartSection.tsx` |
+| 通貨強弱         | TradingView   | `src/components/RelatedTools.tsx` |
+| 経済指標         | TradingView   | `src/components/RelatedTools.tsx` |
+| 経済指標代替確認 | Investing.com | `src/components/RelatedTools.tsx` |
 
 ## リンク属性
 

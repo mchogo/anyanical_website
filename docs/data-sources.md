@@ -41,12 +41,14 @@
 - 実チャート表示
 - 通貨強弱
 - クロスレート
+- 経済指標カレンダー
 
 使用Widget:
 
 - Advanced Chart
 - Forex Heat Map
 - Forex Cross Rates
+- Events Calendar
 
 実装場所:
 
@@ -72,7 +74,7 @@
 
 用途:
 
-- 経済指標カレンダー
+- 経済指標カレンダーの代替確認先
 
 実装場所:
 
@@ -80,7 +82,7 @@
 
 注意:
 
-- iframe表示に依存します
+- TradingView側に表示制限が発生した場合の確認リンクとして扱います
 - 表示言語・タイムゾーンは外部側の仕様変更の影響を受けます
 
 ## HFM / Exness / lit.link

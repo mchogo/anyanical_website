@@ -199,7 +199,7 @@ const participationRoutes = [
     label: 'フォームで申請',
   },
   {
-    title: 'その他リンク',
+    title: 'リンク集',
     body: 'Discord、X、サブスク、各種案内はlit.linkに集約しています。',
     href: EXTERNAL_LINKS[0].href,
     label: 'lit.link/anyafx',
@@ -308,7 +308,7 @@ export const StrategyGuidePage = () => (
     <section className="rounded-lg border border-emerald-300/20 bg-emerald-300/10 p-5">
       <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
         <div>
-          <p className="text-sm font-semibold text-emerald-200">Next actions</p>
+          <p className="text-sm font-semibold text-emerald-200">おすすめ</p>
           <h3 className="mt-1 text-lg font-bold text-white">
             興味に合わせて選べるプレミアム案内
           </h3>

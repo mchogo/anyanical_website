@@ -73,7 +73,7 @@ const relatedTools = [
   },
   {
     title: '戦略ガイド',
-    description: '週末相場から月曜の取引計画へ',
+    description: 'サブスク、コピトレ、半裁量EAの概要',
     href: '#/tools/strategy',
   },
   {
@@ -87,8 +87,8 @@ const relatedTools = [
     href: '#/tools/participation',
   },
   {
-    title: 'その他リンク',
-    description: 'サブスク、Discord、各種案内まとめ',
+    title: 'リンク集',
+    description: 'Discord、X、サブスク、各種案内まとめ',
     href: EXTERNAL_LINKS[0].href,
     external: true,
   },

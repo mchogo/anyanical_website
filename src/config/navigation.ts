@@ -35,8 +35,8 @@ export const INTERNAL_NAV_LINKS = [
 
 export const EXTERNAL_LINKS = [
   {
-    label: 'その他リンク',
+    label: 'リンク集',
     href: 'https://lit.link/anyafx',
-    description: 'サブスク、Discord、各種案内',
+    description: 'Discord、X、サブスク、各種案内',
   },
 ] as const;

@@ -211,10 +211,12 @@ export const ToolPage = ({ pageId, prices }: ToolPageProps) => {
         <div className="rounded-lg border border-white/10 bg-white/[0.035] p-5">
           <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
             <div>
-              <p className="text-sm font-semibold text-cyan-200">Next</p>
-              <h2 className="mt-1 text-xl font-bold text-white">次に見るもの</h2>
+              <p className="text-sm font-semibold text-cyan-200">おすすめ</p>
+              <h2 className="mt-1 text-xl font-bold text-white">次に確認するページ</h2>
             </div>
-            <p className="text-sm text-slate-500">目的に近いページへ移動します。</p>
+            <p className="text-sm text-slate-500">
+              いま見ている内容に近いページを表示します。
+            </p>
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">

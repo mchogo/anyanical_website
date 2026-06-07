@@ -132,29 +132,68 @@ export const EconomicCalendarTool = () => (
       </p>
     </div>
 
-    <div className="overflow-hidden rounded-lg border border-white/10 bg-slate-950">
-      <iframe
-        title="経済指標カレンダー"
-        src="https://sslecal2.investing.com?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&features=datepicker,timezone&countries=5,4,10,14,48,25,6,36,12,26,41,17,43,22,32,178,42,72,37,110,46,35,11,39&calType=week&timeZone=29&lang=11"
-        width="100%"
-        height="660"
-        frameBorder="0"
-        marginWidth={0}
-        marginHeight={0}
-        className="block border-0"
+    <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+      <TradingViewScriptWidget
+        src="https://s3.tradingview.com/external-embedding/embed-widget-events.js"
+        heightClassName="h-[660px]"
+        config={{
+          width: '100%',
+          height: '100%',
+          colorTheme: 'dark',
+          isTransparent: true,
+          locale: 'ja',
+          importanceFilter: '0,1',
+          countryFilter: 'us,jp,eu,gb,ca,au,nz',
+        }}
       />
-      <div className="border-t border-white/10 px-4 py-3 text-xs text-slate-500">
-        金融ポータルサイト、
+
+      <aside className="rounded-lg border border-white/10 bg-white/[0.035] p-5">
+        <p className="text-sm font-semibold text-cyan-200">指標前チェック</p>
+        <h3 className="mt-1 text-xl font-bold text-white">EA・裁量前に確認すること</h3>
+        <div className="mt-4 space-y-3 text-sm leading-6 text-slate-400">
+          <p>
+            重要度の高い指標前後は、スプレッド拡大、約定遅延、急なヒゲが起きやすくなります。
+          </p>
+          <p>
+            指標の結果だけでなく、発表時刻、対象通貨、直前のボラティリティを合わせて確認してください。
+          </p>
+        </div>
+        <ul className="mt-5 space-y-3 text-sm text-slate-300">
+          <li className="rounded-lg bg-slate-950/50 p-3">
+            高重要度の米指標はXAUUSDとUSDJPYを優先確認
+          </li>
+          <li className="rounded-lg bg-slate-950/50 p-3">
+            EA稼働中はロット、停止条件、証拠金維持率を再確認
+          </li>
+          <li className="rounded-lg bg-slate-950/50 p-3">
+            週明け前は窓開け監視と合わせて確認
+          </li>
+        </ul>
         <a
-          href="https://jp.investing.com/"
-          rel="nofollow noopener noreferrer"
+          href="https://jp.tradingview.com/economic-calendar/"
+          rel="noopener noreferrer"
           target="_blank"
-          className="font-semibold text-cyan-200"
+          className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200"
         >
-          Investing.com 日本
+          TradingViewで開く
         </a>
-        によって提供されている経済カレンダーです。
-      </div>
+        <p className="mt-4 text-xs leading-5 text-slate-500">
+          カレンダーはTradingView公式ウィジェットを使用しています。表示内容、時刻、対象国は外部仕様の変更を受ける場合があります。
+        </p>
+      </aside>
+    </div>
+
+    <div className="mt-4 rounded-lg border border-white/10 bg-slate-950/70 px-4 py-3 text-xs leading-5 text-slate-500">
+      TradingView側の表示制限が発生する場合は、別タブのTradingViewカレンダー、または
+      <a
+        href="https://jp.investing.com/economic-calendar/"
+        rel="nofollow noopener noreferrer"
+        target="_blank"
+        className="font-semibold text-cyan-200"
+      >
+        Investing.com 日本
+      </a>
+      など複数ソースで確認してください。
     </div>
   </section>
 );
