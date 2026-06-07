@@ -105,10 +105,10 @@ Cloudflare Workers側でDeploy commandが必須の画面を使う場合:
 
 ```text
 Build command: npm run build
-Deploy command: npx wrangler deploy
+Deploy command: npx wrangler pages deploy dist --project-name anyanicalwebsite
 ```
 
-`wrangler.jsonc` が `dist/` を静的アセットとして配信します。
+`dist/` をCloudflare Pagesへアップロードします。`--project-name` はCloudflare側のプロジェクト名に合わせています。
 
 ---
 
