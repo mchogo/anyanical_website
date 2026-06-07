@@ -82,8 +82,8 @@ const relatedTools = [
     href: '#/tools/community',
   },
   {
-    title: '参加方法',
-    description: 'サブスク、口座開設、ストラテジー導線',
+    title: 'プレミアム',
+    description: '限定コンテンツ、加入手続き、運用リンク',
     href: '#/tools/participation',
   },
   {

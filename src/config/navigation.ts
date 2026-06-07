@@ -28,7 +28,7 @@ export const INTERNAL_NAV_LINKS = [
     href: '#/tools/community',
   },
   {
-    label: '参加方法',
+    label: 'プレミアム',
     href: '#/tools/participation',
   },
 ] as const;

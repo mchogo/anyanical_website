@@ -58,7 +58,7 @@ const toolPages: Array<{
   {
     id: 'strategy',
     title: '戦略',
-    description: 'サブスク、Discord、コピトレ、半裁量EAの導線',
+    description: 'サブスク、Discord、コピトレ、半裁量EAの活用案内',
     href: '#/tools/strategy',
   },
   {
@@ -69,8 +69,8 @@ const toolPages: Array<{
   },
   {
     id: 'participation',
-    title: '参加方法',
-    description: 'サブスク、口座開設、ストラテジー導線',
+    title: 'プレミアム',
+    description: '限定コンテンツ、加入手続き、運用リンク',
     href: '#/tools/participation',
   },
 ];
@@ -111,7 +111,7 @@ const nextActions: Record<
     },
     {
       title: 'Discordで見方を追う',
-      body: '日々の目線やチャート解説をコミュニティ導線から確認します。',
+      body: '日々の目線やチャート解説をコミュニティで確認します。',
       href: '#/tools/community',
     },
   ],
@@ -123,7 +123,7 @@ const nextActions: Record<
     },
     {
       title: '戦略ページへ',
-      body: 'サブスク、コピトレ、半裁量EAへの導線を確認します。',
+      body: 'サブスク、コピトレ、半裁量EAの活用イメージを確認します。',
       href: '#/tools/strategy',
     },
   ],
@@ -134,7 +134,7 @@ const nextActions: Record<
       href: '#/',
     },
     {
-      title: '参加方法を見る',
+      title: 'プレミアムを見る',
       body: 'note加入、申請フォーム、運用リンクを確認します。',
       href: '#/tools/participation',
     },
@@ -146,7 +146,7 @@ const nextActions: Record<
       href: '#/tools/strategy',
     },
     {
-      title: '参加方法へ',
+      title: 'プレミアムへ',
       body: 'noteメンバーシップ、申請、各種リンクを確認します。',
       href: '#/tools/participation',
     },
@@ -165,20 +165,20 @@ const nextActions: Record<
   ],
   community: [
     {
-      title: '参加方法を見る',
+      title: 'プレミアムを見る',
       body: 'note加入、Discord権限付与、TradingView ID申請へ進みます。',
       href: '#/tools/participation',
     },
     {
       title: '戦略ページへ',
-      body: 'サブスク、コピトレ、半裁量EAの導線を確認します。',
+      body: 'サブスク、コピトレ、半裁量EAの活用イメージを確認します。',
       href: '#/tools/strategy',
     },
   ],
   participation: [
     {
       title: 'Discordコミュニティ',
-      body: '参加後に見るチャンネル構成と限定導線を確認します。',
+      body: 'プレミアム参加後に見られるチャンネル構成を確認します。',
       href: '#/tools/community',
     },
     {
@@ -197,7 +197,7 @@ export const ToolPage = ({ pageId, prices }: ToolPageProps) => {
     <main>
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="max-w-4xl">
-          <p className="text-sm font-semibold text-cyan-200">Anyanical tools</p>
+          <p className="text-sm font-semibold text-cyan-200">アニャニカル</p>
           <h1 className="mt-1 text-3xl font-bold text-white">{page.title}</h1>
           <p className="mt-2 text-sm leading-6 text-slate-400">{page.description}</p>
         </div>
@@ -212,7 +212,7 @@ export const ToolPage = ({ pageId, prices }: ToolPageProps) => {
           <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
             <div>
               <p className="text-sm font-semibold text-cyan-200">Next</p>
-              <h2 className="mt-1 text-xl font-bold text-white">次に見る導線</h2>
+              <h2 className="mt-1 text-xl font-bold text-white">次に見るもの</h2>
             </div>
             <p className="text-sm text-slate-500">目的に近いページへ移動します。</p>
           </div>

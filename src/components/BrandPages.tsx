@@ -39,7 +39,7 @@ const strategyOfferCards = [
     badge: 'Subscribe',
     body: '週末相場の見方、XAUUSD・BTCUSD・USDJPYの注目ポイント、限定チャンネル案内を確認したい人向けの入口です。',
     href: '#/tools/participation',
-    label: '参加方法を見る',
+    label: 'プレミアムを見る',
   },
   {
     title: 'HFMコピートレード',
@@ -285,7 +285,7 @@ export const StrategyGuidePage = () => (
     <section className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-5">
       <p className="text-sm font-semibold text-cyan-200">Membership value</p>
       <h2 className="mt-2 text-2xl font-bold text-white">
-        ただ眺めるだけで終わらせないための導線
+        ただ眺めるだけで終わらせないために
       </h2>
       <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">
         相場ボードやチャートは、見るだけでは使い切れません。noteメンバーシップ、Discord限定チャンネル、コピートレード、半裁量EAを組み合わせて、
@@ -309,10 +309,12 @@ export const StrategyGuidePage = () => (
       <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
         <div>
           <p className="text-sm font-semibold text-emerald-200">Next actions</p>
-          <h3 className="mt-1 text-lg font-bold text-white">戦略を運用へつなげる導線</h3>
+          <h3 className="mt-1 text-lg font-bold text-white">
+            興味に合わせて選べるプレミアム案内
+          </h3>
         </div>
         <p className="text-sm text-slate-400">
-          学ぶ、任せる、補助する導線を分けて確認できます。
+          学ぶ、任せる、補助する。目的に合わせて見たい内容を選べます。
         </p>
       </div>
 
@@ -534,10 +536,10 @@ export const ParticipationGuidePage = () => (
   <section className="space-y-6">
     <section className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-5">
       <p className="text-sm font-semibold text-amber-200">Join guide</p>
-      <h2 className="mt-2 text-2xl font-bold text-white">noteメンバーシップ参加方法</h2>
+      <h2 className="mt-2 text-2xl font-bold text-white">プレミアムコンテンツ</h2>
       <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">
-        noteメンバーシップへ加入後、加入確認を送ってください。確認後、Discordの限定チャンネル権限を付与します。
-        申請前に必ずnote側の加入が完了していることを確認してください。
+        noteメンバーシップ参加者向けに、限定チャンネル、インジ関連情報、運用リンクをまとめています。
+        加入後に確認申請を行うと、Discordの限定チャンネル権限を付与します。
       </p>
     </section>
 
@@ -617,7 +619,7 @@ export const ParticipationGuidePage = () => (
       <h3 className="text-lg font-bold text-white">運用リンク</h3>
       <p className="mt-2 text-sm leading-6 text-slate-500">
         口座開設、EA、HFM Copy
-        Tradingは任意の運用導線です。条件やリスクを確認してから利用してください。
+        Tradingは任意の運用メニューです。条件やリスクを確認してから利用してください。
       </p>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
