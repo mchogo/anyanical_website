@@ -14,7 +14,7 @@ const EA_DISTRIBUTION_CHANNEL_URL =
 const strategyCards = [
   {
     title: '相場の見方がまとまる',
-    body: 'Xでは流しにくい細かい目線、チャートの読み方、エントリー前に見るポイントをまとめて確認できます。',
+    body: 'Xでは流しにくい細かい目線、チャートの読み方、エントリー前に見るポイントを日々の考察として追えます。',
   },
   {
     title: '限定チャンネルで追える',
@@ -23,6 +23,24 @@ const strategyCards = [
   {
     title: '自分の判断材料が増える',
     body: '答えを丸投げする場所ではなく、自分で相場を見て判断するための材料や補助ツールへの入口として使えます。',
+  },
+];
+
+const premiumStats = [
+  {
+    value: '95%+',
+    label: '継続率',
+    body: '直近のメンバー継続率は9.5割超え。短期の煽りではなく、毎日見返せる実用メモを重視しています。',
+  },
+  {
+    value: 'Daily',
+    label: '日々の考察',
+    body: 'ゴールド、ドル円、BTCなどの目線、注意ライン、崩れる条件をDiscordで継続的に共有します。',
+  },
+  {
+    value: 'Tools',
+    label: '限定ツール',
+    body: 'オリジナルインジ、アラート、EA関連の案内をまとめ、必要な情報へ迷わず移動できるようにします。',
   },
 ];
 
@@ -106,7 +124,7 @@ const semiAutoEaRiskRows = [
 const communityFeatures = [
   {
     title: '日々のチャート分析',
-    body: 'ドル円やゴールドを中心に、日々の目線、立ち回り、どこを抜けると崩れるかを確認する場所です。',
+    body: 'ドル円やゴールドを中心に、日々の目線、立ち回り、どこを抜けると崩れるかを継続的に確認する場所です。',
   },
   {
     title: 'エントリーパターン',
@@ -115,6 +133,25 @@ const communityFeatures = [
   {
     title: 'インジ・bot・EA',
     body: 'オリジナルインジ、半裁量bot、EAの運用メモ、決済や損切りを含む実運用の共有を扱います。',
+  },
+];
+
+const premiumBenefits = [
+  {
+    title: '毎日の相場考察を追える',
+    body: 'ゴールド、ドル円、BTCなど、いま見ているラインや注意点を日々の投稿で確認できます。',
+  },
+  {
+    title: '見方が散らばらない',
+    body: 'チャート、インジ、EA、コピトレ、申請フォームをDiscordとnoteに整理して、必要なときに見返せます。',
+  },
+  {
+    title: '継続しやすい環境',
+    body: '直近の継続率は9.5割超え。派手な一発情報より、日々の確認と学習を続けやすい場を重視しています。',
+  },
+  {
+    title: '運用前の確認がしやすい',
+    body: 'EA稼働前、指標前、週明け前など、止めるべき場面や確認ポイントを見直しやすくします。',
   },
 ];
 
@@ -285,13 +322,26 @@ export const StrategyGuidePage = () => (
     <section className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-5">
       <p className="text-sm font-semibold text-cyan-200">Membership value</p>
       <h2 className="mt-2 text-2xl font-bold text-white">
-        ただ眺めるだけで終わらせないために
+        相場を見る習慣を、ひとりで終わらせないために
       </h2>
       <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">
         相場ボードやチャートは、見るだけでは使い切れません。noteメンバーシップ、Discord限定チャンネル、コピートレード、半裁量EAを組み合わせて、
-        相場の見方、補助ツール、運用前チェックまでつなげられるようにしています。
+        日々の相場考察、補助ツール、運用前チェックまで見返せるようにしています。
       </p>
     </section>
+
+    <div className="grid gap-4 lg:grid-cols-3">
+      {premiumStats.map((stat) => (
+        <article
+          key={stat.label}
+          className="rounded-lg border border-white/10 bg-slate-900/80 p-5"
+        >
+          <p className="text-3xl font-black text-cyan-200">{stat.value}</p>
+          <h3 className="mt-3 text-lg font-bold text-white">{stat.label}</h3>
+          <p className="mt-3 text-sm leading-6 text-slate-400">{stat.body}</p>
+        </article>
+      ))}
+    </div>
 
     <div className="grid gap-4 lg:grid-cols-3">
       {strategyCards.map((card) => (
@@ -335,6 +385,33 @@ export const StrategyGuidePage = () => (
             >
               {offer.label}
             </a>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-semibold text-cyan-200">Premium contents</p>
+          <h3 className="mt-1 text-lg font-bold text-white">プレミアムで見られるもの</h3>
+        </div>
+        <a
+          href="#/tools/participation"
+          className="inline-flex min-h-10 items-center justify-center rounded-lg bg-cyan-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-cyan-200"
+        >
+          プレミアムを見る
+        </a>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        {premiumBenefits.map((benefit) => (
+          <article
+            key={benefit.title}
+            className="rounded-lg border border-white/10 bg-slate-950/40 p-4"
+          >
+            <h4 className="font-bold text-white">{benefit.title}</h4>
+            <p className="mt-2 text-sm leading-6 text-slate-400">{benefit.body}</p>
           </article>
         ))}
       </div>
@@ -439,6 +516,18 @@ export const CommunityGuidePage = () => (
         アニャニカル覗き部屋では、日々の目線、チャート分析、エントリーパターン、インジ、bot、EA関連の情報を整理して確認できます。
         公開チャンネルと限定チャンネルがあるため、まず概要と閲覧手順を確認してください。
       </p>
+      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        {premiumStats.map((stat) => (
+          <div
+            key={stat.label}
+            className="rounded-lg border border-white/10 bg-slate-950/35 p-4"
+          >
+            <p className="text-2xl font-black text-emerald-200">{stat.value}</p>
+            <p className="mt-2 text-sm font-bold text-white">{stat.label}</p>
+            <p className="mt-2 text-xs leading-5 text-slate-400">{stat.body}</p>
+          </div>
+        ))}
+      </div>
     </section>
 
     <div className="grid gap-4 lg:grid-cols-3">
@@ -506,6 +595,12 @@ export const CommunityGuidePage = () => (
           </li>
         ))}
       </ol>
+      <a
+        href="#/tools/participation"
+        className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg bg-cyan-300 px-5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200"
+      >
+        プレミアムコンテンツを確認
+      </a>
     </section>
 
     <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
@@ -534,13 +629,51 @@ export const CommunityGuidePage = () => (
 
 export const ParticipationGuidePage = () => (
   <section className="space-y-6">
-    <section className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-5">
-      <p className="text-sm font-semibold text-amber-200">Join guide</p>
-      <h2 className="mt-2 text-2xl font-bold text-white">プレミアムコンテンツ</h2>
-      <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">
-        noteメンバーシップ参加者向けに、限定チャンネル、インジ関連情報、運用リンクをまとめています。
-        加入後に確認申請を行うと、Discordの限定チャンネル権限を付与します。
-      </p>
+    <section className="overflow-hidden rounded-lg border border-amber-300/20 bg-slate-900/90">
+      <div className="bg-amber-300/10 p-5">
+        <p className="text-sm font-semibold text-amber-200">Premium contents</p>
+        <h2 className="mt-2 text-2xl font-bold text-white">プレミアムコンテンツ</h2>
+        <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">
+          noteメンバーシップ参加者向けに、日々の相場考察、Discord限定チャンネル、インジ関連情報、運用リンクをまとめています。
+          加入後に確認申請を行うと、限定チャンネル権限を付与します。
+        </p>
+      </div>
+      <div className="grid gap-0 border-t border-white/10 md:grid-cols-3">
+        {premiumStats.map((stat) => (
+          <article
+            key={stat.label}
+            className="border-b border-white/10 p-5 md:border-b-0 md:border-r last:md:border-r-0"
+          >
+            <p className="text-3xl font-black text-amber-200">{stat.value}</p>
+            <h3 className="mt-3 text-lg font-bold text-white">{stat.label}</h3>
+            <p className="mt-3 text-sm leading-6 text-slate-400">{stat.body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section className="rounded-lg border border-white/10 bg-white/[0.035] p-5">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-semibold text-cyan-200">Why join</p>
+          <h3 className="mt-1 text-lg font-bold text-white">
+            入るメリットが分かる4つのポイント
+          </h3>
+        </div>
+        <p className="text-sm text-slate-500">日々見返せる情報を中心に整理しています。</p>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        {premiumBenefits.map((benefit) => (
+          <article
+            key={benefit.title}
+            className="rounded-lg border border-white/10 bg-slate-950/40 p-4"
+          >
+            <h4 className="font-bold text-white">{benefit.title}</h4>
+            <p className="mt-2 text-sm leading-6 text-slate-400">{benefit.body}</p>
+          </article>
+        ))}
+      </div>
     </section>
 
     <div className="grid gap-4 lg:grid-cols-3">

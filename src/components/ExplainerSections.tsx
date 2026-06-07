@@ -173,27 +173,41 @@ export const ExplainerSections = () => (
       <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
         <div>
           <p className="text-sm font-semibold text-emerald-200">
-            週末の動きを平日の取引計画へ
+            プレミアムと運用環境の入口
           </p>
           <h2 className="mt-2 text-2xl font-bold text-white">
-            24時間取引に強い口座を用意しておく
+            考察、Discord、EA環境をまとめて確認
           </h2>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
-            週末に金・原油・指数・為替が動いたとき、月曜の窓開けや時間外の値動きに備えやすくなります。
-            Exnessでは裁量トレードだけでなく、半裁量EAや全自動EAを使った運用にも対応できます。
+            日々の相場考察を追いたい人はプレミアムへ。運用環境を整えたい人はExness口座やEAチェックを確認できます。
+            裁量トレードだけでなく、半裁量EAや全自動EAを使った運用にも対応できます。
           </p>
         </div>
-        <a
-          href={EXNESS_SIGNUP_URL}
-          rel="noreferrer"
-          target="_blank"
-          className="inline-flex min-h-12 items-center justify-center rounded-lg bg-emerald-300 px-5 text-sm font-bold text-slate-950 shadow-glow transition hover:bg-emerald-200"
-        >
-          Exnessで無料口座開設
-        </a>
+        <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+          <a
+            href="#/tools/participation"
+            className="inline-flex min-h-12 items-center justify-center rounded-lg bg-emerald-300 px-5 text-sm font-bold text-slate-950 shadow-glow transition hover:bg-emerald-200"
+          >
+            プレミアムを見る
+          </a>
+          <a
+            href={EXNESS_SIGNUP_URL}
+            rel="noreferrer"
+            target="_blank"
+            className="inline-flex min-h-12 items-center justify-center rounded-lg bg-white px-5 text-sm font-bold text-slate-950 transition hover:bg-slate-200"
+          >
+            Exness口座開設
+          </a>
+        </div>
       </div>
 
-      <div className="mt-5 grid gap-3 text-sm sm:grid-cols-3">
+      <div className="mt-5 grid gap-3 text-sm sm:grid-cols-4">
+        <div className="rounded-lg border border-white/10 bg-slate-950/40 p-4">
+          <p className="font-semibold text-white">日々の考察</p>
+          <p className="mt-2 leading-6 text-slate-400">
+            ゴールド、ドル円、BTCなどの目線や注意ラインを継続的に確認。
+          </p>
+        </div>
         <div className="rounded-lg border border-white/10 bg-slate-950/40 p-4">
           <p className="font-semibold text-white">裁量トレード</p>
           <p className="mt-2 leading-6 text-slate-400">

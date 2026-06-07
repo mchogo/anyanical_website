@@ -10,6 +10,7 @@ type TradingViewScriptWidgetProps = {
   src: string;
   config: Record<string, unknown>;
   heightClassName: string;
+  className?: string;
 };
 
 const changeTone = (value: number | null) => {
@@ -50,6 +51,7 @@ const TradingViewScriptWidget = ({
   src,
   config,
   heightClassName,
+  className = 'overflow-hidden rounded-lg border border-white/10 bg-slate-950',
 }: TradingViewScriptWidgetProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const configJson = JSON.stringify(config);
@@ -75,12 +77,7 @@ const TradingViewScriptWidget = ({
     };
   }, [src, configJson]);
 
-  return (
-    <div
-      ref={containerRef}
-      className={`${heightClassName} overflow-hidden rounded-lg border border-white/10 bg-slate-950`}
-    />
-  );
+  return <div ref={containerRef} className={`${heightClassName} ${className}`} />;
 };
 
 export const CurrencyStrengthTool = () => (
@@ -133,19 +130,28 @@ export const EconomicCalendarTool = () => (
     </div>
 
     <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
-      <TradingViewScriptWidget
-        src="https://s3.tradingview.com/external-embedding/embed-widget-events.js"
-        heightClassName="h-[660px]"
-        config={{
-          width: '100%',
-          height: '100%',
-          colorTheme: 'dark',
-          isTransparent: true,
-          locale: 'ja',
-          importanceFilter: '0,1',
-          countryFilter: 'us,jp,eu,gb,ca,au,nz',
-        }}
-      />
+      <div className="overflow-hidden rounded-lg border border-white/10 bg-white shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
+        <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+          <p className="text-sm font-bold text-slate-950">主要国の経済イベント</p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            TradingView公式カレンダーをライトテーマで表示しています。
+          </p>
+        </div>
+        <TradingViewScriptWidget
+          src="https://s3.tradingview.com/external-embedding/embed-widget-events.js"
+          heightClassName="h-[620px]"
+          className="bg-white"
+          config={{
+            width: '100%',
+            height: '100%',
+            colorTheme: 'light',
+            isTransparent: false,
+            locale: 'ja',
+            importanceFilter: '0,1',
+            countryFilter: 'us,jp,eu,gb,ca,au,nz',
+          }}
+        />
+      </div>
 
       <aside className="rounded-lg border border-white/10 bg-white/[0.035] p-5">
         <p className="text-sm font-semibold text-cyan-200">指標前チェック</p>
