@@ -51,6 +51,8 @@ Cloudflare側の画面でDeploy commandが必須の場合は、Workers Static As
 
 `wrangler.jsonc` で `assets.directory` を `./dist` に指定しているため、Deploy commandへ `--assets=dist` を直接書く必要はありません。
 
+Cloudflareの画面が内部的にPages deployとして扱う場合に備えて、`pages_build_output_dir` も `./dist` に指定しています。
+
 SPAとして動かすため、`assets.not_found_handling` は `single-page-application` にしています。
 
 ## デプロイ前チェック
