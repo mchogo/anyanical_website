@@ -40,18 +40,18 @@ dist/
 
 ハッシュルーティングのため、`#/tools/...` のページは追加rewriteなしで動作します。
 
-## Cloudflare Pages Deploy Command例
+## Cloudflare Workers Static Assets例
 
-Cloudflare側の画面でDeploy commandが必須の場合は、Pages deployで `dist` とプロジェクト名を明示します。
+Cloudflare側の画面でDeploy commandが必須で、プロジェクトがWorkerとして作成されている場合は、Workers Static Assetsとしてデプロイします。
 
-| 項目           | 値                                                                |
-| -------------- | ----------------------------------------------------------------- |
-| Build command  | `npm run build`                                                   |
-| Deploy command | `npx wrangler pages deploy dist --project-name anyanical_website` |
+| 項目           | 値                    |
+| -------------- | --------------------- |
+| Build command  | `npm run build`       |
+| Deploy command | `npx wrangler deploy` |
 
-`dist/` をCloudflare Pagesへアップロードします。`--project-name` はCloudflare側のプロジェクト名に合わせています。
+`wrangler.jsonc` の `name` はCloudflare側のWorker名 `anyanicalwebsite` に合わせています。
 
-`dist` と `--project-name` をコマンド側で明示するため、`wrangler.jsonc` は不要です。
+`assets.directory` は `./dist` です。SPAとして動かすため、`assets.not_found_handling` は `single-page-application` にしています。
 
 ## デプロイ前チェック
 
