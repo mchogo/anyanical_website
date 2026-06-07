@@ -1,6 +1,9 @@
 import { EXTERNAL_LINKS } from '../config/navigation';
 
 const EXNESS_SIGNUP_URL = 'https://x.gd/CxfuR';
+const NOTE_MEMBERSHIP_URL = 'https://note.com/anyafx/membership';
+const MEMBERSHIP_FORM_URL =
+  'https://docs.google.com/forms/d/e/1FAIpQLSc9odFoGLOGFGpCN_OsZewwzXhO61xdzBxY6bQk_NCsQHeq2Q/viewform?usp=dialog';
 
 const strategyCards = [
   {
@@ -41,33 +44,78 @@ const communityFeatures = [
 
 const participationRoutes = [
   {
+    title: 'noteメンバーシップ',
+    body: '通常プランへの参加はこちらから。加入後にDiscord/XのID確認へ進んでください。',
+    href: NOTE_MEMBERSHIP_URL,
+    label: 'note加入ページ',
+  },
+  {
+    title: '加入申請フォーム',
+    body: 'DMを省略したい場合は、note加入後に専用フォームから申請してください。',
+    href: MEMBERSHIP_FORM_URL,
+    label: 'フォームで申請',
+  },
+  {
     title: 'その他リンク',
-    body: 'サブスク、Discord、各種案内はlit.linkに集約しています。',
+    body: 'Discord、X、サブスク、各種案内はlit.linkに集約しています。',
     href: EXTERNAL_LINKS[0].href,
     label: 'lit.link/anyafx',
   },
+];
+
+const membershipSteps = [
   {
-    title: 'Exness口座開設',
-    body: '裁量トレード、半裁量EA、全自動EAの運用環境を準備するための口座開設リンクです。',
-    href: EXNESS_SIGNUP_URL,
-    label: 'Exnessで口座開設',
+    title: 'noteメンバーシップへ参加',
+    body: 'まず通常プランへ加入してください。2025/04/01以降の加入は1日約150円のプランが適用されます。',
+  },
+  {
+    title: '加入確認を送付',
+    body: 'noteのユーザーIDが分かるスクリーンショットを、DiscordまたはXのDMで送ってください。Xで送る場合はDiscord IDも添えてください。',
+  },
+  {
+    title: 'フォーム申請も可能',
+    body: 'DMのやり取りを簡略化したい場合は、note加入後に専用フォームから申請できます。',
+  },
+  {
+    title: '権限付与後に次ステップへ',
+    body: '基本的に1日以内に確認します。権限付与後、必要に応じてTradingView IDなど次の提出へ進んでください。',
   },
 ];
 
-const hfmStrategies = [
+const planStatus = [
+  {
+    title: '通常プラン',
+    status: '公開中',
+    body: '現在はこちらのプランのみ公開中です。予告なく値上げする場合がありますが、既に加入中の方は加入時点の料金が適用されます。',
+  },
+  {
+    title: '個別サポート付きプラン',
+    status: '満員・非公開',
+    body: '現在は非公開です。再募集予定はありません。参加希望の場合はDMで待ちリストへの追加を相談してください。',
+  },
+];
+
+const operationLinks = [
+  {
+    title: 'Exness口座開設',
+    subtitle: '裁量 / 半裁量EA / 全自動EA',
+    body: 'EA運用環境を準備したい場合の口座開設リンクです。',
+    href: EXNESS_SIGNUP_URL,
+    label: 'Exnessで口座開設',
+  },
   {
     title: 'Anya Gold Cent',
     subtitle: 'セント口座ストラテジー',
-    id: '153191918',
-    lotRatio: '0.01ロット / 2000セント',
+    body: 'ID: 153191918 / 0.01ロット / 2000セント',
     href: 'https://my.hfm.com/jp/copy-trading/provider-details?provider=153191918',
+    label: 'ストラテジー詳細',
   },
   {
     title: 'Anya Gold',
     subtitle: 'ドル口座ストラテジー',
-    id: '147038068',
-    lotRatio: '0.01ロット / 1000ドル',
+    body: 'ID: 147038068 / 0.01ロット / 1000ドル',
     href: 'https://my.hfm.com/jp/copy-trading/provider-details?provider=147038068',
+    label: 'ストラテジー詳細',
   },
 ];
 
@@ -182,15 +230,15 @@ export const CommunityGuidePage = () => (
 export const ParticipationGuidePage = () => (
   <section className="space-y-6">
     <section className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-5">
-      <p className="text-sm font-semibold text-amber-200">Join / Affiliate</p>
-      <h2 className="mt-2 text-2xl font-bold text-white">参加方法と運用リンク</h2>
+      <p className="text-sm font-semibold text-amber-200">Join guide</p>
+      <h2 className="mt-2 text-2xl font-bold text-white">noteメンバーシップ参加方法</h2>
       <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">
-        サブスク、Discord、口座開設、HFMストラテジーなど、運用前に確認するリンクをまとめています。
-        取引条件、口座タイプ、リスク許容額は必ず自分で確認してください。
+        noteメンバーシップへ加入後、加入確認を送ってください。確認後、Discordの限定チャンネル権限を付与します。
+        申請前に必ずnote側の加入が完了していることを確認してください。
       </p>
     </section>
 
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid gap-4 lg:grid-cols-3">
       {participationRoutes.map((route) => (
         <article
           key={route.href}
@@ -211,36 +259,82 @@ export const ParticipationGuidePage = () => (
     </div>
 
     <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
-      <h3 className="text-lg font-bold text-white">HFM Copy Trading</h3>
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-semibold text-amber-200">Plan status</p>
+          <h3 className="mt-1 text-lg font-bold text-white">現在の募集状況</h3>
+        </div>
+        <p className="text-sm text-slate-500">個別プランは待ちリスト対応です。</p>
+      </div>
+
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        {hfmStrategies.map((strategy) => (
+        {planStatus.map((plan) => (
           <article
-            key={strategy.id}
+            key={plan.title}
+            className="rounded-lg border border-white/10 bg-slate-950/40 p-5"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <h4 className="text-lg font-bold text-white">{plan.title}</h4>
+              <span className="rounded-full bg-amber-300/10 px-3 py-1 text-xs font-bold text-amber-200 ring-1 ring-amber-300/20">
+                {plan.status}
+              </span>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-slate-400">{plan.body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
+      <h3 className="text-lg font-bold text-white">加入後の流れ</h3>
+      <ol className="mt-4 grid gap-3 md:grid-cols-2">
+        {membershipSteps.map((step, index) => (
+          <li
+            key={step.title}
+            className="flex gap-3 rounded-lg border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300"
+          >
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-amber-300 text-sm font-bold text-slate-950">
+              {index + 1}
+            </span>
+            <span>
+              <span className="block font-semibold text-white">{step.title}</span>
+              <span className="mt-1 block leading-6 text-slate-400">{step.body}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+
+      <div className="mt-4 rounded-lg border border-red-300/20 bg-red-300/10 p-4 text-sm leading-6 text-red-100">
+        最重要:
+        noteメンバーシップへの加入完了後に、DMまたはフォーム申請を行ってください。加入前の申請では確認できません。
+      </div>
+    </section>
+
+    <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
+      <h3 className="text-lg font-bold text-white">運用リンク</h3>
+      <p className="mt-2 text-sm leading-6 text-slate-500">
+        口座開設、EA、HFM Copy
+        Tradingは任意の運用導線です。条件やリスクを確認してから利用してください。
+      </p>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        {operationLinks.map((link) => (
+          <article
+            key={link.href}
             className="rounded-lg border border-white/10 bg-slate-950/40 p-5"
           >
             <p className="text-xs font-semibold uppercase text-slate-500">
-              {strategy.subtitle}
+              {link.subtitle}
             </p>
-            <h4 className="mt-2 text-xl font-bold text-white">{strategy.title}</h4>
-            <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-              <div>
-                <dt className="text-slate-500">ストラテジーID</dt>
-                <dd className="mt-1 font-semibold text-slate-200 tabular-nums">
-                  {strategy.id}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">ロット比率</dt>
-                <dd className="mt-1 font-semibold text-amber-200">{strategy.lotRatio}</dd>
-              </div>
-            </dl>
+            <h4 className="mt-2 text-lg font-bold text-white">{link.title}</h4>
+            <p className="mt-3 text-sm leading-6 text-slate-400">{link.body}</p>
             <a
-              href={strategy.href}
+              href={link.href}
               rel="nofollow noopener noreferrer"
               target="_blank"
               className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg bg-amber-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-200"
             >
-              ストラテジー詳細
+              {link.label}
             </a>
           </article>
         ))}
