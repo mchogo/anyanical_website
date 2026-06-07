@@ -44,10 +44,10 @@ dist/
 
 Cloudflare側の画面でDeploy commandが必須の場合は、Pages deployで `dist` とプロジェクト名を明示します。
 
-| 項目           | 値                                                               |
-| -------------- | ---------------------------------------------------------------- |
-| Build command  | `npm run build`                                                  |
-| Deploy command | `npx wrangler pages deploy dist --project-name anyanicalwebsite` |
+| 項目           | 値                                                                |
+| -------------- | ----------------------------------------------------------------- |
+| Build command  | `npm run build`                                                   |
+| Deploy command | `npx wrangler pages deploy dist --project-name anyanical_website` |
 
 `dist/` をCloudflare Pagesへアップロードします。`--project-name` はCloudflare側のプロジェクト名に合わせています。
 
