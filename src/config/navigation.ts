@@ -19,6 +19,18 @@ export const INTERNAL_NAV_LINKS = [
     label: 'EAチェック',
     href: '#/tools/ea-checklist',
   },
+  {
+    label: '戦略',
+    href: '#/tools/strategy',
+  },
+  {
+    label: 'コミュニティ',
+    href: '#/tools/community',
+  },
+  {
+    label: '参加方法',
+    href: '#/tools/participation',
+  },
 ] as const;
 
 export const EXTERNAL_LINKS = [

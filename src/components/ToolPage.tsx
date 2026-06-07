@@ -4,6 +4,11 @@ import {
   EconomicCalendarTool,
   GapWatchTool,
 } from './RelatedTools';
+import {
+  CommunityGuidePage,
+  ParticipationGuidePage,
+  StrategyGuidePage,
+} from './BrandPages';
 import { EXTERNAL_LINKS } from '../config/navigation';
 import type { MarketPrice } from '../config/markets';
 
@@ -11,7 +16,10 @@ export type ToolPageId =
   | 'currency-strength'
   | 'economic-calendar'
   | 'gap-watch'
-  | 'ea-checklist';
+  | 'ea-checklist'
+  | 'strategy'
+  | 'community'
+  | 'participation';
 
 type ToolPageProps = {
   pageId: ToolPageId;
@@ -48,6 +56,24 @@ const toolPages: Array<{
     description: '半裁量EA・全自動EAの稼働前確認',
     href: '#/tools/ea-checklist',
   },
+  {
+    id: 'strategy',
+    title: '戦略',
+    description: '週末相場から月曜の取引計画へ',
+    href: '#/tools/strategy',
+  },
+  {
+    id: 'community',
+    title: 'コミュニティ',
+    description: 'ツール、メモ、各種案内のまとめ',
+    href: '#/tools/community',
+  },
+  {
+    id: 'participation',
+    title: '参加方法',
+    description: 'サブスク、口座開設、ストラテジー導線',
+    href: '#/tools/participation',
+  },
 ];
 
 const renderTool = (pageId: ToolPageId, prices: Record<string, MarketPrice>) => {
@@ -60,6 +86,12 @@ const renderTool = (pageId: ToolPageId, prices: Record<string, MarketPrice>) => 
       return <GapWatchTool prices={prices} />;
     case 'ea-checklist':
       return <EaChecklistTool />;
+    case 'strategy':
+      return <StrategyGuidePage />;
+    case 'community':
+      return <CommunityGuidePage />;
+    case 'participation':
+      return <ParticipationGuidePage />;
   }
 };
 

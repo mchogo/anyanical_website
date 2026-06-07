@@ -72,6 +72,21 @@ const relatedTools = [
     href: '#/tools/ea-checklist',
   },
   {
+    title: '戦略ガイド',
+    description: '週末相場から月曜の取引計画へ',
+    href: '#/tools/strategy',
+  },
+  {
+    title: 'コミュニティ案内',
+    description: '市場メモ、ツール、各種案内のまとめ',
+    href: '#/tools/community',
+  },
+  {
+    title: '参加方法',
+    description: 'サブスク、口座開設、ストラテジー導線',
+    href: '#/tools/participation',
+  },
+  {
     title: 'その他リンク',
     description: 'サブスク、Discord、各種案内まとめ',
     href: EXTERNAL_LINKS[0].href,
@@ -291,7 +306,7 @@ export const ExplainerSections = () => (
         <p className="text-sm text-slate-500">各ツールは別ページで開きます。</p>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {relatedTools.map((tool) => (
           <a
             key={tool.href}

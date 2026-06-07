@@ -23,6 +23,9 @@ const toolPageIds: ToolPageId[] = [
   'economic-calendar',
   'gap-watch',
   'ea-checklist',
+  'strategy',
+  'community',
+  'participation',
 ];
 
 const getRoute = () => window.location.hash.replace(/^#\/?/, '');

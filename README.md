@@ -14,6 +14,7 @@ Hyperliquidの24時間365日perp価格を使い、金・銀・原油・S&P500・
 - 金曜クローズ基準の参考セクション
 - TradingViewチャートタブ
 - 通貨強弱、経済指標、窓開け監視、EAチェックリストの別ページ
+- 戦略ガイド、コミュニティ案内、参加方法の別ページ
 - Exness/HFM/Anya Goldストラテジー導線
 - 固定追尾ナビ
 
@@ -57,6 +58,9 @@ http://127.0.0.1:5173/
 | `#/tools/economic-calendar` | 経済指標カレンダー     |
 | `#/tools/gap-watch`         | 窓開け監視ボード       |
 | `#/tools/ea-checklist`      | EA運用チェックリスト   |
+| `#/tools/strategy`          | 戦略ガイド             |
+| `#/tools/community`         | コミュニティ案内       |
+| `#/tools/participation`     | 参加方法・外部リンク   |
 
 ハッシュルーティングのため、Cloudflare Pagesなどの静的ホスティングで追加rewriteなしに動作します。
 
