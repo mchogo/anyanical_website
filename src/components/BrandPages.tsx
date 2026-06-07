@@ -27,6 +27,30 @@ const strategySteps = [
   'EA稼働前にスプレッド、ロット、最大ポジション、停止条件を確認',
 ];
 
+const strategyOfferCards = [
+  {
+    title: 'noteメンバーシップ',
+    badge: 'Subscribe',
+    body: '週末相場の見方、XAUUSD・BTCUSD・USDJPYの注目ポイント、限定チャンネル案内を確認したい人向けの入口です。',
+    href: '#/tools/participation',
+    label: '参加方法を見る',
+  },
+  {
+    title: 'HFMコピートレード',
+    badge: 'Copy trade',
+    body: 'Anya Gold Cent / Anya Gold のストラテジー情報を確認できます。資金量とロット比率を理解したうえで検討してください。',
+    href: '#/tools/participation',
+    label: 'ストラテジーを見る',
+  },
+  {
+    title: '半裁量EA',
+    badge: 'Semi-auto EA',
+    body: '相場判断は人が行い、エントリー補助・決済補助・リスク管理をEAで支援する運用です。稼働前チェックとセットで使います。',
+    href: '#/tools/ea-checklist',
+    label: 'EAチェックへ',
+  },
+];
+
 const communityFeatures = [
   {
     title: '市場メモ',
@@ -159,6 +183,39 @@ export const StrategyGuidePage = () => (
         </article>
       ))}
     </div>
+
+    <section className="rounded-lg border border-emerald-300/20 bg-emerald-300/10 p-5">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-semibold text-emerald-200">Next actions</p>
+          <h3 className="mt-1 text-lg font-bold text-white">戦略を運用へつなげる導線</h3>
+        </div>
+        <p className="text-sm text-slate-400">
+          学ぶ、任せる、補助する導線を分けて確認できます。
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        {strategyOfferCards.map((offer) => (
+          <article
+            key={offer.title}
+            className="rounded-lg border border-white/10 bg-slate-950/40 p-5"
+          >
+            <span className="rounded-full bg-emerald-300/10 px-3 py-1 text-xs font-bold text-emerald-200 ring-1 ring-emerald-300/20">
+              {offer.badge}
+            </span>
+            <h4 className="mt-4 text-lg font-bold text-white">{offer.title}</h4>
+            <p className="mt-3 text-sm leading-6 text-slate-400">{offer.body}</p>
+            <a
+              href={offer.href}
+              className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg bg-emerald-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-emerald-200"
+            >
+              {offer.label}
+            </a>
+          </article>
+        ))}
+      </div>
+    </section>
 
     <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
       <h3 className="text-lg font-bold text-white">確認フロー</h3>
