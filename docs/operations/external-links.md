@@ -52,11 +52,20 @@
 | 加入申請フォーム     | `https://docs.google.com/forms/d/e/1FAIpQLSc9odFoGLOGFGpCN_OsZewwzXhO61xdzBxY6bQk_NCsQHeq2Q/viewform?usp=dialog` | 参加方法     |
 | Discord / X / 各案内 | `https://lit.link/anyafx`                                                                                        | 参加方法ほか |
 
+## Discordコミュニティ
+
+| 用途                   | URL                                       | 表示場所     |
+| ---------------------- | ----------------------------------------- | ------------ |
+| Discordサーバー        | `https://discord.gg/G6xWszr9CZ`           | コミュニティ |
+| Discord案内note        | `https://note.com/anyafx/n/n614fec6d40d8` | コミュニティ |
+| オリジナルインジまとめ | `https://note.com/anyafx/n/nc05844962145` | コミュニティ |
+
 表示時の注意:
 
 - note加入完了後にDMまたはフォーム申請へ進む導線にする
 - noteユーザーIDが分かるスクリーンショットとDiscord IDの確認を促す
 - 料金や募集状況は変更される可能性があるため、最終確認はnote側で行う
+- Discordの限定チャンネル、インジ利用、ロール変更はサーバー内の案内を最終確認とする
 
 ## 外部Widget
 

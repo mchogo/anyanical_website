@@ -2,6 +2,9 @@ import { EXTERNAL_LINKS } from '../config/navigation';
 
 const EXNESS_SIGNUP_URL = 'https://x.gd/CxfuR';
 const NOTE_MEMBERSHIP_URL = 'https://note.com/anyafx/membership';
+const NOTE_DISCORD_GUIDE_URL = 'https://note.com/anyafx/n/n614fec6d40d8';
+const DISCORD_INVITE_URL = 'https://discord.gg/G6xWszr9CZ';
+const INDICATORS_NOTE_URL = 'https://note.com/anyafx/n/nc05844962145';
 const MEMBERSHIP_FORM_URL =
   'https://docs.google.com/forms/d/e/1FAIpQLSc9odFoGLOGFGpCN_OsZewwzXhO61xdzBxY6bQk_NCsQHeq2Q/viewform?usp=dialog';
 const SEMI_AUTO_EA_FORM_URL = 'https://forms.gle/1EiRMR257pgQ9GDJ7';
@@ -102,16 +105,83 @@ const semiAutoEaRiskRows = [
 
 const communityFeatures = [
   {
-    title: '市場メモ',
-    body: '週末に出たニュース、金・BTC・ドル円の反応、週明けに見る価格帯を短く整理します。',
+    title: '日々のチャート分析',
+    body: 'ドル円やゴールドを中心に、日々の目線、立ち回り、どこを抜けると崩れるかを確認する場所です。',
   },
   {
-    title: 'ツール導線',
-    body: '相場ボード、通貨強弱、経済指標、窓開け監視を同じ導線から確認できます。',
+    title: 'エントリーパターン',
+    body: 'ローソクの読み方、エントリー根拠、初心者向けの見方をスレッド形式で追いやすく整理します。',
   },
   {
-    title: '運用チェック',
-    body: '裁量、半裁量EA、全自動EAのどれでも、稼働前に確認したい項目を見落とさないようにします。',
+    title: 'インジ・bot・EA',
+    body: 'オリジナルインジ、半裁量bot、EAの運用メモ、決済や損切りを含む実運用の共有を扱います。',
+  },
+];
+
+const communityLinks = [
+  {
+    title: 'Discordサーバー',
+    body: 'アニャニカル覗き部屋。公開チャンネルと限定チャンネルがあります。',
+    href: DISCORD_INVITE_URL,
+    label: 'Discordに参加',
+  },
+  {
+    title: 'Discord案内note',
+    body: 'サーバー概要、チャンネル構成、限定チャンネルの見方をまとめた案内記事です。',
+    href: NOTE_DISCORD_GUIDE_URL,
+    label: '案内noteを見る',
+  },
+  {
+    title: 'オリジナルインジまとめ',
+    body: 'Discordメンバー向けのインジやbot関連情報を確認できます。',
+    href: INDICATORS_NOTE_URL,
+    label: 'インジまとめ',
+  },
+];
+
+const communityChannels = [
+  {
+    title: 'サーバー概要',
+    body: '全員が見られる概要チャンネル。限定チャンネルの閲覧手順もここから確認します。',
+  },
+  {
+    title: '裁量関係',
+    body: 'ポジション共有、立ち回り予定、エントリーパターン、ローソク足の読み方を確認します。',
+  },
+  {
+    title: 'チャート関係',
+    body: 'ドル円・ゴールドを中心に、毎日のチャートやリアルタイム確認用リンクを共有します。',
+  },
+  {
+    title: '天と地 / EA関係',
+    body: 'EAやbotの運用、ポジション決済、損切りを含む共有を確認します。',
+  },
+  {
+    title: 'アラート関係',
+    body: 'ロール変更や通知設定と組み合わせて、自分が見たいアラートを調整します。',
+  },
+  {
+    title: 'その他企画',
+    body: 'Discordメンバー限定の企画や、未公開noteの先出しなどの案内を確認します。',
+  },
+];
+
+const communityAccessSteps = [
+  {
+    title: 'Discordへ参加',
+    body: 'まずサーバーに参加し、公開チャンネルで概要と閲覧手順を確認します。',
+  },
+  {
+    title: 'noteプランへ加入',
+    body: '限定チャンネルやインジ利用権付きプランに加入し、会員証やnote IDを送付します。',
+  },
+  {
+    title: '権限付与を待つ',
+    body: '確認後にロールが付与され、限定チャンネルを閲覧できるようになります。',
+  },
+  {
+    title: '必要ならTradingView IDを申請',
+    body: 'オリジナルインジ利用にはTradingView IDの連絡、または利用申請フォームが必要です。',
   },
 ];
 
@@ -360,13 +430,32 @@ export const CommunityGuidePage = () => (
   <section className="space-y-6">
     <section className="rounded-lg border border-emerald-300/20 bg-emerald-300/10 p-5">
       <p className="text-sm font-semibold text-emerald-200">Community</p>
-      <h2 className="mt-2 text-2xl font-bold text-white">
-        ツールとコミュニティ導線をまとめる
-      </h2>
+      <h2 className="mt-2 text-2xl font-bold text-white">Discordコミュニティ案内</h2>
       <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">
-        相場の確認、週明けの準備、EA稼働前チェック、各種案内を分散させず、必要なリンクへすぐ移動できる構成にしています。
+        アニャニカル覗き部屋では、日々の目線、チャート分析、エントリーパターン、インジ、bot、EA関連の情報を整理して確認できます。
+        公開チャンネルと限定チャンネルがあるため、まず概要と閲覧手順を確認してください。
       </p>
     </section>
+
+    <div className="grid gap-4 lg:grid-cols-3">
+      {communityLinks.map((link) => (
+        <article
+          key={link.href}
+          className="rounded-lg border border-white/10 bg-white/[0.035] p-5"
+        >
+          <h3 className="text-lg font-bold text-white">{link.title}</h3>
+          <p className="mt-3 text-sm leading-6 text-slate-400">{link.body}</p>
+          <a
+            href={link.href}
+            rel="nofollow noopener noreferrer"
+            target="_blank"
+            className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg bg-emerald-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-emerald-200"
+          >
+            {link.label}
+          </a>
+        </article>
+      ))}
+    </div>
 
     <div className="grid gap-4 lg:grid-cols-3">
       {communityFeatures.map((feature) => (
@@ -379,6 +468,41 @@ export const CommunityGuidePage = () => (
         </article>
       ))}
     </div>
+
+    <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
+      <h3 className="text-lg font-bold text-white">チャンネルで見られる内容</h3>
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {communityChannels.map((channel) => (
+          <article
+            key={channel.title}
+            className="rounded-lg border border-white/10 bg-slate-950/40 p-4"
+          >
+            <h4 className="font-bold text-white">{channel.title}</h4>
+            <p className="mt-2 text-sm leading-6 text-slate-400">{channel.body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-5">
+      <h3 className="text-lg font-bold text-white">限定チャンネルを見る流れ</h3>
+      <ol className="mt-4 grid gap-3 md:grid-cols-2">
+        {communityAccessSteps.map((step, index) => (
+          <li
+            key={step.title}
+            className="flex gap-3 rounded-lg border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300"
+          >
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-cyan-300 text-sm font-bold text-slate-950">
+              {index + 1}
+            </span>
+            <span>
+              <span className="block font-semibold text-white">{step.title}</span>
+              <span className="mt-1 block leading-6 text-slate-400">{step.body}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </section>
 
     <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
       <h3 className="text-lg font-bold text-white">よくある質問</h3>
