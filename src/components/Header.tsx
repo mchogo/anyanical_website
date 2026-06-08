@@ -1,6 +1,29 @@
 import { ConnectionStatus } from './ConnectionStatus';
 import type { ConnectionStatus as ConnectionStatusType } from '../hooks/useHyperliquidMids';
 
+const getMondayOpenCountdown = (now: Date): string | null => {
+  const utcDay = now.getUTCDay();
+  const nextOpen = new Date(now);
+
+  if (utcDay === 6) {
+    nextOpen.setUTCDate(nextOpen.getUTCDate() + 1);
+    nextOpen.setUTCHours(22, 0, 0, 0);
+  } else if (utcDay === 0 && now.getUTCHours() < 22) {
+    nextOpen.setUTCHours(22, 0, 0, 0);
+  } else {
+    return null;
+  }
+
+  const diff = nextOpen.getTime() - now.getTime();
+  if (diff <= 0) return null;
+
+  const h = Math.floor(diff / 3_600_000);
+  const m = Math.floor((diff % 3_600_000) / 60_000);
+  const s = Math.floor((diff % 60_000) / 1_000);
+
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+};
+
 type HeaderProps = {
   connectionStatus: ConnectionStatusType;
   tickCount: number;
@@ -73,12 +96,21 @@ export const Header = ({
           <p className="text-xs text-slate-400">接続状態</p>
           <p className="mt-1 text-lg font-semibold text-white">{connectionStatus}</p>
         </div>
-        <div className="animate-fade-up stagger-3 hidden rounded-lg border border-white/10 bg-white/[0.04] p-4 sm:block">
-          <p className="text-xs text-slate-400">更新回数</p>
-          <p className="mt-1 text-lg font-semibold text-white">
-            {tickCount.toLocaleString()}
-          </p>
-        </div>
+        {isWeekendMode && getMondayOpenCountdown(currentTime) !== null ? (
+          <div className="animate-fade-up stagger-3 rounded-lg border border-amber-300/20 bg-amber-300/[0.08] p-4">
+            <p className="text-xs text-amber-200/70">月曜オープンまで (FX基準)</p>
+            <p className="mt-1 font-mono text-lg font-semibold tabular-nums text-amber-100">
+              {getMondayOpenCountdown(currentTime)}
+            </p>
+          </div>
+        ) : (
+          <div className="animate-fade-up stagger-3 hidden rounded-lg border border-white/10 bg-white/[0.04] p-4 sm:block">
+            <p className="text-xs text-slate-400">更新回数</p>
+            <p className="mt-1 text-lg font-semibold text-white">
+              {tickCount.toLocaleString()}
+            </p>
+          </div>
+        )}
         <div className="animate-fade-up stagger-4 hidden rounded-lg border border-white/10 bg-white/[0.04] p-4 sm:block">
           <p className="text-xs text-slate-400">最終更新時刻</p>
           <p className="mt-1 text-lg font-semibold text-white">

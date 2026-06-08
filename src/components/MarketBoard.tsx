@@ -44,15 +44,38 @@ const categoryFilters: Array<{
 const filterMarkets = (
   markets: MarketConfig[],
   categoryFilter: MarketCategory | 'all',
-) =>
-  categoryFilter === 'all'
-    ? markets
-    : markets.filter((market) => market.category === categoryFilter);
+  searchQuery: string,
+  pinnedSymbols: string[],
+) => {
+  let result =
+    categoryFilter === 'all'
+      ? markets
+      : markets.filter((m) => m.category === categoryFilter);
+
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    result = result.filter(
+      (m) =>
+        m.symbol.toLowerCase().includes(q) ||
+        m.displayName.toLowerCase().includes(q) ||
+        (m.weekendDisplayName?.toLowerCase().includes(q) ?? false) ||
+        m.label.toLowerCase().includes(q),
+    );
+  }
+
+  return [...result].sort((a, b) => {
+    const aPinned = pinnedSymbols.includes(a.symbol) ? 0 : 1;
+    const bPinned = pinnedSymbols.includes(b.symbol) ? 0 : 1;
+    return aPinned - bPinned;
+  });
+};
 
 const renderMarketCards = (
   markets: MarketConfig[],
   props: MarketBoardProps,
   gridClassName = 'grid gap-4 md:grid-cols-2 xl:grid-cols-3',
+  pinnedSymbols: string[] = [],
+  togglePin?: (symbol: string) => void,
 ) => (
   <div className={gridClassName}>
     {markets.map((market, index) => (
@@ -69,6 +92,8 @@ const renderMarketCards = (
         requestPermission={props.requestPermission}
         permissionStatus={props.permissionStatus}
         index={index}
+        isPinned={pinnedSymbols.includes(market.symbol)}
+        onTogglePin={togglePin ? () => togglePin(market.symbol) : undefined}
       />
     ))}
   </div>
@@ -86,9 +111,45 @@ export const MarketBoard = ({
   permissionStatus,
 }: MarketBoardProps) => {
   const [categoryFilter, setCategoryFilter] = useState<MarketCategory | 'all'>('all');
-  const filteredWeekendMarkets = filterMarkets(WEEKEND_MARKETS, categoryFilter);
-  const filteredCryptoMarkets = filterMarkets(CRYPTO_MARKETS, categoryFilter);
-  const filteredForexMarkets = filterMarkets(FOREX_MARKETS, categoryFilter);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [pinnedSymbols, setPinnedSymbols] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('market-board:pinned');
+      if (stored) return JSON.parse(stored) as string[];
+    } catch {
+      /* ignore */
+    }
+    return [];
+  });
+
+  const togglePin = (symbol: string) => {
+    setPinnedSymbols((prev) => {
+      const next = prev.includes(symbol)
+        ? prev.filter((s) => s !== symbol)
+        : [...prev, symbol];
+      localStorage.setItem('market-board:pinned', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const filteredWeekendMarkets = filterMarkets(
+    WEEKEND_MARKETS,
+    categoryFilter,
+    searchQuery,
+    pinnedSymbols,
+  );
+  const filteredCryptoMarkets = filterMarkets(
+    CRYPTO_MARKETS,
+    categoryFilter,
+    searchQuery,
+    pinnedSymbols,
+  );
+  const filteredForexMarkets = filterMarkets(
+    FOREX_MARKETS,
+    categoryFilter,
+    searchQuery,
+    pinnedSymbols,
+  );
   const cardProps = {
     prices,
     priceHistory,
@@ -100,6 +161,8 @@ export const MarketBoard = ({
     requestPermission,
     permissionStatus,
   };
+  const hasResults =
+    filteredWeekendMarkets.length + filteredCryptoMarkets.length + filteredForexMarkets.length > 0;
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -115,6 +178,16 @@ export const MarketBoard = ({
             ? '公式市場が休みの間も動く参考価格で、週末ニュースへの反応を確認します。'
             : '通常の銘柄名で24時間取引価格を確認します。週末時はサンデー相場表示に切り替わります。'}
         </p>
+      </div>
+
+      <div className="mb-4">
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="銘柄を検索... (例: GOLD、BTC)"
+          className="w-full rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-slate-200 placeholder-slate-600 outline-none ring-1 ring-white/10 transition focus:border-cyan-300/30 focus:ring-cyan-300/20 sm:max-w-xs"
+        />
       </div>
 
       <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
@@ -138,8 +211,14 @@ export const MarketBoard = ({
         })}
       </div>
 
+      {!hasResults && (
+        <p className="py-10 text-center text-sm text-slate-500">
+          「{searchQuery}」に一致する銘柄が見つかりませんでした
+        </p>
+      )}
+
       {filteredWeekendMarkets.length > 0
-        ? renderMarketCards(filteredWeekendMarkets, cardProps)
+        ? renderMarketCards(filteredWeekendMarkets, cardProps, undefined, pinnedSymbols, togglePin)
         : null}
 
       {filteredCryptoMarkets.length > 0 ? (
@@ -154,7 +233,13 @@ export const MarketBoard = ({
             </p>
           </div>
 
-          {renderMarketCards(filteredCryptoMarkets, cardProps)}
+          {renderMarketCards(
+            filteredCryptoMarkets,
+            cardProps,
+            undefined,
+            pinnedSymbols,
+            togglePin,
+          )}
         </div>
       ) : null}
 
@@ -174,6 +259,8 @@ export const MarketBoard = ({
             filteredForexMarkets,
             cardProps,
             'grid gap-4 md:grid-cols-2 xl:grid-cols-4',
+            pinnedSymbols,
+            togglePin,
           )}
         </div>
       ) : null}

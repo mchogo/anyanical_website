@@ -8,7 +8,7 @@ type SparkLineProps = {
 
 export const SparkLine = ({ data, width = 120, height = 36 }: SparkLineProps) => {
   if (data.length < 2) {
-    return null;
+    return <div className="shimmer h-9 w-full rounded" aria-hidden="true" />;
   }
 
   const prices = data.map((point) => point.price);
@@ -43,10 +43,11 @@ export const SparkLine = ({ data, width = 120, height = 36 }: SparkLineProps) =>
   const isDown = lastValue < firstValue;
   const stroke = isUp ? '#34d399' : isDown ? '#fb7185' : '#94a3b8';
   const gradientId = `spark-${stroke.replace('#', '')}`;
+  const trend = isUp ? '上昇' : isDown ? '下降' : '横ばい';
 
   return (
     <svg
-      aria-hidden="true"
+      aria-label={`過去6時間チャート ${trend}傾向`}
       className="h-9 w-full animate-fade-in"
       role="img"
       viewBox={`0 0 ${width} ${height}`}

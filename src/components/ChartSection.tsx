@@ -54,6 +54,14 @@ const TradingViewWidget = ({ symbol }: { symbol: string }) => {
 
 export const ChartSection = () => {
   const [activeSymbol, setActiveSymbol] = useState<ChartSymbol>(CHART_SYMBOLS[0]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSymbolChange = (symbol: ChartSymbol) => {
+    if (symbol.symbol === activeSymbol.symbol) return;
+    setActiveSymbol(symbol);
+    setIsLoading(true);
+    window.setTimeout(() => setIsLoading(false), 2500);
+  };
 
   return (
     <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
@@ -83,7 +91,7 @@ export const ChartSection = () => {
             <button
               key={chartSymbol.symbol}
               type="button"
-              onClick={() => setActiveSymbol(chartSymbol)}
+              onClick={() => handleSymbolChange(chartSymbol)}
               className={`btn-press shrink-0 rounded-full px-4 py-2 text-sm font-semibold ring-1 transition ${
                 isActive
                   ? 'bg-cyan-300 text-slate-950 ring-cyan-200'
@@ -104,7 +112,14 @@ export const ChartSection = () => {
           </div>
           <p className="text-xs text-slate-500">{activeSymbol.symbol}</p>
         </div>
-        <TradingViewWidget key={activeSymbol.symbol} symbol={activeSymbol.symbol} />
+        <div className="relative">
+          {isLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-slate-950/80 backdrop-blur-sm">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-cyan-300" />
+            </div>
+          )}
+          <TradingViewWidget key={activeSymbol.symbol} symbol={activeSymbol.symbol} />
+        </div>
       </div>
     </section>
   );

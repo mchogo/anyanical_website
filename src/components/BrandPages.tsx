@@ -81,9 +81,9 @@ const premiumStats: StatEntry[] = [
   },
   {
     countTo: 150,
-    suffix: '名',
-    label: 'メンバー上限',
-    body: '上限150名のクローズドコミュニティ。空きが出た月初のみ新規募集を実施しています。',
+    suffix: '+名',
+    label: '在籍メンバー',
+    body: '上限制のクローズドコミュニティ。満員の月は募集なし。空きが出た月初のみ参加できます。',
   },
   {
     text: 'Daily',

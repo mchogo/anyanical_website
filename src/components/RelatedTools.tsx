@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { WEEKEND_MARKETS, type MarketConfig, type MarketPrice } from '../config/markets';
 import type { PriceHistoryPoint } from '../hooks/useHyperliquidMids';
@@ -249,6 +249,25 @@ export const GapWatchTool = ({
     ? '週末ニュースや地政学リスクで大きく動いた銘柄を優先して確認します。月曜寄り付き前の参考値であり、公式市場の始値を保証するものではありません。'
     : '平日は金曜終値との比較を判断材料にしません。直近数時間の動きと取得状態を確認し、実際の窓開け判断は公式市場が閉まった後に行います。';
 
+  const [sortDir, setSortDir] = useState<'desc' | 'asc' | null>(null);
+
+  const handleSort = () => {
+    setSortDir((prev) => (prev === null ? 'desc' : prev === 'desc' ? 'asc' : null));
+  };
+
+  const sortedMarkets =
+    sortDir === null
+      ? WEEKEND_MARKETS
+      : [...WEEKEND_MARKETS].sort((a, b) => {
+          const aVal = isWeekendMode
+            ? Math.abs(prices[a.symbol]?.changePct ?? -Infinity)
+            : Math.abs(calculateHistoryChangePct(priceHistory?.[a.symbol]) ?? -Infinity);
+          const bVal = isWeekendMode
+            ? Math.abs(prices[b.symbol]?.changePct ?? -Infinity)
+            : Math.abs(calculateHistoryChangePct(priceHistory?.[b.symbol]) ?? -Infinity);
+          return sortDir === 'desc' ? bVal - aVal : aVal - bVal;
+        });
+
   return (
     <section id="tools-gap-watch" className="scroll-mt-8">
       <div className="mb-4">
@@ -286,21 +305,37 @@ export const GapWatchTool = ({
                 <th className="px-4 py-3">銘柄</th>
                 <th className="px-4 py-3 text-right">現在値</th>
                 <th className="px-4 py-3 text-right">金曜基準</th>
-                <th className="px-4 py-3 text-right">週末変動率</th>
+                <th
+                  className="cursor-pointer select-none px-4 py-3 text-right transition hover:text-slate-300"
+                  onClick={handleSort}
+                >
+                  週末変動率
+                  <span className={`ml-1 ${sortDir !== null ? 'text-cyan-300' : 'text-slate-600'}`}>
+                    {sortDir === null ? '↕' : sortDir === 'desc' ? '↓' : '↑'}
+                  </span>
+                </th>
                 <th className="px-4 py-3">窓開け警戒</th>
               </tr>
             ) : (
               <tr>
                 <th className="px-4 py-3">監視銘柄</th>
                 <th className="px-4 py-3 text-right">現在値</th>
-                <th className="px-4 py-3 text-right">直近6時間</th>
+                <th
+                  className="cursor-pointer select-none px-4 py-3 text-right transition hover:text-slate-300"
+                  onClick={handleSort}
+                >
+                  直近6時間
+                  <span className={`ml-1 ${sortDir !== null ? 'text-cyan-300' : 'text-slate-600'}`}>
+                    {sortDir === null ? '↕' : sortDir === 'desc' ? '↓' : '↑'}
+                  </span>
+                </th>
                 <th className="px-4 py-3">短期状態</th>
                 <th className="px-4 py-3">取得状態</th>
               </tr>
             )}
           </thead>
           <tbody className="divide-y divide-white/10">
-            {WEEKEND_MARKETS.map((market) => {
+            {sortedMarkets.map((market) => {
               const price = prices[market.symbol];
               const changePct = price?.changePct ?? null;
               const absChange = Math.abs(changePct ?? 0);
@@ -461,6 +496,35 @@ export const EaChecklistTool = () => {
     '半裁量EAの場合、エントリー許可・停止の判断基準を決めた',
   ];
 
+  const [checked, setChecked] = useState<boolean[]>(() => {
+    try {
+      const stored = localStorage.getItem('ea-checklist');
+      if (stored) {
+        const parsed = JSON.parse(stored) as unknown;
+        if (Array.isArray(parsed) && parsed.length === checklist.length) {
+          return parsed as boolean[];
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    return Array<boolean>(checklist.length).fill(false);
+  });
+
+  const toggleItem = (index: number) => {
+    setChecked((prev) => {
+      const next = prev.map((v, i) => (i === index ? !v : v));
+      localStorage.setItem('ea-checklist', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const resetChecklist = () => {
+    const reset = Array<boolean>(checklist.length).fill(false);
+    setChecked(reset);
+    localStorage.setItem('ea-checklist', JSON.stringify(reset));
+  };
+
   return (
     <section id="tools-ea-checklist" className="scroll-mt-8">
       <div className="mb-4">
@@ -500,16 +564,34 @@ export const EaChecklistTool = () => {
         {checklist.map((item, index) => (
           <label
             key={item}
-            className="animate-fade-up flex min-h-16 cursor-pointer items-start gap-3 rounded-lg border border-white/10 bg-white/[0.035] p-4 text-sm text-slate-300 transition hover:border-white/20 hover:bg-white/[0.06]"
+            className={`animate-fade-up flex min-h-16 cursor-pointer items-start gap-3 rounded-lg border p-4 text-sm transition ${
+              checked[index]
+                ? 'border-cyan-300/20 bg-cyan-300/[0.06] text-slate-500'
+                : 'border-white/10 bg-white/[0.035] text-slate-300 hover:border-white/20 hover:bg-white/[0.06]'
+            }`}
             style={{ animationDelay: `${360 + index * 40}ms` }}
           >
             <input
               type="checkbox"
-              className="mt-1 h-4 w-4 rounded border-white/20 bg-slate-950 accent-cyan-300"
+              checked={checked[index]}
+              onChange={() => toggleItem(index)}
+              className="mt-1 h-4 w-4 shrink-0 rounded border-white/20 bg-slate-950 accent-cyan-300"
             />
-            <span>{item}</span>
+            <span className={checked[index] ? 'line-through' : ''}>{item}</span>
           </label>
         ))}
+      </div>
+      <div className="mt-4 flex items-center justify-between">
+        <p className="text-sm text-slate-500">
+          {checked.filter(Boolean).length} / {checklist.length} 完了
+        </p>
+        <button
+          type="button"
+          onClick={resetChecklist}
+          className="text-xs text-slate-500 transition hover:text-slate-300"
+        >
+          リセット
+        </button>
       </div>
     </section>
   );

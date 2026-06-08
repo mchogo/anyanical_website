@@ -267,6 +267,15 @@ details[open] summary .faq-icon {
   animation: toast-in 0.22s ease-out both;
 }
 
+@keyframes toast-progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.animate-toast-progress {
+  animation: toast-progress 6s linear forwards;
+}
+
 @keyframes home-scan {
   0% {
     transform: translateY(0);
