@@ -48,7 +48,7 @@ export const AlertPanel = ({
   };
 
   return (
-    <div className="mt-4 rounded-lg border border-white/10 bg-slate-800/60 p-3 text-sm">
+    <div className="animate-slide-down mt-4 rounded-lg border border-white/10 bg-slate-800/60 p-3 text-sm">
       <p className="mb-3 text-xs leading-5 text-slate-400">
         条件に到達すると画面右下に通知を表示します。ブラウザ通知を許可すると、別タブを見ている時も通知を受け取れます。
       </p>

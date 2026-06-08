@@ -15,7 +15,7 @@ export const AlertToasts = ({ notifications, dismissNotification }: AlertToastsP
       {notifications.map((notification) => (
         <div
           key={notification.id}
-          className="rounded-lg border border-cyan-300/30 bg-slate-950/95 p-4 shadow-[0_16px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/10 backdrop-blur"
+          className="animate-toast-in rounded-lg border border-cyan-300/30 bg-slate-950/95 p-4 shadow-[0_16px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/10 backdrop-blur"
         >
           <div className="flex items-start justify-between gap-3">
             <div>

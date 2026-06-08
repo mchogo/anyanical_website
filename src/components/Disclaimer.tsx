@@ -1,6 +1,6 @@
 export const Disclaimer = () => (
   <footer className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
-    <div className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-5 text-sm leading-6 text-amber-100">
+    <div className="animate-fade-up rounded-lg border border-amber-300/20 bg-amber-300/10 p-5 text-sm leading-6 text-amber-100">
       <h2 className="text-base font-bold text-amber-50">重要な注意事項</h2>
       <p className="mt-3">
         表示価格は24時間取引市場から取得した参考価格、およびTradingViewウィジェット経由の参考チャートです。公式スポット価格やCME/NYSE/東証/OTC

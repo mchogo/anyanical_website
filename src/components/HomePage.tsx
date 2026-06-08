@@ -177,27 +177,27 @@ export const HomePage = ({
         <div className="home-scan-line pointer-events-none absolute inset-x-0 top-0 h-px bg-cyan-200/70" />
         <div className="relative z-10 mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1.02fr_0.98fr] lg:px-8">
           <div className="flex flex-col justify-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">
+            <p className="animate-slide-left text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">
               Anyanical peek room
             </p>
-            <h1 className="mt-4 max-w-4xl text-4xl font-black leading-tight text-white sm:text-5xl lg:text-6xl">
+            <h1 className="animate-fade-up stagger-1 mt-4 max-w-4xl text-4xl font-black leading-tight text-white sm:text-5xl lg:text-6xl">
               アニャニカル覗き部屋
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300">
+            <p className="animate-fade-up stagger-2 mt-5 max-w-2xl text-base leading-8 text-slate-300">
               週末相場、通貨強弱、経済指標、EAチェック、プレミアム案内をまとめた入口です。
               相場を見る、学ぶ、準備する流れをこのページから選べます。
             </p>
 
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+            <div className="animate-fade-up stagger-3 mt-7 flex flex-col gap-3 sm:flex-row">
               <a
                 href="#/board"
-                className="inline-flex min-h-12 items-center justify-center rounded-lg bg-cyan-300 px-6 text-sm font-black text-slate-950 shadow-glow transition hover:bg-cyan-200"
+                className="btn-press inline-flex min-h-12 items-center justify-center rounded-lg bg-cyan-300 px-6 text-sm font-black text-slate-950 shadow-glow transition hover:bg-cyan-200"
               >
                 相場ボードを開く
               </a>
               <a
                 href="#/tools/participation"
-                className="inline-flex min-h-12 items-center justify-center rounded-lg bg-white px-6 text-sm font-black text-slate-950 transition hover:bg-slate-200"
+                className="btn-press inline-flex min-h-12 items-center justify-center rounded-lg bg-white px-6 text-sm font-black text-slate-950 transition hover:bg-slate-200"
               >
                 プレミアムを見る
               </a>
@@ -323,8 +323,8 @@ export const HomePage = ({
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-semibold text-cyan-200">Start here</p>
-            <h2 className="mt-1 text-2xl font-bold text-white">まず見るページ</h2>
+            <p className="animate-slide-left text-sm font-semibold text-cyan-200">Start here</p>
+            <h2 className="animate-fade-up stagger-1 mt-1 text-2xl font-bold text-white">まず見るページ</h2>
           </div>
           <p className="text-sm text-slate-500">
             目的に合わせて、最初に開くページを選べます。
@@ -332,13 +332,14 @@ export const HomePage = ({
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {primaryActions.map((action) => (
+          {primaryActions.map((action, index) => (
             <a
               key={action.href}
               href={action.href}
               rel={action.external ? 'noopener noreferrer' : undefined}
               target={action.external ? '_blank' : undefined}
-              className="home-card rounded-lg border border-white/10 bg-slate-900/80 p-5 transition hover:border-cyan-300/40 hover:bg-cyan-300/10"
+              className="home-card card-interactive animate-fade-up rounded-lg border border-white/10 bg-slate-900/80 p-5 hover:border-cyan-300/30 hover:bg-cyan-300/[0.07]"
+              style={{ animationDelay: `${index * 60}ms` }}
             >
               <h3 className="text-xl font-bold text-white">{action.title}</h3>
               <p className="mt-3 min-h-16 text-sm leading-6 text-slate-400">
@@ -353,10 +354,11 @@ export const HomePage = ({
       </section>
 
       <section className="mx-auto grid max-w-7xl gap-4 px-4 pb-10 sm:px-6 lg:grid-cols-3 lg:px-8">
-        {valuePoints.map((point) => (
+        {valuePoints.map((point, index) => (
           <article
             key={point.title}
-            className="rounded-lg border border-white/10 bg-white/[0.035] p-5"
+            className="card-interactive animate-fade-up rounded-lg border border-white/10 bg-white/[0.035] p-5"
+            style={{ animationDelay: `${index * 70}ms` }}
           >
             <h3 className="text-lg font-bold text-white">{point.title}</h3>
             <p className="mt-3 text-sm leading-6 text-slate-400">{point.body}</p>
@@ -381,7 +383,7 @@ export const HomePage = ({
                 href={tool.href}
                 rel={tool.external ? 'noopener noreferrer' : undefined}
                 target={tool.external ? '_blank' : undefined}
-                className="rounded-lg border border-white/10 bg-slate-950/40 p-4 transition hover:border-cyan-300/40 hover:bg-cyan-300/10"
+                className="card-interactive rounded-lg border border-white/10 bg-slate-950/40 p-4 hover:border-cyan-300/30 hover:bg-cyan-300/[0.06]"
               >
                 <p className="font-bold text-white">{tool.title}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-500">{tool.body}</p>
