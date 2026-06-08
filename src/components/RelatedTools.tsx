@@ -1,9 +1,12 @@
 import { useEffect, useRef } from 'react';
 
 import { WEEKEND_MARKETS, type MarketConfig, type MarketPrice } from '../config/markets';
+import type { PriceHistoryPoint } from '../hooks/useHyperliquidMids';
 
 type RelatedToolsProps = {
   prices: Record<string, MarketPrice>;
+  priceHistory?: Record<string, PriceHistoryPoint[]>;
+  isWeekendMode?: boolean;
 };
 
 type TradingViewScriptWidgetProps = {
@@ -40,6 +43,21 @@ const formatPercent = (value: number | null) => {
 
   const sign = value > 0 ? '+' : '';
   return `${sign}${value.toFixed(2)}%`;
+};
+
+const calculateHistoryChangePct = (history: PriceHistoryPoint[] | undefined) => {
+  if (history === undefined || history.length < 2) {
+    return null;
+  }
+
+  const firstPrice = history[0].price;
+  const lastPrice = history[history.length - 1].price;
+
+  if (firstPrice === 0) {
+    return null;
+  }
+
+  return ((lastPrice - firstPrice) / firstPrice) * 100;
 };
 
 const EXNESS_SIGNUP_URL = 'https://x.gd/CxfuR';
@@ -204,83 +222,194 @@ export const EconomicCalendarTool = () => (
   </section>
 );
 
-export const GapWatchTool = ({ prices }: RelatedToolsProps) => (
-  <section id="tools-gap-watch" className="scroll-mt-8">
-    <div className="mb-4">
-      <p className="text-sm font-semibold text-cyan-200">Gap watch</p>
-      <h2 className="mt-1 text-2xl font-bold text-white">窓開け監視ボード</h2>
-      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-        金曜クローズ付近の基準価格と現在の24時間取引価格を並べ、月曜オープン前のギャップ警戒度を確認します。
-      </p>
-    </div>
+export const GapWatchTool = ({
+  prices,
+  priceHistory,
+  isWeekendMode = false,
+}: RelatedToolsProps) => {
+  const modeLabel = isWeekendMode ? '週末監視中' : '平日準備モード';
+  const modeClass = isWeekendMode
+    ? 'border-amber-300/30 bg-amber-300/10 text-amber-100'
+    : 'border-cyan-300/25 bg-cyan-300/10 text-cyan-100';
+  const description = isWeekendMode
+    ? '金曜クローズ付近の基準価格と現在の24時間取引価格を並べ、月曜オープン前のギャップ警戒度を確認します。'
+    : '平日は公式市場も動いているため、窓開け警戒ではなく、現在値と直近6時間の動きで短期の偏りを確認します。';
+  const guidance = isWeekendMode
+    ? '週末ニュースや地政学リスクで大きく動いた銘柄を優先して確認します。月曜寄り付き前の参考値であり、公式市場の始値を保証するものではありません。'
+    : '平日は金曜終値との比較を判断材料にしません。直近数時間の動きと取得状態を確認し、実際の窓開け判断は公式市場が閉まった後に行います。';
 
-    <div className="overflow-x-auto rounded-lg border border-white/10 bg-slate-900/80">
-      <table className="min-w-[760px] w-full text-left text-sm">
-        <thead className="bg-white/[0.04] text-xs uppercase text-slate-500">
-          <tr>
-            <th className="px-4 py-3">銘柄</th>
-            <th className="px-4 py-3 text-right">現在値</th>
-            <th className="px-4 py-3 text-right">金曜基準</th>
-            <th className="px-4 py-3 text-right">変動率</th>
-            <th className="px-4 py-3">警戒度</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-white/10">
-          {WEEKEND_MARKETS.map((market) => {
-            const price = prices[market.symbol];
-            const changePct = price?.changePct ?? null;
-            const absChange = Math.abs(changePct ?? 0);
-            const alertLabel =
-              changePct === null
-                ? '未取得'
-                : absChange >= 1
-                  ? '高'
-                  : absChange >= 0.35
-                    ? '中'
-                    : '低';
-            const alertClass =
-              alertLabel === '高'
-                ? 'bg-rose-400/15 text-rose-200 ring-rose-300/30'
-                : alertLabel === '中'
-                  ? 'bg-amber-400/15 text-amber-200 ring-amber-300/30'
-                  : 'bg-slate-400/15 text-slate-200 ring-slate-300/30';
+  return (
+    <section id="tools-gap-watch" className="scroll-mt-8">
+      <div className="mb-4">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+          <div>
+            <p className="text-sm font-semibold text-cyan-200">Gap watch</p>
+            <h2 className="mt-1 text-2xl font-bold text-white">窓開け監視ボード</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+              {description}
+            </p>
+          </div>
+          <span
+            className={`inline-flex w-fit rounded-full border px-3 py-1 text-xs font-bold ${modeClass}`}
+          >
+            {modeLabel}
+          </span>
+        </div>
+      </div>
 
-            return (
-              <tr key={market.symbol}>
-                <td className="px-4 py-4">
-                  <p className="font-semibold text-white">
-                    {market.weekendDisplayName ?? market.displayName}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {price?.activeSymbol ?? '未取得'}
-                  </p>
-                </td>
-                <td className="px-4 py-4 text-right font-semibold text-slate-200 tabular-nums">
-                  {formatNumber(price?.price ?? null, market)}
-                </td>
-                <td className="px-4 py-4 text-right text-slate-400 tabular-nums">
-                  {formatNumber(price?.comparisonPrice ?? null, market)}
-                </td>
-                <td
-                  className={`px-4 py-4 text-right font-semibold tabular-nums ${changeTone(changePct)}`}
-                >
-                  {formatPercent(changePct)}
-                </td>
-                <td className="px-4 py-4">
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${alertClass}`}
-                  >
-                    {alertLabel}
-                  </span>
-                </td>
+      <div className={`mb-4 rounded-lg border px-4 py-3 text-sm leading-6 ${modeClass}`}>
+        {guidance}
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-white/10 bg-slate-900/80">
+        <table className="min-w-[760px] w-full text-left text-sm">
+          <thead className="bg-white/[0.04] text-xs uppercase text-slate-500">
+            {isWeekendMode ? (
+              <tr>
+                <th className="px-4 py-3">銘柄</th>
+                <th className="px-4 py-3 text-right">現在値</th>
+                <th className="px-4 py-3 text-right">金曜基準</th>
+                <th className="px-4 py-3 text-right">週末変動率</th>
+                <th className="px-4 py-3">窓開け警戒</th>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  </section>
-);
+            ) : (
+              <tr>
+                <th className="px-4 py-3">監視銘柄</th>
+                <th className="px-4 py-3 text-right">現在値</th>
+                <th className="px-4 py-3 text-right">直近6時間</th>
+                <th className="px-4 py-3">短期状態</th>
+                <th className="px-4 py-3">取得状態</th>
+              </tr>
+            )}
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {WEEKEND_MARKETS.map((market) => {
+              const price = prices[market.symbol];
+              const changePct = price?.changePct ?? null;
+              const absChange = Math.abs(changePct ?? 0);
+              const alertLabel =
+                changePct === null
+                  ? '未取得'
+                  : absChange >= 1
+                    ? isWeekendMode
+                      ? '高'
+                      : '大きめ'
+                    : absChange >= 0.35
+                      ? isWeekendMode
+                        ? '中'
+                        : '確認'
+                      : isWeekendMode
+                        ? '低'
+                        : '通常';
+              const alertClass =
+                alertLabel === '高' || alertLabel === '大きめ'
+                  ? 'bg-rose-400/15 text-rose-200 ring-rose-300/30'
+                  : alertLabel === '中' || alertLabel === '確認'
+                    ? 'bg-amber-400/15 text-amber-200 ring-amber-300/30'
+                    : 'bg-slate-400/15 text-slate-200 ring-slate-300/30';
+              const hasPrice = price?.price !== null && price?.price !== undefined;
+              const recentChangePct = calculateHistoryChangePct(
+                priceHistory?.[market.symbol],
+              );
+              const recentAbsChange = Math.abs(recentChangePct ?? 0);
+              const recentLabel =
+                recentChangePct === null
+                  ? '履歴取得中'
+                  : recentAbsChange >= 0.8
+                    ? '大きめ'
+                    : recentAbsChange >= 0.25
+                      ? '動きあり'
+                      : '落ち着き';
+              const recentClass =
+                recentLabel === '大きめ'
+                  ? 'bg-rose-400/15 text-rose-200 ring-rose-300/30'
+                  : recentLabel === '動きあり'
+                    ? 'bg-amber-400/15 text-amber-200 ring-amber-300/30'
+                    : recentLabel === '落ち着き'
+                      ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-300/30'
+                      : 'bg-slate-400/15 text-slate-200 ring-slate-300/30';
+
+              if (!isWeekendMode) {
+                return (
+                  <tr key={market.symbol}>
+                    <td className="px-4 py-4">
+                      <p className="font-semibold text-white">{market.displayName}</p>
+                      <p className="text-xs text-slate-500">
+                        {market.officialMarketLabel ?? market.sourceLabel}
+                      </p>
+                    </td>
+                    <td className="px-4 py-4 text-right font-semibold text-slate-200 tabular-nums">
+                      {formatNumber(price?.price ?? null, market)}
+                    </td>
+                    <td
+                      className={`px-4 py-4 text-right font-semibold tabular-nums ${changeTone(recentChangePct)}`}
+                    >
+                      {formatPercent(recentChangePct)}
+                    </td>
+                    <td className="px-4 py-4">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${recentClass}`}
+                      >
+                        {recentLabel}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${
+                          hasPrice
+                            ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-300/30'
+                            : 'bg-slate-400/15 text-slate-200 ring-slate-300/30'
+                        }`}
+                      >
+                        {hasPrice ? '取得中' : '未取得'}
+                      </span>
+                      <p className="mt-2 text-xs text-slate-500">
+                        {price?.activeSymbol ?? '採用シンボル確認中'}
+                      </p>
+                    </td>
+                  </tr>
+                );
+              }
+
+              return (
+                <tr key={market.symbol}>
+                  <td className="px-4 py-4">
+                    <p className="font-semibold text-white">
+                      {isWeekendMode && market.weekendDisplayName
+                        ? market.weekendDisplayName
+                        : market.displayName}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {price?.activeSymbol ?? '未取得'}
+                    </p>
+                  </td>
+                  <td className="px-4 py-4 text-right font-semibold text-slate-200 tabular-nums">
+                    {formatNumber(price?.price ?? null, market)}
+                  </td>
+                  <td className="px-4 py-4 text-right text-slate-400 tabular-nums">
+                    {formatNumber(price?.comparisonPrice ?? null, market)}
+                  </td>
+                  <td
+                    className={`px-4 py-4 text-right font-semibold tabular-nums ${changeTone(changePct)}`}
+                  >
+                    {formatPercent(changePct)}
+                  </td>
+                  <td className="px-4 py-4">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${alertClass}`}
+                    >
+                      {alertLabel}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+};
 
 export const EaChecklistTool = () => {
   const setupSteps = [

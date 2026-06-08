@@ -90,9 +90,20 @@ export const App = () => {
     <div className="min-h-screen bg-slate-950 pt-16 text-slate-100">
       <FloatingNav currentRoute={route} />
       {isHomeRoute ? (
-        <HomePage />
+        <HomePage
+          prices={prices}
+          priceHistory={priceHistory}
+          connectionStatus={connectionStatus}
+          lastUpdatedAt={lastUpdatedAt}
+          isWeekendMode={isWeekendMode}
+        />
       ) : toolPageId ? (
-        <ToolPage pageId={toolPageId} prices={prices} />
+        <ToolPage
+          pageId={toolPageId}
+          prices={prices}
+          priceHistory={priceHistory}
+          isWeekendMode={isWeekendMode}
+        />
       ) : isBoardRoute ? (
         <main>
           <Header
@@ -118,7 +129,13 @@ export const App = () => {
           <Disclaimer />
         </main>
       ) : (
-        <HomePage />
+        <HomePage
+          prices={prices}
+          priceHistory={priceHistory}
+          connectionStatus={connectionStatus}
+          lastUpdatedAt={lastUpdatedAt}
+          isWeekendMode={isWeekendMode}
+        />
       )}
       <AlertToasts
         notifications={notifications}

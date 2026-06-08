@@ -10,6 +10,7 @@ import {
   StrategyGuidePage,
 } from './BrandPages';
 import type { MarketPrice } from '../config/markets';
+import type { PriceHistoryPoint } from '../hooks/useHyperliquidMids';
 
 export type ToolPageId =
   | 'currency-strength'
@@ -23,6 +24,8 @@ export type ToolPageId =
 type ToolPageProps = {
   pageId: ToolPageId;
   prices: Record<string, MarketPrice>;
+  priceHistory: Record<string, PriceHistoryPoint[]>;
+  isWeekendMode: boolean;
 };
 
 const toolPages: Array<{
@@ -75,14 +78,25 @@ const toolPages: Array<{
   },
 ];
 
-const renderTool = (pageId: ToolPageId, prices: Record<string, MarketPrice>) => {
+const renderTool = (
+  pageId: ToolPageId,
+  prices: Record<string, MarketPrice>,
+  priceHistory: Record<string, PriceHistoryPoint[]>,
+  isWeekendMode: boolean,
+) => {
   switch (pageId) {
     case 'currency-strength':
       return <CurrencyStrengthTool />;
     case 'economic-calendar':
       return <EconomicCalendarTool />;
     case 'gap-watch':
-      return <GapWatchTool prices={prices} />;
+      return (
+        <GapWatchTool
+          prices={prices}
+          priceHistory={priceHistory}
+          isWeekendMode={isWeekendMode}
+        />
+      );
     case 'ea-checklist':
       return <EaChecklistTool />;
     case 'strategy':
@@ -189,9 +203,18 @@ const nextActions: Record<
   ],
 };
 
-export const ToolPage = ({ pageId, prices }: ToolPageProps) => {
+export const ToolPage = ({
+  pageId,
+  prices,
+  priceHistory,
+  isWeekendMode,
+}: ToolPageProps) => {
   const page = toolPages.find((toolPage) => toolPage.id === pageId) ?? toolPages[0];
   const actions = nextActions[pageId];
+  const pageDescription =
+    pageId === 'gap-watch' && !isWeekendMode
+      ? '平日は現在値と直近6時間の動きで、短期の偏りを確認します'
+      : page.description;
 
   return (
     <main>
@@ -199,12 +222,12 @@ export const ToolPage = ({ pageId, prices }: ToolPageProps) => {
         <div className="max-w-4xl">
           <p className="text-sm font-semibold text-cyan-200">アニャニカル</p>
           <h1 className="mt-1 text-3xl font-bold text-white">{page.title}</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-400">{page.description}</p>
+          <p className="mt-2 text-sm leading-6 text-slate-400">{pageDescription}</p>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
-        {renderTool(pageId, prices)}
+        {renderTool(pageId, prices, priceHistory, isWeekendMode)}
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
