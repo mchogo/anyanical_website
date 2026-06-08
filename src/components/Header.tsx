@@ -34,15 +34,18 @@ export const Header = ({
       <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">
-            Weekend Market Board
+            Anyanical Market Board
           </p>
           <h1 className="mt-2 text-3xl font-bold text-white sm:text-4xl">
-            土日も動く相場ボード
+            {isWeekendMode ? '土日も動く相場ボード' : '24時間相場ボード'}
           </h1>
-          <p className="mt-2 text-sm text-slate-300">Hyperliquid 24/7 Perp Prices</p>
+          <p className="mt-2 text-sm text-slate-300">
+            {isWeekendMode ? '週末・祝日も動く参考価格' : '通常銘柄の24時間参考価格'}
+          </p>
           <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-400">
-            分散型取引所 Hyperliquid
-            の24時間365日perpで、金・銀・原油・S&P500・日経225の週末変動を確認します。前日比は約24時間前価格との比較です。
+            {isWeekendMode
+              ? '金・銀・原油・S&P500・日経225など、公式市場が休みの間も動く24時間取引価格を参考に、週末ニュースでどれだけ動いたかを確認します。変動率は金曜クローズ付近の価格との比較です。'
+              : '金・銀・原油・S&P500・日経225などの24時間取引価格を通常の銘柄名で表示します。週末や閉場時はサンデー相場として、金曜基準からの動きを確認できます。'}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -70,13 +73,13 @@ export const Header = ({
           <p className="text-xs text-slate-400">接続状態</p>
           <p className="mt-1 text-lg font-semibold text-white">{connectionStatus}</p>
         </div>
-        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-          <p className="text-xs text-slate-400">受信tick数</p>
+        <div className="hidden rounded-lg border border-white/10 bg-white/[0.04] p-4 sm:block">
+          <p className="text-xs text-slate-400">更新回数</p>
           <p className="mt-1 text-lg font-semibold text-white">
             {tickCount.toLocaleString()}
           </p>
         </div>
-        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+        <div className="hidden rounded-lg border border-white/10 bg-white/[0.04] p-4 sm:block">
           <p className="text-xs text-slate-400">最終更新時刻</p>
           <p className="mt-1 text-lg font-semibold text-white">
             {formatDateTime(lastUpdatedAt)}

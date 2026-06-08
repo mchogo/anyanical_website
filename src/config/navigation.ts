@@ -1,7 +1,7 @@
 export const INTERNAL_NAV_LINKS = [
   {
     label: '相場ボード',
-    href: '#/',
+    href: '#/board',
   },
   {
     label: '通貨強弱',

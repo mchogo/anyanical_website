@@ -210,8 +210,7 @@ export const GapWatchTool = ({ prices }: RelatedToolsProps) => (
       <p className="text-sm font-semibold text-cyan-200">Gap watch</p>
       <h2 className="mt-1 text-2xl font-bold text-white">窓開け監視ボード</h2>
       <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-        約24時間前価格と現在のHyperliquid
-        perp価格を並べ、月曜オープン前のギャップ警戒度を確認します。
+        金曜クローズ付近の基準価格と現在の24時間取引価格を並べ、月曜オープン前のギャップ警戒度を確認します。
       </p>
     </div>
 
@@ -221,7 +220,7 @@ export const GapWatchTool = ({ prices }: RelatedToolsProps) => (
           <tr>
             <th className="px-4 py-3">銘柄</th>
             <th className="px-4 py-3 text-right">現在値</th>
-            <th className="px-4 py-3 text-right">約24時間前</th>
+            <th className="px-4 py-3 text-right">金曜基準</th>
             <th className="px-4 py-3 text-right">変動率</th>
             <th className="px-4 py-3">警戒度</th>
           </tr>
@@ -249,7 +248,9 @@ export const GapWatchTool = ({ prices }: RelatedToolsProps) => (
             return (
               <tr key={market.symbol}>
                 <td className="px-4 py-4">
-                  <p className="font-semibold text-white">{market.displayName}</p>
+                  <p className="font-semibold text-white">
+                    {market.weekendDisplayName ?? market.displayName}
+                  </p>
                   <p className="text-xs text-slate-500">
                     {price?.activeSymbol ?? '未取得'}
                   </p>

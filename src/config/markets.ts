@@ -4,12 +4,17 @@ export type MarketMode = 'weekend' | 'crypto' | 'forex';
 export type MarketConfig = {
   label: string;
   displayName: string;
+  weekendDisplayName?: string;
   symbol: string;
   symbolCandidates: string[];
   category: MarketCategory;
   mode: MarketMode;
   sourceLabel: string;
   officialMarketLabel?: string;
+  fridayCloseUtc?: {
+    hour: number;
+    minute: number;
+  };
 };
 
 export type MarketPrice = {
@@ -25,7 +30,8 @@ export type MarketPrice = {
 export const MARKETS: MarketConfig[] = [
   {
     label: 'GOLD',
-    displayName: 'サンデーゴールド',
+    displayName: 'ゴールド',
+    weekendDisplayName: 'サンデーゴールド',
     symbol: 'GOLD',
     symbolCandidates: [
       'xyz:GOLD',
@@ -38,12 +44,14 @@ export const MARKETS: MarketConfig[] = [
     ],
     category: 'metal',
     mode: 'weekend',
-    sourceLabel: 'Hyperliquid HIP-3 / GOLD perp',
+    sourceLabel: '24時間取引価格 / GOLD',
     officialMarketLabel: 'COMEX Gold',
+    fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
     label: 'SILVER',
-    displayName: 'サンデーシルバー',
+    displayName: 'シルバー',
+    weekendDisplayName: 'サンデーシルバー',
     symbol: 'SILVER',
     symbolCandidates: [
       'xyz:SILVER',
@@ -55,38 +63,45 @@ export const MARKETS: MarketConfig[] = [
     ],
     category: 'metal',
     mode: 'weekend',
-    sourceLabel: 'Hyperliquid HIP-3 / SILVER perp',
+    sourceLabel: '24時間取引価格 / SILVER',
     officialMarketLabel: 'COMEX Silver',
+    fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
     label: 'WTI',
-    displayName: 'サンデー原油',
+    displayName: 'WTI原油',
+    weekendDisplayName: 'サンデー原油',
     symbol: 'WTI',
     symbolCandidates: ['xyz:CL', 'km:USOIL', 'cash:WTI', 'flx:OIL'],
     category: 'energy',
     mode: 'weekend',
-    sourceLabel: 'Hyperliquid HIP-3 / crude oil perp',
+    sourceLabel: '24時間取引価格 / 原油',
     officialMarketLabel: 'NYMEX WTI Crude Oil',
+    fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
     label: 'S&P500',
-    displayName: 'サンデーS&P500',
+    displayName: 'S&P500',
+    weekendDisplayName: 'サンデーS&P500',
     symbol: 'SP500',
     symbolCandidates: ['xyz:SP500', 'flx:USA500', 'km:US500', 'cash:USA500'],
     category: 'index',
     mode: 'weekend',
-    sourceLabel: 'Hyperliquid HIP-3 / US index perp',
+    sourceLabel: '24時間取引価格 / 米国株価指数',
     officialMarketLabel: 'CME E-mini S&P 500',
+    fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
     label: 'NIKKEI225',
-    displayName: 'サンデー日経225',
+    displayName: '日経225',
+    weekendDisplayName: 'サンデー日経225',
     symbol: 'JP225',
     symbolCandidates: ['xyz:JP225'],
     category: 'index',
     mode: 'weekend',
-    sourceLabel: 'Hyperliquid HIP-3 / JP225 perp',
+    sourceLabel: '24時間取引価格 / 日経225',
     officialMarketLabel: '大阪取引所・CME Nikkei 225',
+    fridayCloseUtc: { hour: 6, minute: 0 },
   },
   {
     label: 'BTC',
@@ -95,7 +110,8 @@ export const MARKETS: MarketConfig[] = [
     symbolCandidates: ['BTC'],
     category: 'crypto',
     mode: 'crypto',
-    sourceLabel: 'Hyperliquid / BTC perp',
+    sourceLabel: '24時間取引価格 / BTC',
+    fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
     label: 'ETH',
@@ -104,7 +120,8 @@ export const MARKETS: MarketConfig[] = [
     symbolCandidates: ['ETH'],
     category: 'crypto',
     mode: 'crypto',
-    sourceLabel: 'Hyperliquid / ETH perp',
+    sourceLabel: '24時間取引価格 / ETH',
+    fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
     label: 'HYPE',
@@ -113,17 +130,20 @@ export const MARKETS: MarketConfig[] = [
     symbolCandidates: ['HYPE'],
     category: 'crypto',
     mode: 'crypto',
-    sourceLabel: 'Hyperliquid / HYPE perp',
+    sourceLabel: '24時間取引価格 / HYPE',
+    fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
     label: 'USD/JPY',
-    displayName: 'サンデードル円',
+    displayName: 'USD/JPY',
+    weekendDisplayName: 'サンデードル円',
     symbol: 'USDJPY',
     symbolCandidates: ['xyz:JPY'],
     category: 'fx',
     mode: 'weekend',
-    sourceLabel: 'Hyperliquid HIP-3 / JPY perp',
+    sourceLabel: '24時間取引価格 / USDJPY参考',
     officialMarketLabel: 'OTC FX',
+    fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
     label: 'EUR/USD',
@@ -132,8 +152,9 @@ export const MARKETS: MarketConfig[] = [
     symbolCandidates: ['xyz:EUR'],
     category: 'fx',
     mode: 'forex',
-    sourceLabel: 'Hyperliquid HIP-3 / EUR perp',
+    sourceLabel: '24時間取引価格 / EURUSD参考',
     officialMarketLabel: 'OTC FX',
+    fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
     label: 'GBP/USD',
@@ -142,8 +163,9 @@ export const MARKETS: MarketConfig[] = [
     symbolCandidates: ['xyz:GBP'],
     category: 'fx',
     mode: 'forex',
-    sourceLabel: 'Hyperliquid HIP-3 / GBP perp',
+    sourceLabel: '24時間取引価格 / GBPUSD参考',
     officialMarketLabel: 'OTC FX',
+    fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
     label: 'USD/KRW',
@@ -152,8 +174,9 @@ export const MARKETS: MarketConfig[] = [
     symbolCandidates: ['xyz:KRW'],
     category: 'fx',
     mode: 'forex',
-    sourceLabel: 'Hyperliquid HIP-3 / KRW perp',
+    sourceLabel: '24時間取引価格 / USDKRW参考',
     officialMarketLabel: 'OTC FX',
+    fridayCloseUtc: { hour: 21, minute: 0 },
   },
 ];
 

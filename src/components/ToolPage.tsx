@@ -46,7 +46,7 @@ const toolPages: Array<{
   {
     id: 'gap-watch',
     title: '窓開け監視',
-    description: '週末価格と約24時間前の差',
+    description: '週末価格と金曜基準の差',
     href: '#/tools/gap-watch',
   },
   {
@@ -130,8 +130,8 @@ const nextActions: Record<
   'gap-watch': [
     {
       title: '相場ボードへ戻る',
-      body: '週末perp価格、チャート、注意事項をまとめて確認します。',
-      href: '#/',
+      body: '週末参考価格、チャート、注意事項をまとめて確認します。',
+      href: '#/board',
     },
     {
       title: 'プレミアムを見る',

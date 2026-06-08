@@ -3,10 +3,13 @@ import { useEffect, useState } from 'react';
 import { ChartSection } from './components/ChartSection';
 import { Disclaimer } from './components/Disclaimer';
 import { ExplainerSections } from './components/ExplainerSections';
+import { AlertToasts } from './components/AlertToasts';
 import { FloatingNav } from './components/FloatingNav';
 import { Header } from './components/Header';
+import { HomePage } from './components/HomePage';
 import { MarketBoard } from './components/MarketBoard';
 import { ToolPage, type ToolPageId } from './components/ToolPage';
+import { useAlerts } from './hooks/useAlerts';
 import { useHyperliquidMids } from './hooks/useHyperliquidMids';
 
 const isWeekendModeInJst = (timestamp: number) => {
@@ -42,11 +45,23 @@ const parseToolPageId = (route: string): ToolPageId | null => {
 };
 
 export const App = () => {
-  const { prices, connectionStatus, tickCount, lastUpdatedAt } = useHyperliquidMids();
+  const { prices, priceHistory, connectionStatus, tickCount, lastUpdatedAt } =
+    useHyperliquidMids();
+  const {
+    alerts,
+    notifications,
+    addAlert,
+    removeAlert,
+    dismissNotification,
+    requestPermission,
+    permissionStatus,
+  } = useAlerts(prices);
   const [now, setNow] = useState(() => Date.now());
   const [route, setRoute] = useState(getRoute);
   const isWeekendMode = isWeekendModeInJst(now);
   const toolPageId = parseToolPageId(route);
+  const isHomeRoute = route === '' || route === 'home';
+  const isBoardRoute = route === 'board';
 
   useEffect(() => {
     const timerId = window.setInterval(() => {
@@ -74,9 +89,11 @@ export const App = () => {
   return (
     <div className="min-h-screen bg-slate-950 pt-16 text-slate-100">
       <FloatingNav currentRoute={route} />
-      {toolPageId ? (
+      {isHomeRoute ? (
+        <HomePage />
+      ) : toolPageId ? (
         <ToolPage pageId={toolPageId} prices={prices} />
-      ) : (
+      ) : isBoardRoute ? (
         <main>
           <Header
             connectionStatus={connectionStatus}
@@ -85,12 +102,28 @@ export const App = () => {
             currentTime={new Date(now)}
             isWeekendMode={isWeekendMode}
           />
-          <MarketBoard prices={prices} now={now} isWeekendMode={isWeekendMode} />
+          <MarketBoard
+            prices={prices}
+            priceHistory={priceHistory}
+            now={now}
+            isWeekendMode={isWeekendMode}
+            alerts={alerts}
+            addAlert={addAlert}
+            removeAlert={removeAlert}
+            requestPermission={requestPermission}
+            permissionStatus={permissionStatus}
+          />
           <ChartSection />
           <ExplainerSections />
           <Disclaimer />
         </main>
+      ) : (
+        <HomePage />
       )}
+      <AlertToasts
+        notifications={notifications}
+        dismissNotification={dismissNotification}
+      />
     </div>
   );
 };

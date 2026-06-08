@@ -67,7 +67,7 @@ export const FridayCloseReferences = ({ prices }: FridayCloseReferencesProps) =>
             <h3 className="mt-1 text-base font-semibold text-white">{reference.label}</h3>
             <dl className="mt-4 space-y-3 text-sm">
               <div>
-                <dt className="text-slate-500">約24時間前</dt>
+                <dt className="text-slate-500">金曜基準</dt>
                 <dd className="mt-1 font-semibold text-slate-200 tabular-nums">
                   {formatPrice(
                     livePrice?.comparisonPrice ?? null,

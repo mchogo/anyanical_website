@@ -77,7 +77,7 @@ npm run build
 
 - ブラウザDevToolsでWebSocket接続を確認する
 - Hyperliquid側の銘柄名変更を疑い、`src/config/markets.ts` の `symbolCandidates` を見直す
-- `prevDayPx` がない場合は比較価格なしとして扱う
+- `candleSnapshot` が取得できない場合は金曜基準価格なしとして扱う
 
 チャートが出ない:
 

@@ -12,7 +12,7 @@ const statusLabel: Record<ConnectionStatusType, string> = {
 };
 
 const statusClassName: Record<ConnectionStatusType, string> = {
-  connecting: 'bg-amber-400/15 text-amber-200 ring-amber-300/30',
+  connecting: 'animate-pulse bg-amber-400/15 text-amber-200 ring-amber-300/30',
   connected: 'bg-emerald-400/15 text-emerald-200 ring-emerald-300/30',
   disconnected: 'bg-slate-400/15 text-slate-200 ring-slate-300/30',
   error: 'bg-rose-400/15 text-rose-200 ring-rose-300/30',

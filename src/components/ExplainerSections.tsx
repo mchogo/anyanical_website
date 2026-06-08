@@ -3,15 +3,15 @@ import { EXTERNAL_LINKS } from '../config/navigation';
 const featureSections = [
   {
     title: 'サンデー相場とは',
-    body: '金・原油・株価指数などの公式市場は週末に休場します。一方でHyperliquidのHIP-3 perpは24時間365日動くため、地政学ニュースや要人発言への週末反応を月曜の市場再開前に確認できます。',
+    body: '金・原油・株価指数などの公式市場は週末に休場します。一方で一部の24時間取引市場では価格が動くため、地政学ニュースや要人発言への週末反応を月曜の市場再開前に確認できます。',
   },
   {
-    title: '前日比の考え方',
-    body: 'このMVPではHyperliquidのprevDayPxを約24時間前価格として使います。将来はCloudflare Worker/D1/KVで金曜クローズや任意時刻のスナップショットを保存し、より厳密な比較へ拡張できます。',
+    title: '金曜基準の考え方',
+    body: '週末の窓開けを確認しやすいように、直近の金曜クローズ付近の価格を比較基準として使います。銘柄ごとの公式市場クローズ時刻には差があるため、あくまで参考値として確認してください。',
   },
   {
     title: '公式市場との差',
-    body: '表示価格はperp実取引値です。COMEX、NYMEX、CME、東証、OTC FXなどの公式・参考市場とは流動性、需給、取引時間、参照オラクルの違いにより乖離することがあります。',
+    body: '表示価格は公式市場の終値ではありません。COMEX、NYMEX、CME、東証、OTC FXなどとは流動性、需給、取引時間、参照価格の違いにより乖離することがあります。',
   },
 ];
 
@@ -26,7 +26,7 @@ const faqItems = [
   {
     question: 'サンデーゴールドの価格はどこの値段ですか？',
     answer:
-      'HyperliquidのHIP-3 GOLD perpを優先して表示しています。COMEXやLBMAなどの公式スポットとは参照市場が違うため、需給や流動性によって多少の差が出ることがあります。',
+      '24時間取引市場のGOLD価格を優先して表示しています。COMEXやLBMAなどの公式スポットとは参照市場が違うため、需給や流動性によって多少の差が出ることがあります。',
   },
   {
     question: '土日なのに価格がほとんど動かないことがあります。故障ですか？',
@@ -36,12 +36,12 @@ const faqItems = [
   {
     question: 'サンデードル円は何を見ていますか？',
     answer:
-      'Hyperliquid HIP-3のJPY perpを参照しています。USD/JPYの参考として表示していますが、OTC FXや各社CFDの気配値とは完全一致しません。',
+      '24時間取引市場のJPY価格をUSD/JPYの参考として表示しています。OTC FXや各社CFDの気配値とは完全一致しません。',
   },
   {
-    question: '前日比は金曜クローズ比ですか？',
+    question: '変動率は金曜クローズ比ですか？',
     answer:
-      '現時点ではHyperliquid APIのprevDayPxを使った約24時間前比です。将来は金曜クローズや任意時刻のスナップショットを保存して、より厳密な比較にできます。',
+      'はい。週末の窓開け確認に使いやすいよう、直近の金曜クローズ付近の価格を基準にしています。ただし公式市場の終値そのものではなく、24時間取引市場側の参考価格です。',
   },
   {
     question: 'このボードの価格でそのまま取引できますか？',
@@ -148,15 +148,15 @@ export const ExplainerSections = () => (
         <h2 className="text-lg font-bold text-white">見方のポイント</h2>
         <dl className="mt-4 space-y-4 text-sm">
           <div>
-            <dt className="font-semibold text-slate-200">Hyperliquid価格</dt>
+            <dt className="font-semibold text-slate-200">24時間取引価格</dt>
             <dd className="mt-1 text-slate-500">
-              週末も動くperp実取引値。ニュース直後の反応を見る場所。
+              週末も動く参考価格。ニュース直後の反応を見る場所。
             </dd>
           </div>
           <div>
             <dt className="font-semibold text-slate-200">TradingViewチャート</dt>
             <dd className="mt-1 text-slate-500">
-              CFDやFXの参考チャート。Hyperliquid perpとの水準差を見る補助用。
+              CFDやFXの参考チャート。24時間取引価格との水準差を見る補助用。
             </dd>
           </div>
           <div>

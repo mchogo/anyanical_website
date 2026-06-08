@@ -11,20 +11,22 @@ type AllMidsMessage = {
   };
 };
 
-type MetaAndAssetCtxsResponse = [
-  {
-    universe?: Array<{
-      name: string;
-    }>;
-  },
-  Array<{
-    prevDayPx?: string | number | null;
-  }>,
-];
+export type PriceHistoryPoint = {
+  time: number;
+  price: number;
+};
+
+type CandleSnapshotResponse = Array<{
+  t?: number;
+  T?: number;
+  c?: string | number;
+}>;
 
 const HYPERLIQUID_WS_URL = 'wss://api.hyperliquid.xyz/ws';
 const HYPERLIQUID_INFO_URL = 'https://api.hyperliquid.xyz/info';
 const RECONNECT_DELAY_MS = 3_000;
+const HISTORY_LOOKBACK_MS = 6 * 60 * 60 * 1_000;
+const LIVE_HISTORY_SAMPLE_MS = 5 * 60 * 1_000;
 const ALL_MIDS_SUBSCRIPTIONS = [{ type: 'allMids' }, { type: 'allMids', dex: 'xyz' }];
 
 const createInitialPrices = (): Record<string, MarketPrice> =>
@@ -42,6 +44,11 @@ const createInitialPrices = (): Record<string, MarketPrice> =>
       },
     ]),
   );
+
+const toFiniteNumber = (value: string | number | null | undefined) => {
+  const parsedValue = Number(value);
+  return Number.isFinite(parsedValue) ? parsedValue : null;
+};
 
 const calculatePriceSnapshot = (
   symbol: string,
@@ -65,52 +72,70 @@ const calculatePriceSnapshot = (
   };
 };
 
-const fetchMetaAndAssetCtxs = async (dex?: string) => {
+const fetchCandleSnapshot = async (coin: string, startTime: number, endTime: number) => {
   const response = await fetch(HYPERLIQUID_INFO_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      type: 'metaAndAssetCtxs',
-      ...(dex ? { dex } : {}),
+      type: 'candleSnapshot',
+      req: {
+        coin,
+        interval: '15m',
+        startTime,
+        endTime,
+      },
     }),
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch Hyperliquid market contexts');
+    throw new Error('Failed to fetch Hyperliquid candle snapshot');
   }
 
-  return (await response.json()) as MetaAndAssetCtxsResponse;
+  return (await response.json()) as CandleSnapshotResponse;
 };
 
-const toPreviousDayPriceMap = ([meta, contexts]: MetaAndAssetCtxsResponse) => {
-  const priceBySymbol: Record<string, number> = {};
+const toHistoryPoints = (candles: CandleSnapshotResponse) =>
+  candles
+    .map((candle) => {
+      const time = Number(candle.t ?? candle.T);
+      const price = toFiniteNumber(candle.c);
 
-  for (const [index, asset] of meta.universe?.entries() ?? []) {
-    const rawPreviousDayPrice = contexts[index]?.prevDayPx;
-    const previousDayPrice = Number(rawPreviousDayPrice);
+      if (!Number.isFinite(time) || price === null) {
+        return null;
+      }
 
-    if (Number.isFinite(previousDayPrice)) {
-      priceBySymbol[asset.name] = previousDayPrice;
-    }
-  }
+      return {
+        time,
+        price,
+      };
+    })
+    .filter((point): point is PriceHistoryPoint => point !== null)
+    .sort((left, right) => left.time - right.time);
 
-  return priceBySymbol;
-};
-
-const findComparisonPriceForMarket = (
-  priceBySymbol: Record<string, number>,
-  symbolCandidates: string[],
+const getLastFridayCloseTime = (
+  now: number,
+  marketCloseUtc = { hour: 21, minute: 0 },
 ) => {
-  for (const symbolCandidate of symbolCandidates) {
-    const comparisonPrice = priceBySymbol[symbolCandidate];
-    if (comparisonPrice !== undefined) {
-      return comparisonPrice;
-    }
+  const nowDate = new Date(now);
+  const utcMidnight = Date.UTC(
+    nowDate.getUTCFullYear(),
+    nowDate.getUTCMonth(),
+    nowDate.getUTCDate(),
+  );
+  const daysFromFriday = new Date(utcMidnight).getUTCDay() - 5;
+  const fridayMidnight = utcMidnight - daysFromFriday * 24 * 60 * 60 * 1_000;
+  let fridayCloseTime =
+    fridayMidnight +
+    marketCloseUtc.hour * 60 * 60 * 1_000 +
+    marketCloseUtc.minute * 60 * 1_000;
+
+  if (fridayCloseTime > now) {
+    fridayCloseTime -= 7 * 24 * 60 * 60 * 1_000;
   }
 
-  return null;
+  return fridayCloseTime;
 };
 
 const findMidForMarket = (mids: Record<string, string>, symbolCandidates: string[]) => {
@@ -129,6 +154,9 @@ const findMidForMarket = (mids: Record<string, string>, symbolCandidates: string
 
 export const useHyperliquidMids = () => {
   const [prices, setPrices] = useState<Record<string, MarketPrice>>(createInitialPrices);
+  const [priceHistory, setPriceHistory] = useState<Record<string, PriceHistoryPoint[]>>(
+    {},
+  );
   const [connectionStatus, setConnectionStatus] =
     useState<ConnectionStatus>('connecting');
   const [tickCount, setTickCount] = useState(0);
@@ -139,41 +167,100 @@ export const useHyperliquidMids = () => {
   const shouldReconnectRef = useRef(true);
 
   useEffect(() => {
-    const loadComparisonPrices = async () => {
-      try {
-        const [defaultContexts, xyzContexts] = await Promise.all([
-          fetchMetaAndAssetCtxs(),
-          fetchMetaAndAssetCtxs('xyz'),
-        ]);
-        const comparisonBySymbol = {
-          ...toPreviousDayPriceMap(defaultContexts),
-          ...toPreviousDayPriceMap(xyzContexts),
-        };
+    const loadFridayClosePrices = async () => {
+      const now = Date.now();
+      const comparisonEntries = await Promise.allSettled(
+        MARKETS.map(async (market) => {
+          const fridayCloseTime = getLastFridayCloseTime(now, market.fridayCloseUtc);
+          const startTime = fridayCloseTime - 3 * 60 * 60 * 1_000;
+          const endTime = fridayCloseTime + 15 * 60 * 1_000;
 
-        setPrices((currentPrices) => {
-          const nextPrices = { ...currentPrices };
+          for (const symbolCandidate of market.symbolCandidates) {
+            try {
+              const candles = await fetchCandleSnapshot(
+                symbolCandidate,
+                startTime,
+                endTime,
+              );
+              const historyPoints = toHistoryPoints(candles);
+              const closePoint =
+                historyPoints.filter((point) => point.time < fridayCloseTime).at(-1) ??
+                historyPoints.at(-1);
 
-          for (const market of MARKETS) {
-            const comparisonPrice = findComparisonPriceForMarket(
-              comparisonBySymbol,
-              market.symbolCandidates,
-            );
-
-            if (comparisonPrice === null) {
-              continue;
+              if (closePoint !== undefined) {
+                return [market.symbol, closePoint.price] as const;
+              }
+            } catch {
+              // Try the next symbol candidate. Some symbols may not expose candles.
             }
-
-            nextPrices[market.symbol] = {
-              ...currentPrices[market.symbol],
-              comparisonPrice,
-            };
           }
 
-          return nextPrices;
-        });
-      } catch {
-        // Live mids still work without prevDayPx; the first live price becomes the fallback baseline.
+          return [market.symbol, null] as const;
+        }),
+      );
+
+      setPrices((currentPrices) => {
+        const nextPrices = { ...currentPrices };
+
+        for (const entry of comparisonEntries) {
+          if (entry.status !== 'fulfilled') {
+            continue;
+          }
+
+          const [symbol, comparisonPrice] = entry.value;
+          if (comparisonPrice === null) {
+            continue;
+          }
+
+          nextPrices[symbol] = {
+            ...currentPrices[symbol],
+            comparisonPrice,
+          };
+        }
+
+        return nextPrices;
+      });
+    };
+
+    const loadHistoricalPrices = async () => {
+      const endTime = Date.now();
+      const startTime = endTime - HISTORY_LOOKBACK_MS;
+      const historyEntries = await Promise.allSettled(
+        MARKETS.map(async (market) => {
+          for (const symbolCandidate of market.symbolCandidates) {
+            try {
+              const candles = await fetchCandleSnapshot(
+                symbolCandidate,
+                startTime,
+                endTime,
+              );
+              const historyPoints = toHistoryPoints(candles);
+
+              if (historyPoints.length > 0) {
+                return [market.symbol, historyPoints] as const;
+              }
+            } catch {
+              // Try the next symbol candidate. Some HIP-3 aliases do not expose candles.
+            }
+          }
+
+          return [market.symbol, [] as PriceHistoryPoint[]] as const;
+        }),
+      );
+
+      const nextHistory: Record<string, PriceHistoryPoint[]> = {};
+
+      for (const entry of historyEntries) {
+        if (entry.status === 'fulfilled') {
+          const [symbol, historyPoints] = entry.value;
+          nextHistory[symbol] = historyPoints;
+        }
       }
+
+      setPriceHistory((currentHistory) => ({
+        ...currentHistory,
+        ...nextHistory,
+      }));
     };
 
     const clearReconnectTimer = () => {
@@ -216,6 +303,7 @@ export const useHyperliquidMids = () => {
 
           setPrices((currentPrices) => {
             const nextPrices = { ...currentPrices };
+            const nextHistoryUpdates: Record<string, PriceHistoryPoint> = {};
 
             for (const market of MARKETS) {
               const mid = findMidForMarket(mids, market.symbolCandidates);
@@ -235,6 +323,35 @@ export const useHyperliquidMids = () => {
                 mid.activeSymbol,
                 receivedAt,
               );
+              nextHistoryUpdates[market.symbol] = {
+                time: receivedAt,
+                price: parsedPrice,
+              };
+            }
+
+            if (Object.keys(nextHistoryUpdates).length > 0) {
+              setPriceHistory((currentHistory) => {
+                const nextHistory = { ...currentHistory };
+
+                for (const [symbol, historyPoint] of Object.entries(nextHistoryUpdates)) {
+                  const previousHistory = nextHistory[symbol] ?? [];
+                  const lastPoint = previousHistory[previousHistory.length - 1];
+
+                  if (
+                    lastPoint !== undefined &&
+                    historyPoint.time - lastPoint.time < LIVE_HISTORY_SAMPLE_MS
+                  ) {
+                    nextHistory[symbol] = previousHistory;
+                    continue;
+                  }
+
+                  nextHistory[symbol] = [...previousHistory, historyPoint].filter(
+                    (point) => historyPoint.time - point.time <= HISTORY_LOOKBACK_MS,
+                  );
+                }
+
+                return nextHistory;
+              });
             }
 
             return nextPrices;
@@ -267,7 +384,8 @@ export const useHyperliquidMids = () => {
     };
 
     shouldReconnectRef.current = true;
-    void loadComparisonPrices();
+    void loadFridayClosePrices();
+    void loadHistoricalPrices();
     connect();
 
     return () => {
@@ -280,6 +398,7 @@ export const useHyperliquidMids = () => {
 
   return {
     prices,
+    priceHistory,
     connectionStatus,
     tickCount,
     lastUpdatedAt,

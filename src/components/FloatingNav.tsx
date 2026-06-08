@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { EXTERNAL_LINKS, INTERNAL_NAV_LINKS } from '../config/navigation';
 
@@ -51,12 +51,32 @@ const NavLinks = ({
 
 export const FloatingNav = ({ currentRoute }: FloatingNavProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setHasScrolled(window.scrollY > 0);
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   return (
-    <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-slate-950/95 px-3 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.28)] backdrop-blur">
+    <nav
+      className={`fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-slate-950/95 px-3 py-3 backdrop-blur transition-shadow ${
+        hasScrolled
+          ? 'shadow-[0_4px_24px_rgba(0,0,0,0.4)]'
+          : 'shadow-[0_12px_40px_rgba(0,0,0,0.28)]'
+      }`}
+    >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
         <a
-          href="#/"
+          href="#/home"
           className="shrink-0 rounded-lg px-2 py-1 text-sm font-bold text-white transition hover:text-cyan-100"
           onClick={() => setIsOpen(false)}
         >
