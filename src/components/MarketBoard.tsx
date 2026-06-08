@@ -55,7 +55,7 @@ const renderMarketCards = (
   gridClassName = 'grid gap-4 md:grid-cols-2 xl:grid-cols-3',
 ) => (
   <div className={gridClassName}>
-    {markets.map((market) => (
+    {markets.map((market, index) => (
       <MarketCard
         key={market.symbol}
         market={market}
@@ -68,6 +68,7 @@ const renderMarketCards = (
         removeAlert={props.removeAlert}
         requestPermission={props.requestPermission}
         permissionStatus={props.permissionStatus}
+        index={index}
       />
     ))}
   </div>
@@ -104,10 +105,10 @@ export const MarketBoard = ({
     <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
         <div>
-          <p className="text-sm font-semibold text-cyan-200">
+          <p className="animate-slide-left text-sm font-semibold text-cyan-200">
             {isWeekendMode ? 'Weekend mode' : 'Market mode'}
           </p>
-          <h2 className="mt-1 text-2xl font-bold text-white">24時間価格モニター</h2>
+          <h2 className="animate-fade-up stagger-1 mt-1 text-2xl font-bold text-white">24時間価格モニター</h2>
         </div>
         <p className="text-sm text-slate-400">
           {isWeekendMode
@@ -125,7 +126,7 @@ export const MarketBoard = ({
               key={filter.value}
               type="button"
               onClick={() => setCategoryFilter(filter.value)}
-              className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold ring-1 transition ${
+              className={`btn-press shrink-0 rounded-full px-4 py-2 text-sm font-semibold ring-1 transition ${
                 isActive
                   ? 'bg-cyan-300 text-slate-950 ring-cyan-200'
                   : 'bg-white/[0.04] text-slate-200 ring-white/10 hover:bg-cyan-300/10 hover:text-cyan-100 hover:ring-cyan-300/30'

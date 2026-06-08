@@ -101,7 +101,7 @@ export const FloatingNav = ({ currentRoute }: FloatingNavProps) => {
       {isOpen ? (
         <div
           id="mobile-primary-nav"
-          className="mx-auto mt-3 grid max-h-[calc(100vh-4.5rem)] max-w-7xl grid-cols-2 gap-2 overflow-y-auto border-t border-white/10 pt-3 md:hidden"
+          className="animate-slide-down mx-auto mt-3 grid max-h-[calc(100vh-4.5rem)] max-w-7xl grid-cols-2 gap-2 overflow-y-auto border-t border-white/10 pt-3 md:hidden"
         >
           <NavLinks currentRoute={currentRoute} onNavigate={() => setIsOpen(false)} />
         </div>

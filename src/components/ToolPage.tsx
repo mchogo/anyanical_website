@@ -7,6 +7,7 @@ import {
 import {
   CommunityGuidePage,
   ParticipationGuidePage,
+  SemiAutoSignPage,
   StrategyGuidePage,
 } from './BrandPages';
 import type { MarketPrice } from '../config/markets';
@@ -19,7 +20,8 @@ export type ToolPageId =
   | 'ea-checklist'
   | 'strategy'
   | 'community'
-  | 'participation';
+  | 'participation'
+  | 'semi-auto-sign';
 
 type ToolPageProps = {
   pageId: ToolPageId;
@@ -76,6 +78,12 @@ const toolPages: Array<{
     description: '限定コンテンツ、加入手続き、運用リンク',
     href: '#/tools/participation',
   },
+  {
+    id: 'semi-auto-sign',
+    title: '半裁量サイン',
+    description: 'XAUUSD専用のDiscord通知サイン。サイン種別・通知チャンネル・利用開始手順を確認します。',
+    href: '#/tools/semi-auto-sign',
+  },
 ];
 
 const renderTool = (
@@ -105,6 +113,8 @@ const renderTool = (
       return <CommunityGuidePage />;
     case 'participation':
       return <ParticipationGuidePage />;
+    case 'semi-auto-sign':
+      return <SemiAutoSignPage />;
   }
 };
 
@@ -201,6 +211,18 @@ const nextActions: Record<
       href: '#/tools/ea-checklist',
     },
   ],
+  'semi-auto-sign': [
+    {
+      title: 'EAチェック',
+      body: '半裁量EAの稼働前チェック、停止条件、ロット設定を確認します。',
+      href: '#/tools/ea-checklist',
+    },
+    {
+      title: '戦略ページへ',
+      body: 'EA導入手順、Exness口座開設、HFMストラテジーの概要を確認します。',
+      href: '#/tools/strategy',
+    },
+  ],
 };
 
 export const ToolPage = ({
@@ -217,16 +239,16 @@ export const ToolPage = ({
       : page.description;
 
   return (
-    <main>
+    <main className="animate-fade-in">
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="max-w-4xl">
-          <p className="text-sm font-semibold text-cyan-200">アニャニカル</p>
-          <h1 className="mt-1 text-3xl font-bold text-white">{page.title}</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-400">{pageDescription}</p>
+          <p className="animate-slide-left text-sm font-semibold text-cyan-200">アニャニカル</p>
+          <h1 className="animate-fade-up stagger-1 mt-1 text-3xl font-bold text-white">{page.title}</h1>
+          <p className="animate-fade-up stagger-2 mt-2 text-sm leading-6 text-slate-400">{pageDescription}</p>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
+      <section className="tool-section mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
         {renderTool(pageId, prices, priceHistory, isWeekendMode)}
       </section>
 

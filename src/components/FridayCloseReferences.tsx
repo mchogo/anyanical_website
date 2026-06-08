@@ -46,7 +46,7 @@ export const FridayCloseReferences = ({ prices }: FridayCloseReferencesProps) =>
     </div>
 
     <div className="grid gap-3 lg:grid-cols-5">
-      {FRIDAY_CLOSE_REFERENCES.map((reference) => {
+      {FRIDAY_CLOSE_REFERENCES.map((reference, index) => {
         const livePrice = prices[reference.pairedSymbol];
         const isUp = (livePrice?.change ?? 0) > 0;
         const isDown = (livePrice?.change ?? 0) < 0;
@@ -59,7 +59,8 @@ export const FridayCloseReferences = ({ prices }: FridayCloseReferencesProps) =>
         return (
           <article
             key={reference.pairedSymbol}
-            className="rounded-lg border border-white/10 bg-white/[0.035] p-4"
+            className="card-interactive animate-fade-up rounded-lg border border-white/10 bg-white/[0.035] p-4"
+            style={{ animationDelay: `${index * 60}ms` }}
           >
             <p className="text-xs font-semibold uppercase text-slate-500">
               {reference.market}

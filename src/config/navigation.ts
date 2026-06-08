@@ -31,6 +31,10 @@ export const INTERNAL_NAV_LINKS = [
     label: 'プレミアム',
     href: '#/tools/participation',
   },
+  {
+    label: '半裁量サイン',
+    href: '#/tools/semi-auto-sign',
+  },
 ] as const;
 
 export const EXTERNAL_LINKS = [

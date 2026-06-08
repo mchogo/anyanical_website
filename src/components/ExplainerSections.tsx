@@ -118,10 +118,11 @@ const anyaGoldStrategies = [
 export const ExplainerSections = () => (
   <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
     <div className="grid gap-4 lg:grid-cols-3">
-      {featureSections.map((section) => (
+      {featureSections.map((section, index) => (
         <article
           key={section.title}
-          className="rounded-lg border border-white/10 bg-white/[0.035] p-5"
+          className="card-interactive animate-fade-up rounded-lg border border-white/10 bg-white/[0.035] p-5"
+          style={{ animationDelay: `${index * 70}ms` }}
         >
           <h2 className="text-lg font-bold text-white">{section.title}</h2>
           <p className="mt-3 text-sm leading-6 text-slate-400">{section.body}</p>
@@ -295,17 +296,19 @@ export const ExplainerSections = () => (
         {faqItems.map((item) => (
           <details
             key={item.question}
-            className="group rounded-lg border border-white/10 bg-white/[0.035]"
+            className="rounded-lg border border-white/10 bg-white/[0.035]"
           >
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 text-sm font-semibold text-white">
               <span>{item.question}</span>
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-cyan-300/10 text-cyan-200 ring-1 ring-cyan-300/20 group-open:rotate-45">
+              <span className="faq-icon grid h-7 w-7 shrink-0 place-items-center rounded-full bg-cyan-300/10 text-cyan-200 ring-1 ring-cyan-300/20">
                 +
               </span>
             </summary>
-            <p className="border-t border-white/10 px-4 py-4 text-sm leading-6 text-slate-400">
-              {item.answer}
-            </p>
+            <div className="faq-body border-t border-white/10">
+              <div className="faq-body-inner px-4 py-4 text-sm leading-6 text-slate-400">
+                {item.answer}
+              </div>
+            </div>
           </details>
         ))}
       </div>
@@ -327,7 +330,7 @@ export const ExplainerSections = () => (
             href={tool.href}
             rel={'external' in tool ? 'noopener noreferrer' : undefined}
             target={'external' in tool ? '_blank' : undefined}
-            className="rounded-lg border border-white/10 bg-slate-950/40 p-4 text-sm transition hover:border-cyan-300/40 hover:bg-cyan-300/10"
+            className="card-interactive rounded-lg border border-white/10 bg-slate-950/40 p-4 text-sm hover:border-cyan-300/30 hover:bg-cyan-300/[0.06]"
           >
             <p className="font-bold text-white">{tool.title}</p>
             <p className="mt-2 leading-6 text-slate-500">{tool.description}</p>

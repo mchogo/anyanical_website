@@ -21,6 +21,7 @@ type MarketCardProps = {
   removeAlert: (alertId: string) => void;
   requestPermission: () => Promise<void>;
   permissionStatus: NotificationPermissionStatus;
+  index?: number;
 };
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -88,6 +89,7 @@ export const MarketCard = ({
   removeAlert,
   requestPermission,
   permissionStatus,
+  index = 0,
 }: MarketCardProps) => {
   const [isAlertPanelOpen, setIsAlertPanelOpen] = useState(false);
   const [isPriceFlashing, setIsPriceFlashing] = useState(false);
@@ -135,7 +137,10 @@ export const MarketCard = ({
   }, [price.updatedAt]);
 
   return (
-    <article className="rounded-lg border border-white/10 bg-slate-900/80 p-5 shadow-glow">
+    <article
+      className="card-interactive animate-fade-up rounded-lg border border-white/10 bg-slate-900/80 p-5 shadow-glow"
+      style={{ animationDelay: `${index * 55}ms` }}
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-slate-400">{market.label}</p>
@@ -149,7 +154,7 @@ export const MarketCard = ({
 
       <div className="mt-6">
         <p
-          className={`min-h-10 rounded-md break-words text-3xl font-bold tabular-nums ${isPriceFlashing ? 'price-flash' : ''} ${hasPrice ? 'text-white' : 'text-slate-500'}`}
+          className={`min-h-10 rounded-md break-words text-3xl font-bold tabular-nums ${isPriceFlashing ? 'price-flash' : ''} ${hasPrice ? 'text-white' : 'shimmer text-slate-600'}`}
         >
           {formatPrice(price.price, market)}
         </p>
@@ -166,7 +171,7 @@ export const MarketCard = ({
       {price.changePct !== null ? (
         <div className="mt-4 h-1 overflow-hidden rounded-full bg-white/10">
           <div
-            className={`h-full rounded-full ${gaugeClass}`}
+            className={`h-full rounded-full transition-[width] duration-700 ${gaugeClass}`}
             style={{ width: `${gaugeWidth}%` }}
           />
         </div>

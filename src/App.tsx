@@ -29,6 +29,7 @@ const toolPageIds: ToolPageId[] = [
   'strategy',
   'community',
   'participation',
+  'semi-auto-sign',
 ];
 
 const getRoute = () => window.location.hash.replace(/^#\/?/, '');

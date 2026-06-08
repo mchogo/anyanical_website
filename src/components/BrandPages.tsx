@@ -10,6 +10,16 @@ const MEMBERSHIP_FORM_URL =
 const SEMI_AUTO_EA_FORM_URL = 'https://forms.gle/1EiRMR257pgQ9GDJ7';
 const EA_DISTRIBUTION_CHANNEL_URL =
   'https://discord.com/channels/1152131321297129534/1488800327514718270';
+const SIGN_ROLE_CHANNEL_URL =
+  'https://discord.com/channels/1152131321297129534/1318354632698761310';
+const SIGN_SETUP_CHANNEL_URL =
+  'https://discord.com/channels/1152131321297129534/1488799255593357322';
+const SIGN_CHANNEL_AGGRESSIVE_URL =
+  'https://discord.com/channels/1152131321297129534/1512036779224596490';
+const SIGN_CHANNEL_STANDARD_URL =
+  'https://discord.com/channels/1152131321297129534/1494547003709984889';
+const SIGN_HFM_STRATEGY_CHANNEL_URL =
+  'https://discord.com/channels/1152131321297129534/1505746885657362462';
 
 const strategyCards = [
   {
@@ -778,5 +788,275 @@ export const ParticipationGuidePage = () => (
         ))}
       </div>
     </section>
+  </section>
+);
+
+const signTypes = [
+  {
+    label: '※5mレベル',
+    title: '5分足レベル',
+    body: '通常ロジックのサインです。前バージョンの通知と同じ基準で、頻度が高めのエントリー候補を通知します。',
+    tone: 'cyan' as const,
+  },
+  {
+    label: '※15mレベル',
+    title: '15分足レベル',
+    body: '15分足ベースのレベルサインです。通常の半裁量判断に使いやすく、バランスの取れた頻度で届きます。',
+    tone: 'cyan' as const,
+  },
+  {
+    label: '※30mレベル',
+    title: '30分足レベル',
+    body: '30分足ベースのレベルサインです。より大きな時間軸の流れを意識したエントリー候補を通知します。',
+    tone: 'cyan' as const,
+  },
+  {
+    label: '※15m攻め',
+    title: '15分足 攻め仕様',
+    body: 'チャンスを拾いやすい攻め仕様のサインです。ノイズが増える場面もあるため、チャートの確認を優先してください。',
+    tone: 'amber' as const,
+  },
+  {
+    label: '※30m攻め',
+    title: '30分足 攻め仕様',
+    body: '30分足ベースの攻め仕様です。HFMストラテジーにも反映しており、積極的にチャンスを拾う設計になっています。',
+    tone: 'amber' as const,
+  },
+];
+
+const signStartSteps = [
+  {
+    title: '通知ロールを受け取る',
+    body: 'Discordの指定チャンネルでロールを取得してください。ロール付与後、通知チャンネルにアクセスできます。',
+    href: SIGN_ROLE_CHANNEL_URL,
+    label: 'ロール付与チャンネル',
+  },
+  {
+    title: '半裁量EAをダウンロード',
+    body: 'EA配布チャンネルからファイルを取得し、MT5へ設置します。Exness指定リンク口座と認証申請が必要です。',
+    href: EA_DISTRIBUTION_CHANNEL_URL,
+    label: 'EA配布チャンネル',
+  },
+  {
+    title: '利用手順を確認',
+    body: 'EA設置後の稼働設定、ロット目安、停止条件を手順チャンネルで確認してください。',
+    href: SIGN_SETUP_CHANNEL_URL,
+    label: '利用手順チャンネル',
+  },
+];
+
+const signChannels = [
+  {
+    title: '攻めサイン + 5mレベル',
+    body: '攻め仕様（15m攻め・30m攻め）と5mレベルのサインを流しています。より積極的にチャンスを追いたい場合向けです。',
+    href: SIGN_CHANNEL_AGGRESSIVE_URL,
+    label: 'チャンネルを確認',
+  },
+  {
+    title: '15m / 30m / 5mレベル',
+    body: '通常の15mレベル・30mレベル・5mレベルのサインを流しています。攻め仕様は含まれません。',
+    href: SIGN_CHANNEL_STANDARD_URL,
+    label: 'チャンネルを確認',
+  },
+];
+
+const signFilterItems = [
+  {
+    label: '環境認識',
+    body: '1時間足の20SMAで方向を判断する。SMAの傾きと価格の位置を確認する。',
+  },
+  {
+    label: '5分足RSI制限',
+    body: 'RSIが60より上なら買わない、40より下なら売らない。突っ込みエントリーを避けるための簡易フィルター。',
+  },
+];
+
+export const SemiAutoSignPage = () => (
+  <section className="space-y-6">
+    <section className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-5">
+      <p className="text-sm font-semibold text-amber-200">Semi-discretionary sign</p>
+      <h2 className="mt-2 text-2xl font-bold text-white">半裁量サイン</h2>
+      <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">
+        相場の方向感・時間足の流れ・反発候補になりやすい価格帯を組み合わせて、エントリー候補をDiscord通知します。
+        通知が届いたタイミングでチャートを確認することで、裁量判断の負担を減らしつつ、狙うポイントを絞りやすくなります。
+      </p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <span className="rounded-full bg-amber-300/20 px-3 py-1 text-xs font-bold text-amber-200 ring-1 ring-amber-300/30">
+          XAUUSD 専用
+        </span>
+        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-300 ring-1 ring-white/20">
+          半裁量EA連携推奨
+        </span>
+        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-300 ring-1 ring-white/20">
+          テスト運用中
+        </span>
+      </div>
+    </section>
+
+    <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-semibold text-amber-200">Sign types</p>
+          <h3 className="mt-1 text-lg font-bold text-white">サイン種別</h3>
+        </div>
+        <p className="text-sm text-slate-500">通知末尾のラベルでサインの種類を判別できます。</p>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {signTypes.map((sign) => (
+          <article
+            key={sign.label}
+            className="rounded-lg border border-white/10 bg-slate-950/40 p-4"
+          >
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-bold ring-1 ${
+                sign.tone === 'amber'
+                  ? 'bg-amber-300/10 text-amber-200 ring-amber-300/20'
+                  : 'bg-cyan-300/10 text-cyan-200 ring-cyan-300/20'
+              }`}
+            >
+              {sign.label}
+            </span>
+            <h4 className="mt-4 font-bold text-white">{sign.title}</h4>
+            <p className="mt-2 text-sm leading-6 text-slate-400">{sign.body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
+      <p className="text-sm font-semibold text-cyan-200">Notification format</p>
+      <h3 className="mt-1 text-lg font-bold text-white">通知の見方</h3>
+      <p className="mt-2 text-sm leading-6 text-slate-400">
+        通貨ペアと方向が先頭に来るようにしています。通知を受けた瞬間に判断しやすい形式です。
+      </p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-lg border border-emerald-300/20 bg-slate-950/60 p-4 font-mono text-sm">
+          <p className="text-emerald-300">[XAUUSD] BUY 📈 ※15m攻め</p>
+          <p className="mt-1 text-slate-500">@everyone</p>
+        </div>
+        <div className="rounded-lg border border-rose-300/20 bg-slate-950/60 p-4 font-mono text-sm">
+          <p className="text-rose-300">[XAUUSD] SELL 📉 ※5mレベル</p>
+          <p className="mt-1 text-slate-500">@everyone</p>
+        </div>
+      </div>
+      <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { dt: 'XAUUSD', dd: '対象通貨ペア（現在はゴールドのみ）' },
+          { dt: 'BUY / SELL', dd: 'エントリー方向' },
+          { dt: '📈 / 📉', dd: '方向アイコン（一目で判別可能）' },
+          { dt: '※〇〇', dd: 'サイン種別ラベル' },
+        ].map((item) => (
+          <div key={item.dt} className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+            <dt className="font-bold text-white">{item.dt}</dt>
+            <dd className="mt-1 text-slate-400">{item.dd}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+
+    <section className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-5">
+      <p className="text-sm font-semibold text-cyan-200">Notification channels</p>
+      <h3 className="mt-1 text-lg font-bold text-white">通知チャンネル</h3>
+      <p className="mt-2 text-sm leading-6 text-slate-300">
+        チャンネルごとに流しているサインの種類が異なります。通知量や運用スタイルに合わせて選んでください。
+      </p>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        {signChannels.map((channel) => (
+          <article
+            key={channel.href}
+            className="rounded-lg border border-white/10 bg-slate-950/40 p-5"
+          >
+            <h4 className="font-bold text-white">{channel.title}</h4>
+            <p className="mt-2 text-sm leading-6 text-slate-400">{channel.body}</p>
+            <a
+              href={channel.href}
+              rel="nofollow noopener noreferrer"
+              target="_blank"
+              className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg bg-cyan-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-cyan-200"
+            >
+              {channel.label}
+            </a>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-5">
+      <p className="text-sm font-semibold text-amber-200">Get started</p>
+      <h3 className="mt-1 text-lg font-bold text-white">利用開始の流れ</h3>
+      <p className="mt-2 text-sm leading-6 text-slate-300">
+        半裁量EAを使う前提の通知です。EAを設定してから通知を受け取ると、サインに合わせた立ち回りがしやすくなります。
+      </p>
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        {signStartSteps.map((step, index) => (
+          <article
+            key={step.title}
+            className="rounded-lg border border-white/10 bg-slate-950/40 p-4"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-amber-300 text-sm font-bold text-slate-950">
+              {index + 1}
+            </span>
+            <h4 className="mt-4 font-bold text-white">{step.title}</h4>
+            <p className="mt-2 text-sm leading-6 text-slate-400">{step.body}</p>
+            <a
+              href={step.href}
+              rel="nofollow noopener noreferrer"
+              target="_blank"
+              className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg bg-amber-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-200"
+            >
+              {step.label}
+            </a>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
+      <p className="text-sm font-semibold text-cyan-200">HFM strategy</p>
+      <h3 className="mt-1 text-lg font-bold text-white">HFMストラテジーとの連携</h3>
+      <p className="mt-3 text-sm leading-6 text-slate-400">
+        HFM側で動かしているストラテジーには攻め仕様の半裁量サインを反映しています。
+        セント口座でも利用できるようにしているので、必要に応じて確認してください。
+      </p>
+      <a
+        href={SIGN_HFM_STRATEGY_CHANNEL_URL}
+        rel="nofollow noopener noreferrer"
+        target="_blank"
+        className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg bg-white/10 px-4 text-sm font-bold text-white ring-1 ring-white/20 transition hover:bg-white/20"
+      >
+        HFMストラテジーを確認
+      </a>
+    </section>
+
+    <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
+      <p className="text-sm font-semibold text-slate-400">簡易フィルター</p>
+      <h3 className="mt-1 text-lg font-bold text-white">チャート確認を簡略化したい場合</h3>
+      <p className="mt-2 text-sm leading-6 text-slate-400">
+        以下のルールを加えるだけでも、突っ込みエントリーを避けやすくなります。
+        ただしフィルターを強くすると収益機会も減ります。
+      </p>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        {signFilterItems.map((item) => (
+          <div
+            key={item.label}
+            className="rounded-lg border border-white/10 bg-slate-950/40 p-4 text-sm"
+          >
+            <p className="font-bold text-white">{item.label}</p>
+            <p className="mt-2 leading-6 text-slate-400">{item.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <div className="rounded-lg border border-red-300/20 bg-red-300/10 p-4 text-sm leading-6 text-red-100">
+      <p className="font-bold">注意事項</p>
+      <p className="mt-2">
+        サインはエントリー判断の補助です。必ずご自身でチャートを確認し、ロットとリスクを調整してください。
+        攻め仕様のサインは通常より積極的な設計のため、資金管理を徹底したうえで使用してください。
+        EAの特性上、逆張り気味のサインも含まれます。レンジ相場ではとくにエントリー前の確認を優先してください。
+        通知内容・対象・運用ルールはテスト段階のため変更される可能性があります。
+      </p>
+    </div>
   </section>
 );

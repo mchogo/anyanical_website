@@ -59,8 +59,8 @@ export const ChartSection = () => {
     <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
       <div className="mb-5 flex flex-col justify-between gap-3 lg:flex-row lg:items-end">
         <div>
-          <p className="text-sm font-semibold text-cyan-200">CFD / FX chart</p>
-          <h2 className="mt-1 text-2xl font-bold text-white">チャートで推移を確認</h2>
+          <p className="animate-slide-left text-sm font-semibold text-cyan-200">CFD / FX chart</p>
+          <h2 className="animate-fade-up stagger-1 mt-1 text-2xl font-bold text-white">チャートで推移を確認</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
             下のチャートはTradingViewの金属・原油・指数・FX参考チャートです。先物シンボルは外部埋め込みで制限される場合があるため、表示されやすい汎用シンボルを使います。
           </p>
@@ -84,7 +84,7 @@ export const ChartSection = () => {
               key={chartSymbol.symbol}
               type="button"
               onClick={() => setActiveSymbol(chartSymbol)}
-              className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold ring-1 transition ${
+              className={`btn-press shrink-0 rounded-full px-4 py-2 text-sm font-semibold ring-1 transition ${
                 isActive
                   ? 'bg-cyan-300 text-slate-950 ring-cyan-200'
                   : 'bg-white/[0.04] text-slate-300 ring-white/10 hover:bg-white/[0.08]'

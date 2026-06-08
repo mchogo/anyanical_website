@@ -22,7 +22,9 @@ export const ConnectionStatus = ({ status }: ConnectionStatusProps) => (
   <span
     className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${statusClassName[status]}`}
   >
-    <span className="h-2 w-2 rounded-full bg-current" />
+    <span
+      className={`h-2 w-2 rounded-full bg-current ${status === 'connected' ? 'animate-live-dot' : ''}`}
+    />
     {statusLabel[status]}
   </span>
 );

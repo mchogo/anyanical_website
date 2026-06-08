@@ -63,23 +63,23 @@ export const Header = ({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+        <div className="animate-fade-up stagger-1 rounded-lg border border-white/10 bg-white/[0.04] p-4">
           <p className="text-xs text-slate-400">現在時刻 JST</p>
           <p className="mt-1 text-lg font-semibold text-white">
             {formatDateTime(currentTime)}
           </p>
         </div>
-        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+        <div className="animate-fade-up stagger-2 rounded-lg border border-white/10 bg-white/[0.04] p-4">
           <p className="text-xs text-slate-400">接続状態</p>
           <p className="mt-1 text-lg font-semibold text-white">{connectionStatus}</p>
         </div>
-        <div className="hidden rounded-lg border border-white/10 bg-white/[0.04] p-4 sm:block">
+        <div className="animate-fade-up stagger-3 hidden rounded-lg border border-white/10 bg-white/[0.04] p-4 sm:block">
           <p className="text-xs text-slate-400">更新回数</p>
           <p className="mt-1 text-lg font-semibold text-white">
             {tickCount.toLocaleString()}
           </p>
         </div>
-        <div className="hidden rounded-lg border border-white/10 bg-white/[0.04] p-4 sm:block">
+        <div className="animate-fade-up stagger-4 hidden rounded-lg border border-white/10 bg-white/[0.04] p-4 sm:block">
           <p className="text-xs text-slate-400">最終更新時刻</p>
           <p className="mt-1 text-lg font-semibold text-white">
             {formatDateTime(lastUpdatedAt)}
