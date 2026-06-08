@@ -256,9 +256,10 @@ export const HomePage = ({
                       : 'text-slate-300';
 
                   return (
-                    <div
+                    <a
                       key={row.symbol}
-                      className="home-market-row rounded-lg border border-white/10 bg-white/[0.035] p-3"
+                      href="#/board"
+                      className="home-market-row block rounded-lg border border-white/10 bg-white/[0.035] p-3 transition hover:border-cyan-300/30 hover:bg-cyan-300/[0.06]"
                       style={{ animationDelay: `${index * 120}ms` }}
                     >
                       <div className="grid gap-3 sm:grid-cols-[1fr_112px] sm:items-center">
@@ -296,7 +297,7 @@ export const HomePage = ({
                           )}
                         </div>
                       </div>
-                    </div>
+                    </a>
                   );
                 })}
               </div>
@@ -323,8 +324,12 @@ export const HomePage = ({
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
           <div>
-            <p className="animate-slide-left text-sm font-semibold text-cyan-200">Start here</p>
-            <h2 className="animate-fade-up stagger-1 mt-1 text-2xl font-bold text-white">まず見るページ</h2>
+            <p className="animate-slide-left text-sm font-semibold text-cyan-200">
+              Start here
+            </p>
+            <h2 className="animate-fade-up stagger-1 mt-1 text-2xl font-bold text-white">
+              まず見るページ
+            </h2>
           </div>
           <p className="text-sm text-slate-500">
             目的に合わせて、最初に開くページを選べます。
