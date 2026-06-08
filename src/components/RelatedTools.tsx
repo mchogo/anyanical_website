@@ -101,14 +101,18 @@ const TradingViewScriptWidget = ({
 export const CurrencyStrengthTool = () => (
   <section id="tools-currency-strength" className="scroll-mt-8">
     <div className="mb-4">
-      <p className="text-sm font-semibold text-cyan-200">Currency strength</p>
-      <h2 className="mt-1 text-2xl font-bold text-white">通貨強弱・ヒートマップ</h2>
-      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+      <p className="animate-slide-left text-sm font-semibold text-cyan-200">
+        Currency strength
+      </p>
+      <h2 className="animate-fade-up stagger-1 mt-1 text-2xl font-bold text-white">
+        通貨強弱・ヒートマップ
+      </h2>
+      <p className="animate-fade-up stagger-2 mt-2 max-w-3xl text-sm leading-6 text-slate-400">
         主要8通貨の相対的な強弱をTradingView公式ウィジェットで確認します。緑が強い通貨、赤が弱い通貨です。
       </p>
     </div>
 
-    <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+    <div className="animate-fade-up stagger-3 grid gap-4 xl:grid-cols-[1fr_1fr]">
       <TradingViewScriptWidget
         src="https://s3.tradingview.com/external-embedding/embed-widget-forex-heat-map.js"
         heightClassName="h-[520px] xl:h-[470px]"
@@ -140,14 +144,18 @@ export const CurrencyStrengthTool = () => (
 export const EconomicCalendarTool = () => (
   <section id="tools-economic-calendar" className="scroll-mt-8">
     <div className="mb-4">
-      <p className="text-sm font-semibold text-cyan-200">Economic calendar</p>
-      <h2 className="mt-1 text-2xl font-bold text-white">経済指標カレンダー</h2>
-      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+      <p className="animate-slide-left text-sm font-semibold text-cyan-200">
+        Economic calendar
+      </p>
+      <h2 className="animate-fade-up stagger-1 mt-1 text-2xl font-bold text-white">
+        経済指標カレンダー
+      </h2>
+      <p className="animate-fade-up stagger-2 mt-2 max-w-3xl text-sm leading-6 text-slate-400">
         米国・日本・欧州・英国などの主要指標を日本語・東京時間で表示します。重要指標前後はスプレッドや値動きの急変に注意してください。
       </p>
     </div>
 
-    <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+    <div className="animate-fade-up stagger-3 grid gap-4 xl:grid-cols-[1fr_360px]">
       <div className="overflow-hidden rounded-lg border border-white/10 bg-white shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
         <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
           <p className="text-sm font-bold text-slate-950">主要国の経済イベント</p>
@@ -183,13 +191,13 @@ export const EconomicCalendarTool = () => (
           </p>
         </div>
         <ul className="mt-5 space-y-3 text-sm text-slate-300">
-          <li className="rounded-lg bg-slate-950/50 p-3">
+          <li className="card-interactive rounded-lg bg-slate-950/50 p-3">
             高重要度の米指標はXAUUSDとUSDJPYを優先確認
           </li>
-          <li className="rounded-lg bg-slate-950/50 p-3">
+          <li className="card-interactive rounded-lg bg-slate-950/50 p-3">
             EA稼働中はロット、停止条件、証拠金維持率を再確認
           </li>
-          <li className="rounded-lg bg-slate-950/50 p-3">
+          <li className="card-interactive rounded-lg bg-slate-950/50 p-3">
             週明け前は窓開け監視と合わせて確認
           </li>
         </ul>
@@ -207,7 +215,10 @@ export const EconomicCalendarTool = () => (
       </aside>
     </div>
 
-    <div className="mt-4 rounded-lg border border-white/10 bg-slate-950/70 px-4 py-3 text-xs leading-5 text-slate-500">
+    <div
+      className="animate-fade-up mt-4 rounded-lg border border-white/10 bg-slate-950/70 px-4 py-3 text-xs leading-5 text-slate-500"
+      style={{ animationDelay: '360ms' }}
+    >
       TradingView側の表示制限が発生する場合は、別タブのTradingViewカレンダー、または
       <a
         href="https://jp.investing.com/economic-calendar/"
@@ -243,25 +254,31 @@ export const GapWatchTool = ({
       <div className="mb-4">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
           <div>
-            <p className="text-sm font-semibold text-cyan-200">Gap watch</p>
-            <h2 className="mt-1 text-2xl font-bold text-white">窓開け監視ボード</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+            <p className="animate-slide-left text-sm font-semibold text-cyan-200">
+              Gap watch
+            </p>
+            <h2 className="animate-fade-up stagger-1 mt-1 text-2xl font-bold text-white">
+              窓開け監視ボード
+            </h2>
+            <p className="animate-fade-up stagger-2 mt-2 max-w-3xl text-sm leading-6 text-slate-400">
               {description}
             </p>
           </div>
           <span
-            className={`inline-flex w-fit rounded-full border px-3 py-1 text-xs font-bold ${modeClass}`}
+            className={`animate-fade-up stagger-2 inline-flex w-fit rounded-full border px-3 py-1 text-xs font-bold ${modeClass}`}
           >
             {modeLabel}
           </span>
         </div>
       </div>
 
-      <div className={`mb-4 rounded-lg border px-4 py-3 text-sm leading-6 ${modeClass}`}>
+      <div
+        className={`animate-fade-up stagger-3 mb-4 rounded-lg border px-4 py-3 text-sm leading-6 ${modeClass}`}
+      >
         {guidance}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-white/10 bg-slate-900/80">
+      <div className="animate-fade-up stagger-4 overflow-x-auto rounded-lg border border-white/10 bg-slate-900/80">
         <table className="min-w-[760px] w-full text-left text-sm">
           <thead className="bg-white/[0.04] text-xs uppercase text-slate-500">
             {isWeekendMode ? (
@@ -447,18 +464,23 @@ export const EaChecklistTool = () => {
   return (
     <section id="tools-ea-checklist" className="scroll-mt-8">
       <div className="mb-4">
-        <p className="text-sm font-semibold text-cyan-200">EA checklist</p>
-        <h2 className="mt-1 text-2xl font-bold text-white">EA運用チェックリスト</h2>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+        <p className="animate-slide-left text-sm font-semibold text-cyan-200">
+          EA checklist
+        </p>
+        <h2 className="animate-fade-up stagger-1 mt-1 text-2xl font-bold text-white">
+          EA運用チェックリスト
+        </h2>
+        <p className="animate-fade-up stagger-2 mt-2 max-w-3xl text-sm leading-6 text-slate-400">
           半裁量EA・全自動EAを動かす前に、相場環境と運用条件を確認するための簡易チェックです。
         </p>
       </div>
 
       <div className="mb-6 grid gap-4 lg:grid-cols-3">
-        {setupSteps.map((step) => (
+        {setupSteps.map((step, index) => (
           <article
             key={step.title}
-            className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-4"
+            className="card-interactive animate-fade-up rounded-lg border border-amber-300/20 bg-amber-300/10 p-4"
+            style={{ animationDelay: `${200 + index * 80}ms` }}
           >
             <h3 className="text-base font-bold text-white">{step.title}</h3>
             <p className="mt-2 text-sm leading-6 text-slate-300">{step.body}</p>
@@ -475,10 +497,11 @@ export const EaChecklistTool = () => {
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
-        {checklist.map((item) => (
+        {checklist.map((item, index) => (
           <label
             key={item}
-            className="flex min-h-16 items-start gap-3 rounded-lg border border-white/10 bg-white/[0.035] p-4 text-sm text-slate-300"
+            className="animate-fade-up flex min-h-16 cursor-pointer items-start gap-3 rounded-lg border border-white/10 bg-white/[0.035] p-4 text-sm text-slate-300 transition hover:border-white/20 hover:bg-white/[0.06]"
+            style={{ animationDelay: `${360 + index * 40}ms` }}
           >
             <input
               type="checkbox"

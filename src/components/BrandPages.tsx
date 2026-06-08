@@ -1,4 +1,51 @@
+import { useEffect, useRef, useState } from 'react';
+
 import { EXTERNAL_LINKS } from '../config/navigation';
+
+const CountUp = ({
+  to,
+  suffix = '',
+  duration = 1400,
+}: {
+  to: number;
+  suffix?: string;
+  duration?: number;
+}) => {
+  const [count, setCount] = useState(0);
+  const spanRef = useRef<HTMLSpanElement>(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    const el = spanRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started.current) {
+          started.current = true;
+          const startTime = performance.now();
+          const tick = (now: number) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setCount(Math.round(eased * to));
+            if (progress < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }
+      },
+      { threshold: 0.5 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [to, duration]);
+
+  return (
+    <span ref={spanRef}>
+      {count}
+      {suffix}
+    </span>
+  );
+};
 
 const EXNESS_SIGNUP_URL = 'https://x.gd/CxfuR';
 const NOTE_MEMBERSHIP_URL = 'https://note.com/anyafx/membership';
@@ -21,38 +68,37 @@ const SIGN_CHANNEL_STANDARD_URL =
 const SIGN_HFM_STRATEGY_CHANNEL_URL =
   'https://discord.com/channels/1152131321297129534/1505746885657362462';
 
-const strategyCards = [
-  {
-    title: '相場の見方がまとまる',
-    body: 'Xでは流しにくい細かい目線、チャートの読み方、エントリー前に見るポイントを日々の考察として追えます。',
-  },
-  {
-    title: '限定チャンネルで追える',
-    body: 'Discord内の限定チャンネルで、日々のチャート、インジ、bot、EAまわりの情報を整理して追えるようにします。',
-  },
-  {
-    title: '自分の判断材料が増える',
-    body: '答えを丸投げする場所ではなく、自分で相場を見て判断するための材料や補助ツールへの入口として使えます。',
-  },
-];
+type StatEntry =
+  | { countTo: number; suffix?: string; label: string; body: string }
+  | { text: string; label: string; body: string };
 
-const premiumStats = [
+const premiumStats: StatEntry[] = [
   {
-    value: '95%+',
+    countTo: 95,
+    suffix: '%+',
     label: '継続率',
     body: '直近のメンバー継続率は9.5割超え。短期の煽りではなく、毎日見返せる実用メモを重視しています。',
   },
   {
-    value: 'Daily',
+    countTo: 150,
+    suffix: '名',
+    label: 'メンバー上限',
+    body: '上限150名のクローズドコミュニティ。空きが出た月初のみ新規募集を実施しています。',
+  },
+  {
+    text: 'Daily',
     label: '日々の考察',
     body: 'ゴールド、ドル円、BTCなどの目線、注意ライン、崩れる条件をDiscordで継続的に共有します。',
   },
   {
-    value: 'Tools',
+    text: 'Tools',
     label: '限定ツール',
     body: 'オリジナルインジ、アラート、EA関連の案内をまとめ、必要な情報へ迷わず移動できるようにします。',
   },
 ];
+
+const renderStatValue = (stat: StatEntry) =>
+  'countTo' in stat ? <CountUp to={stat.countTo} suffix={stat.suffix} /> : stat.text;
 
 const strategySteps = [
   'noteメンバーシップで限定記事や参加案内を確認',
@@ -128,40 +174,6 @@ const semiAutoEaRiskRows = [
     balance: '20,000セント',
     lot: '0.1ロット',
     note: 'スタンダード移行前の中間設定',
-  },
-];
-
-const communityFeatures = [
-  {
-    title: '日々のチャート分析',
-    body: 'ドル円やゴールドを中心に、日々の目線、立ち回り、どこを抜けると崩れるかを継続的に確認する場所です。',
-  },
-  {
-    title: 'エントリーパターン',
-    body: 'ローソクの読み方、エントリー根拠、初心者向けの見方をスレッド形式で追いやすく整理します。',
-  },
-  {
-    title: 'インジ・bot・EA',
-    body: 'オリジナルインジ、半裁量bot、EAの運用メモ、決済や損切りを含む実運用の共有を扱います。',
-  },
-];
-
-const premiumBenefits = [
-  {
-    title: '毎日の相場考察を追える',
-    body: 'ゴールド、ドル円、BTCなど、いま見ているラインや注意点を日々の投稿で確認できます。',
-  },
-  {
-    title: '見方が散らばらない',
-    body: 'チャート、インジ、EA、コピトレ、申請フォームをDiscordとnoteに整理して、必要なときに見返せます。',
-  },
-  {
-    title: '継続しやすい環境',
-    body: '直近の継続率は9.5割超え。派手な一発情報より、日々の確認と学習を続けやすい場を重視しています。',
-  },
-  {
-    title: '運用前の確認がしやすい',
-    body: 'EA稼働前、指標前、週明け前など、止めるべき場面や確認ポイントを見直しやすくします。',
   },
 ];
 
@@ -275,8 +287,8 @@ const membershipSteps = [
 const planStatus = [
   {
     title: '通常プラン',
-    status: '公開中',
-    body: '現在はこちらのプランのみ公開中です。予告なく値上げする場合がありますが、既に加入中の方は加入時点の料金が適用されます。',
+    status: '月初のみ募集',
+    body: '新規募集は毎月1日前後のみ実施しています。上限150名のため空きがない月は募集なしです。既存メンバーの料金は加入時点のまま適用されます。',
   },
   {
     title: '個別サポート付きプラン',
@@ -311,19 +323,29 @@ const operationLinks = [
 
 const faqItems = [
   {
-    question: '初心者でも使えますか？',
+    question: '具体的な手法を教えてください',
     answer:
-      '相場ボード自体はニュース後の変化を確認するためのものです。実際に取引する場合は、まず小さいロットで検証し、損失許容額を決めてから使ってください。',
+      '「これだけやっていれば勝てる」という固定の手法はありません。日々の相場観やエントリーの根拠はすべてチャンネルの考察にまとめていますが、それらを総称して「アニャニカル」と呼んでいます。既存の優れた手法を自分なりに組み合わせ、言語化したものです。',
   },
   {
-    question: 'どの銘柄を見るべきですか？',
+    question: '先出し（売買指示）はありますか？',
     answer:
-      '金、BTC、ドル円、S&P500、日経225を優先すると、週末のリスク心理と週明けの窓開け候補を把握しやすくなります。',
+      '一切ありません。「ここで買って、ここで売る」という売買指示を期待しているなら、当サーバーは不向きです。「どの価格帯に注目し、どちらの方向に優位性を感じているか」を毎日アウトプットしているだけです。自分の頭で考えず他人のシグナルに頼っているうちは勝てるようになりません。',
   },
   {
-    question: 'EAは常時稼働でいいですか？',
+    question: 'メンバーになったのに限定チャンネルが見られません',
     answer:
-      '重要指標、週明け直後、急変時はスプレッドや約定条件が悪化しやすいため、稼働条件と停止条件を先に決める必要があります。',
+      '権限付与の同期が必要なため、個別にご連絡ください。noteの会員証のスクリーンショットを添えて、管理者宛DMまたはDiscord内の個別メッセージでご連絡いただければ、確認後に順次アクセス権限を付与します。',
+  },
+  {
+    question: 'なぜサブスク形式で運営しているのですか？',
+    answer:
+      '完全に「気分」です。執着はしていないので、気分次第で突然やめるかもしれません。それくらいの温度感で運営している覗き部屋だと思ってください。1日150円で運営しているので、半裁量サインに適当に乗っていれば余裕でペイできます。',
+  },
+  {
+    question: 'デイスイングbotのチャンネルが見当たりません',
+    answer:
+      'あえてデフォルトで非表示に設定しています。通知頻度が高いため全員に強制表示させていません。「ロール変更」チャンネルから表示・非表示をご自身で切り替えられます。操作が分からない場合は質問スペースでご連絡ください。',
   },
 ];
 
@@ -339,31 +361,6 @@ export const StrategyGuidePage = () => (
         日々の相場考察、補助ツール、運用前チェックまで見返せるようにしています。
       </p>
     </section>
-
-    <div className="grid gap-4 lg:grid-cols-3">
-      {premiumStats.map((stat) => (
-        <article
-          key={stat.label}
-          className="rounded-lg border border-white/10 bg-slate-900/80 p-5"
-        >
-          <p className="text-3xl font-black text-cyan-200">{stat.value}</p>
-          <h3 className="mt-3 text-lg font-bold text-white">{stat.label}</h3>
-          <p className="mt-3 text-sm leading-6 text-slate-400">{stat.body}</p>
-        </article>
-      ))}
-    </div>
-
-    <div className="grid gap-4 lg:grid-cols-3">
-      {strategyCards.map((card) => (
-        <article
-          key={card.title}
-          className="rounded-lg border border-white/10 bg-white/[0.035] p-5"
-        >
-          <h3 className="text-lg font-bold text-white">{card.title}</h3>
-          <p className="mt-3 text-sm leading-6 text-slate-400">{card.body}</p>
-        </article>
-      ))}
-    </div>
 
     <section className="rounded-lg border border-emerald-300/20 bg-emerald-300/10 p-5">
       <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
@@ -395,33 +392,6 @@ export const StrategyGuidePage = () => (
             >
               {offer.label}
             </a>
-          </article>
-        ))}
-      </div>
-    </section>
-
-    <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
-      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
-        <div>
-          <p className="text-sm font-semibold text-cyan-200">Premium contents</p>
-          <h3 className="mt-1 text-lg font-bold text-white">プレミアムで見られるもの</h3>
-        </div>
-        <a
-          href="#/tools/participation"
-          className="inline-flex min-h-10 items-center justify-center rounded-lg bg-cyan-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-cyan-200"
-        >
-          プレミアムを見る
-        </a>
-      </div>
-
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        {premiumBenefits.map((benefit) => (
-          <article
-            key={benefit.title}
-            className="rounded-lg border border-white/10 bg-slate-950/40 p-4"
-          >
-            <h4 className="font-bold text-white">{benefit.title}</h4>
-            <p className="mt-2 text-sm leading-6 text-slate-400">{benefit.body}</p>
           </article>
         ))}
       </div>
@@ -526,18 +496,6 @@ export const CommunityGuidePage = () => (
         アニャニカル覗き部屋では、日々の目線、チャート分析、エントリーパターン、インジ、bot、EA関連の情報を整理して確認できます。
         公開チャンネルと限定チャンネルがあるため、まず概要と閲覧手順を確認してください。
       </p>
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        {premiumStats.map((stat) => (
-          <div
-            key={stat.label}
-            className="rounded-lg border border-white/10 bg-slate-950/35 p-4"
-          >
-            <p className="text-2xl font-black text-emerald-200">{stat.value}</p>
-            <p className="mt-2 text-sm font-bold text-white">{stat.label}</p>
-            <p className="mt-2 text-xs leading-5 text-slate-400">{stat.body}</p>
-          </div>
-        ))}
-      </div>
     </section>
 
     <div className="grid gap-4 lg:grid-cols-3">
@@ -556,18 +514,6 @@ export const CommunityGuidePage = () => (
           >
             {link.label}
           </a>
-        </article>
-      ))}
-    </div>
-
-    <div className="grid gap-4 lg:grid-cols-3">
-      {communityFeatures.map((feature) => (
-        <article
-          key={feature.title}
-          className="rounded-lg border border-white/10 bg-white/[0.035] p-5"
-        >
-          <h3 className="text-lg font-bold text-white">{feature.title}</h3>
-          <p className="mt-3 text-sm leading-6 text-slate-400">{feature.body}</p>
         </article>
       ))}
     </div>
@@ -619,17 +565,21 @@ export const CommunityGuidePage = () => (
         {faqItems.map((item) => (
           <details
             key={item.question}
-            className="group rounded-lg border border-white/10 bg-white/[0.035]"
+            className="rounded-lg border border-white/10 bg-white/[0.035]"
           >
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 text-sm font-semibold text-white">
               <span>{item.question}</span>
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-300/10 text-emerald-200 ring-1 ring-emerald-300/20 group-open:rotate-45">
+              <span className="faq-icon grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-300/10 text-emerald-200 ring-1 ring-emerald-300/20">
                 +
               </span>
             </summary>
-            <p className="border-t border-white/10 px-4 py-4 text-sm leading-6 text-slate-400">
-              {item.answer}
-            </p>
+            <div className="faq-body border-t border-white/10">
+              <div className="faq-body-inner">
+                <p className="px-4 py-4 text-sm leading-6 text-slate-400">
+                  {item.answer}
+                </p>
+              </div>
+            </div>
           </details>
         ))}
       </div>
@@ -648,39 +598,15 @@ export const ParticipationGuidePage = () => (
           加入後に確認申請を行うと、限定チャンネル権限を付与します。
         </p>
       </div>
-      <div className="grid gap-0 border-t border-white/10 md:grid-cols-3">
+      <div className="grid gap-0 border-t border-white/10 sm:grid-cols-2 lg:grid-cols-4">
         {premiumStats.map((stat) => (
           <article
             key={stat.label}
-            className="border-b border-white/10 p-5 md:border-b-0 md:border-r last:md:border-r-0"
+            className="border-b border-white/10 p-5 sm:border-r last:sm:border-r-0 sm:border-b-0"
           >
-            <p className="text-3xl font-black text-amber-200">{stat.value}</p>
+            <p className="text-3xl font-black text-amber-200">{renderStatValue(stat)}</p>
             <h3 className="mt-3 text-lg font-bold text-white">{stat.label}</h3>
             <p className="mt-3 text-sm leading-6 text-slate-400">{stat.body}</p>
-          </article>
-        ))}
-      </div>
-    </section>
-
-    <section className="rounded-lg border border-white/10 bg-white/[0.035] p-5">
-      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
-        <div>
-          <p className="text-sm font-semibold text-cyan-200">Why join</p>
-          <h3 className="mt-1 text-lg font-bold text-white">
-            入るメリットが分かる4つのポイント
-          </h3>
-        </div>
-        <p className="text-sm text-slate-500">日々見返せる情報を中心に整理しています。</p>
-      </div>
-
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        {premiumBenefits.map((benefit) => (
-          <article
-            key={benefit.title}
-            className="rounded-lg border border-white/10 bg-slate-950/40 p-4"
-          >
-            <h4 className="font-bold text-white">{benefit.title}</h4>
-            <p className="mt-2 text-sm leading-6 text-slate-400">{benefit.body}</p>
           </article>
         ))}
       </div>
@@ -899,7 +825,9 @@ export const SemiAutoSignPage = () => (
           <p className="text-sm font-semibold text-amber-200">Sign types</p>
           <h3 className="mt-1 text-lg font-bold text-white">サイン種別</h3>
         </div>
-        <p className="text-sm text-slate-500">通知末尾のラベルでサインの種類を判別できます。</p>
+        <p className="text-sm text-slate-500">
+          通知末尾のラベルでサインの種類を判別できます。
+        </p>
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -947,7 +875,10 @@ export const SemiAutoSignPage = () => (
           { dt: '📈 / 📉', dd: '方向アイコン（一目で判別可能）' },
           { dt: '※〇〇', dd: 'サイン種別ラベル' },
         ].map((item) => (
-          <div key={item.dt} className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+          <div
+            key={item.dt}
+            className="rounded-lg border border-white/10 bg-white/[0.03] p-3"
+          >
             <dt className="font-bold text-white">{item.dt}</dt>
             <dd className="mt-1 text-slate-400">{item.dd}</dd>
           </div>
@@ -1031,7 +962,9 @@ export const SemiAutoSignPage = () => (
 
     <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
       <p className="text-sm font-semibold text-slate-400">簡易フィルター</p>
-      <h3 className="mt-1 text-lg font-bold text-white">チャート確認を簡略化したい場合</h3>
+      <h3 className="mt-1 text-lg font-bold text-white">
+        チャート確認を簡略化したい場合
+      </h3>
       <p className="mt-2 text-sm leading-6 text-slate-400">
         以下のルールを加えるだけでも、突っ込みエントリーを避けやすくなります。
         ただしフィルターを強くすると収益機会も減ります。
