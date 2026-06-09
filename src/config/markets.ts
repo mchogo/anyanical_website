@@ -38,7 +38,7 @@ export const MARKETS: MarketConfig[] = [
     mode: 'ipo',
     sourceLabel: 'SPCX参考価格 / IPO前後の参考マーケット',
     officialMarketLabel: 'Hyperliquid参考マーケット',
-    externalChartUrl: 'https://app.hyperliquid.xyz/trade/SPCX',
+    externalChartUrl: 'https://app.hyperliquid.xyz/trade/xyz:SPCX',
   },
   {
     label: 'GOLD',

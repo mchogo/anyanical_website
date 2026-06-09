@@ -206,7 +206,7 @@ export const SpaceXCountdownPage = ({
         {/* CTA buttons */}
         <div className="mt-10 flex flex-wrap justify-center gap-3">
           <a
-            href="https://app.hyperliquid.xyz/trade/SPCX"
+            href="https://app.hyperliquid.xyz/trade/xyz:SPCX"
             rel="noopener noreferrer nofollow"
             target="_blank"
             className="inline-flex min-h-11 items-center gap-2 rounded-full bg-amber-400 px-6 text-sm font-bold text-slate-950 transition hover:bg-amber-300"
