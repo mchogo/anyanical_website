@@ -1,5 +1,5 @@
-export type MarketCategory = 'metal' | 'energy' | 'index' | 'crypto' | 'fx';
-export type MarketMode = 'weekend' | 'crypto' | 'forex';
+export type MarketCategory = 'metal' | 'energy' | 'index' | 'crypto' | 'fx' | 'stock';
+export type MarketMode = 'weekend' | 'crypto' | 'forex' | 'ipo';
 
 export type MarketConfig = {
   label: string;
@@ -11,6 +11,7 @@ export type MarketConfig = {
   mode: MarketMode;
   sourceLabel: string;
   officialMarketLabel?: string;
+  externalChartUrl?: string;
   fridayCloseUtc?: {
     hour: number;
     minute: number;
@@ -28,6 +29,17 @@ export type MarketPrice = {
 };
 
 export const MARKETS: MarketConfig[] = [
+  {
+    label: 'SPCX',
+    displayName: 'SpaceX',
+    symbol: 'SPCX',
+    symbolCandidates: ['SPCX', 'xyz:SPCX'],
+    category: 'stock',
+    mode: 'ipo',
+    sourceLabel: 'SPCX参考価格 / IPO前後の参考マーケット',
+    officialMarketLabel: 'Hyperliquid参考マーケット',
+    externalChartUrl: 'https://app.hyperliquid.xyz/trade/SPCX',
+  },
   {
     label: 'GOLD',
     displayName: 'ゴールド',
@@ -183,6 +195,7 @@ export const MARKETS: MarketConfig[] = [
 export const WEEKEND_MARKETS = MARKETS.filter((market) => market.mode === 'weekend');
 export const CRYPTO_MARKETS = MARKETS.filter((market) => market.mode === 'crypto');
 export const FOREX_MARKETS = MARKETS.filter((market) => market.mode === 'forex');
+export const IPO_MARKETS = MARKETS.filter((market) => market.mode === 'ipo');
 
 export const FRIDAY_CLOSE_REFERENCES = [
   {

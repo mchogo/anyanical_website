@@ -85,7 +85,7 @@ const getOfficialMarketStatus = (market: MarketConfig, now: number): 'open' | 'c
   const utcDay = date.getUTCDay();
   const utcHour = date.getUTCHours();
 
-  if (market.category === 'crypto') return 'open';
+  if (market.category === 'crypto' || market.category === 'stock') return 'open';
   if (utcDay === 0 || utcDay === 6) return 'closed';
   if (market.category === 'fx') return 'open';
   // Metal/Energy/Index: brief maintenance window 22:00 UTC daily
@@ -267,18 +267,30 @@ export const MarketCard = ({
         </span>
       </div>
 
-      <div className="relative mt-4 inline-flex">
-        <button
-          type="button"
-          onClick={() => setIsAlertPanelOpen((current) => !current)}
-          className="inline-flex min-h-10 items-center justify-center rounded-lg bg-white/[0.04] px-4 text-sm font-bold text-slate-100 ring-1 ring-white/10 transition hover:bg-cyan-300/10 hover:text-cyan-100"
-        >
-          アラート設定
-        </button>
-        {myAlertsCount > 0 && (
-          <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-400 text-xs font-bold text-slate-950">
-            {myAlertsCount}
-          </span>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div className="relative inline-flex">
+          <button
+            type="button"
+            onClick={() => setIsAlertPanelOpen((current) => !current)}
+            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-white/[0.04] px-4 text-sm font-bold text-slate-100 ring-1 ring-white/10 transition hover:bg-cyan-300/10 hover:text-cyan-100"
+          >
+            アラート設定
+          </button>
+          {myAlertsCount > 0 && (
+            <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-400 text-xs font-bold text-slate-950">
+              {myAlertsCount}
+            </span>
+          )}
+        </div>
+        {market.externalChartUrl && (
+          <a
+            href={market.externalChartUrl}
+            rel="noopener noreferrer"
+            target="_blank"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-amber-400/10 px-4 text-sm font-bold text-amber-200 ring-1 ring-amber-300/20 transition hover:bg-amber-400/20"
+          >
+            📈 チャートを見る
+          </a>
         )}
       </div>
 

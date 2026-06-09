@@ -1,9 +1,31 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { IPO_MARKETS } from '../config/markets';
+import type { MarketPrice } from '../config/markets';
+import type {
+  Alert,
+  AlertCondition,
+  NotificationPermissionStatus,
+} from '../hooks/useAlerts';
+import type { PriceHistoryPoint } from '../hooks/useHyperliquidMids';
+import { MarketCard } from './MarketCard';
+
 // June 12, 2026 9:30 AM EDT (NYSE open) = 13:30 UTC
 const IPO_MS = new Date('2026-06-12T13:30:00Z').getTime();
 // S-1 filing date (May 20)
 const S1_MS = new Date('2026-05-20T00:00:00Z').getTime();
+
+type SpaceXCountdownPageProps = {
+  prices: Record<string, MarketPrice>;
+  priceHistory: Record<string, PriceHistoryPoint[]>;
+  now: number;
+  isWeekendMode: boolean;
+  alerts: Alert[];
+  addAlert: (symbol: string, condition: AlertCondition, threshold: number) => void;
+  removeAlert: (alertId: string) => void;
+  requestPermission: () => Promise<void>;
+  permissionStatus: NotificationPermissionStatus;
+};
 
 const pad = (n: number) => String(Math.floor(n)).padStart(2, '0');
 
@@ -52,19 +74,31 @@ const Separator = () => (
   </span>
 );
 
-export const SpaceXCountdownPage = () => {
-  const [now, setNow] = useState(() => Date.now());
+const spcxMarket = IPO_MARKETS.find((m) => m.symbol === 'SPCX');
+
+export const SpaceXCountdownPage = ({
+  prices,
+  priceHistory,
+  now,
+  isWeekendMode,
+  alerts,
+  addAlert,
+  removeAlert,
+  requestPermission,
+  permissionStatus,
+}: SpaceXCountdownPageProps) => {
+  const [localNow, setLocalNow] = useState(() => now);
 
   useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 1_000);
+    const id = window.setInterval(() => setLocalNow(Date.now()), 1_000);
     return () => window.clearInterval(id);
   }, []);
 
-  const { d, h, m, s, done } = useMemo(() => getCountdown(now), [now]);
-  const progress = useMemo(() => getProgress(now), [now]);
+  const { d, h, m, s, done } = useMemo(() => getCountdown(localNow), [localNow]);
+  const progress = useMemo(() => getProgress(localNow), [localNow]);
 
   const tweetText = encodeURIComponent(
-    `🚀 SpaceX IPO まであと${d}日！\n6月12日 9:30 AM ET (NYSE) に上場予定\nHyperliquidで今すぐ先行取引できます\n\n#SpaceX #SPCX #Hyperliquid`,
+    `🚀 SpaceX IPO まであと${d}日！\n6月12日 9:30 AM ET (NYSE) に上場予定\n\n#SpaceX #SPCX #Hyperliquid`,
   );
 
   return (
@@ -114,9 +148,6 @@ export const SpaceXCountdownPage = () => {
         <p className="mt-3 text-sm text-slate-400 sm:text-base">
           June 12, 2026 · 9:30 AM ET · NYSE:{' '}
           <span className="font-bold text-amber-300">SPCX</span>
-        </p>
-        <p className="mt-1 text-xs text-slate-600">
-          Hyperliquidでは今すぐ先行取引可能
         </p>
 
         {/* Countdown */}
@@ -171,12 +202,12 @@ export const SpaceXCountdownPage = () => {
         {/* CTA buttons */}
         <div className="mt-10 flex flex-wrap justify-center gap-3">
           <a
-            href="https://app.hyperliquid.xyz/"
+            href="https://app.hyperliquid.xyz/trade/SPCX"
             rel="noopener noreferrer nofollow"
             target="_blank"
             className="inline-flex min-h-11 items-center gap-2 rounded-full bg-amber-400 px-6 text-sm font-bold text-slate-950 transition hover:bg-amber-300"
           >
-            🚀 Hyperliquidで先行取引
+            📈 参考チャートを見る
           </a>
           <a
             href={`https://twitter.com/intent/tweet?text=${tweetText}`}
@@ -193,13 +224,35 @@ export const SpaceXCountdownPage = () => {
             📊 相場ボードを見る
           </a>
         </div>
-
-        {/* Disclaimer */}
-        <p className="mt-16 max-w-md text-center text-xs leading-6 text-slate-700">
-          非公式ファンページです。上場日時・ティッカーは報道ベースであり、変更される可能性があります。
-          投資判断はご自身の責任で行ってください。
-        </p>
       </div>
+
+      {/* SPCX MarketCard */}
+      {spcxMarket && (
+        <div className="relative mx-auto max-w-sm px-4 pb-12 sm:px-6 lg:px-8">
+          <p className="mb-4 text-center text-sm font-semibold text-amber-300/70">
+            SPCX 参考価格（Hyperliquid）
+          </p>
+          <MarketCard
+            market={spcxMarket}
+            price={prices['SPCX']}
+            now={localNow}
+            isWeekendMode={isWeekendMode}
+            priceHistory={priceHistory['SPCX'] ?? []}
+            alerts={alerts}
+            addAlert={addAlert}
+            removeAlert={removeAlert}
+            requestPermission={requestPermission}
+            permissionStatus={permissionStatus}
+            index={0}
+          />
+        </div>
+      )}
+
+      {/* Disclaimer */}
+      <p className="relative mx-auto max-w-md pb-16 text-center text-xs leading-6 text-slate-700">
+        非公式ファンページです。上場日時・ティッカーは報道ベースであり、変更される可能性があります。
+        投資判断はご自身の責任で行ってください。
+      </p>
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import {
   CRYPTO_MARKETS,
   FOREX_MARKETS,
+  IPO_MARKETS,
   WEEKEND_MARKETS,
   type MarketCategory,
   type MarketConfig,
@@ -34,6 +35,7 @@ const categoryFilters: Array<{
   label: string;
 }> = [
   { value: 'all', label: 'すべて' },
+  { value: 'stock', label: '株式・IPO' },
   { value: 'metal', label: '貴金属' },
   { value: 'energy', label: 'エネルギー' },
   { value: 'index', label: '株価指数' },
@@ -132,6 +134,12 @@ export const MarketBoard = ({
     });
   };
 
+  const filteredIpoMarkets = filterMarkets(
+    IPO_MARKETS,
+    categoryFilter,
+    searchQuery,
+    pinnedSymbols,
+  );
   const filteredWeekendMarkets = filterMarkets(
     WEEKEND_MARKETS,
     categoryFilter,
@@ -162,7 +170,11 @@ export const MarketBoard = ({
     permissionStatus,
   };
   const hasResults =
-    filteredWeekendMarkets.length + filteredCryptoMarkets.length + filteredForexMarkets.length > 0;
+    filteredIpoMarkets.length +
+      filteredWeekendMarkets.length +
+      filteredCryptoMarkets.length +
+      filteredForexMarkets.length >
+    0;
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -216,6 +228,27 @@ export const MarketBoard = ({
           「{searchQuery}」に一致する銘柄が見つかりませんでした
         </p>
       )}
+
+      {filteredIpoMarkets.length > 0 ? (
+        <div className="mb-10">
+          <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+            <div>
+              <p className="text-sm font-semibold text-amber-300">IPO / 期間限定</p>
+              <h2 className="mt-1 text-2xl font-bold text-white">株式・IPO 参考価格</h2>
+            </div>
+            <p className="text-sm text-slate-400">
+              IPO前後の参考価格です。Hyperliquid上の非公式マーケットを表示します。
+            </p>
+          </div>
+          {renderMarketCards(
+            filteredIpoMarkets,
+            cardProps,
+            'grid gap-4 md:grid-cols-2 xl:grid-cols-3',
+            pinnedSymbols,
+            togglePin,
+          )}
+        </div>
+      ) : null}
 
       {filteredWeekendMarkets.length > 0
         ? renderMarketCards(filteredWeekendMarkets, cardProps, undefined, pinnedSymbols, togglePin)

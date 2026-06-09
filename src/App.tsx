@@ -97,7 +97,17 @@ export const App = () => {
       <SpaceXBanner />
       <NewFeaturesTicker />
       {isSpaceXRoute ? (
-        <SpaceXCountdownPage />
+        <SpaceXCountdownPage
+          prices={prices}
+          priceHistory={priceHistory}
+          now={now}
+          isWeekendMode={isWeekendMode}
+          alerts={alerts}
+          addAlert={addAlert}
+          removeAlert={removeAlert}
+          requestPermission={requestPermission}
+          permissionStatus={permissionStatus}
+        />
       ) : isHomeRoute ? (
         <HomePage
           prices={prices}

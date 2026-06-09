@@ -3,6 +3,8 @@ import type { ConnectionStatus, PriceHistoryPoint } from '../hooks/useHyperliqui
 import { SparkLine } from './SparkLine';
 
 const DISCORD_INVITE_URL = 'https://discord.gg/G6xWszr9CZ';
+// JST 2026-06-12 00:00:00
+const SPACEX_IPO_CUTOFF_MS = new Date('2026-06-12T00:00:00+09:00').getTime();
 
 const primaryActions = [
   {
@@ -320,6 +322,32 @@ export const HomePage = ({
           </div>
         </div>
       </section>
+
+      {Date.now() < SPACEX_IPO_CUTOFF_MS && (
+        <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
+          <a
+            href="#/spacex"
+            className="group block overflow-hidden rounded-lg border border-amber-400/20 bg-gradient-to-r from-amber-950/40 via-slate-900/80 to-slate-900/80 p-5 transition hover:border-amber-400/40 hover:from-amber-950/60"
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <span className="shrink-0 rounded bg-amber-400 px-2 py-0.5 text-xs font-black tracking-wide text-slate-950">
+                  期間限定
+                </span>
+                <div>
+                  <p className="font-bold text-white">SpaceX IPO カウントダウン</p>
+                  <p className="mt-0.5 text-sm text-slate-400">
+                    6月12日上場予定 · Hyperliquid参考マーケットのライブ価格を確認できます
+                  </p>
+                </div>
+              </div>
+              <span className="shrink-0 text-sm font-bold text-amber-300 transition group-hover:text-amber-200">
+                特設ページを見る →
+              </span>
+            </div>
+          </a>
+        </section>
+      )}
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
