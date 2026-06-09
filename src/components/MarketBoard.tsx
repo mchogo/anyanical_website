@@ -229,27 +229,6 @@ export const MarketBoard = ({
         </p>
       )}
 
-      {filteredIpoMarkets.length > 0 ? (
-        <div className="mb-10">
-          <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
-            <div>
-              <p className="text-sm font-semibold text-amber-300">IPO / 期間限定</p>
-              <h2 className="mt-1 text-2xl font-bold text-white">株式・IPO 参考価格</h2>
-            </div>
-            <p className="text-sm text-slate-400">
-              IPO前後の参考価格です。Hyperliquid上の非公式マーケットを表示します。
-            </p>
-          </div>
-          {renderMarketCards(
-            filteredIpoMarkets,
-            cardProps,
-            'grid gap-4 md:grid-cols-2 xl:grid-cols-3',
-            pinnedSymbols,
-            togglePin,
-          )}
-        </div>
-      ) : null}
-
       {filteredWeekendMarkets.length > 0
         ? renderMarketCards(filteredWeekendMarkets, cardProps, undefined, pinnedSymbols, togglePin)
         : null}
@@ -270,6 +249,27 @@ export const MarketBoard = ({
             filteredCryptoMarkets,
             cardProps,
             undefined,
+            pinnedSymbols,
+            togglePin,
+          )}
+        </div>
+      ) : null}
+
+      {filteredIpoMarkets.length > 0 ? (
+        <div className="mt-10">
+          <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+            <div>
+              <p className="text-sm font-semibold text-amber-300">IPO / 期間限定</p>
+              <h2 className="mt-1 text-2xl font-bold text-white">株式・IPO 参考価格</h2>
+            </div>
+            <p className="text-sm text-slate-400">
+              IPO前後の参考価格です。Hyperliquid上の非公式マーケットを表示します。
+            </p>
+          </div>
+          {renderMarketCards(
+            filteredIpoMarkets,
+            cardProps,
+            'grid gap-4 md:grid-cols-2 xl:grid-cols-3',
             pinnedSymbols,
             togglePin,
           )}

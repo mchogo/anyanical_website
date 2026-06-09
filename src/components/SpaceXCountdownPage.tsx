@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { IPO_MARKETS } from '../config/markets';
+import { IPO_MARKETS, WEEKEND_MARKETS } from '../config/markets';
 import type { MarketPrice } from '../config/markets';
 import type {
   Alert,
@@ -75,6 +75,10 @@ const Separator = () => (
 );
 
 const spcxMarket = IPO_MARKETS.find((m) => m.symbol === 'SPCX');
+// S&P500, Nikkei225, USD/JPY as IPO context
+const contextMarkets = WEEKEND_MARKETS.filter((m) =>
+  ['SP500', 'JP225', 'USDJPY'].includes(m.symbol),
+);
 
 export const SpaceXCountdownPage = ({
   prices,
@@ -226,27 +230,45 @@ export const SpaceXCountdownPage = ({
         </div>
       </div>
 
-      {/* SPCX MarketCard */}
-      {spcxMarket && (
-        <div className="relative mx-auto max-w-sm px-4 pb-12 sm:px-6 lg:px-8">
-          <p className="mb-4 text-center text-sm font-semibold text-amber-300/70">
-            SPCX 参考価格（Hyperliquid）
-          </p>
-          <MarketCard
-            market={spcxMarket}
-            price={prices['SPCX']}
-            now={localNow}
-            isWeekendMode={isWeekendMode}
-            priceHistory={priceHistory['SPCX'] ?? []}
-            alerts={alerts}
-            addAlert={addAlert}
-            removeAlert={removeAlert}
-            requestPermission={requestPermission}
-            permissionStatus={permissionStatus}
-            index={0}
-          />
+      {/* Market cards */}
+      <div className="relative mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+        <p className="mb-5 text-center text-sm font-semibold text-slate-500">
+          参考価格 · Hyperliquid
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {spcxMarket && (
+            <MarketCard
+              market={spcxMarket}
+              price={prices['SPCX']}
+              now={localNow}
+              isWeekendMode={isWeekendMode}
+              priceHistory={priceHistory['SPCX'] ?? []}
+              alerts={alerts}
+              addAlert={addAlert}
+              removeAlert={removeAlert}
+              requestPermission={requestPermission}
+              permissionStatus={permissionStatus}
+              index={0}
+            />
+          )}
+          {contextMarkets.map((market, i) => (
+            <MarketCard
+              key={market.symbol}
+              market={market}
+              price={prices[market.symbol]}
+              now={localNow}
+              isWeekendMode={isWeekendMode}
+              priceHistory={priceHistory[market.symbol] ?? []}
+              alerts={alerts}
+              addAlert={addAlert}
+              removeAlert={removeAlert}
+              requestPermission={requestPermission}
+              permissionStatus={permissionStatus}
+              index={i + 1}
+            />
+          ))}
         </div>
-      )}
+      </div>
 
       {/* Disclaimer */}
       <p className="relative mx-auto max-w-md pb-16 text-center text-xs leading-6 text-slate-700">
