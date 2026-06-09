@@ -37,21 +37,21 @@ export const SpaceXBanner = () => {
 
   return (
     <div className="relative border-b border-amber-400/20 bg-gradient-to-r from-slate-950 via-amber-950/25 to-slate-950">
-      <div className="mx-auto flex max-w-7xl items-center gap-3 px-3 py-2 sm:px-6 lg:px-8">
-        <span className="shrink-0 rounded bg-amber-400 px-2 py-0.5 text-xs font-black tracking-wide text-slate-950">
+      {/* Tap target covering the whole banner (below dismiss button) */}
+      <a href="#/spacex" className="absolute inset-0 z-0" aria-label="SpaceX IPO 特設ページを見る" />
+
+      <div className="relative z-10 mx-auto flex max-w-7xl items-center gap-3 px-3 py-2 sm:px-6 lg:px-8">
+        <span className="pointer-events-none shrink-0 rounded bg-amber-400 px-2 py-0.5 text-xs font-black tracking-wide text-slate-950">
           NEW
         </span>
 
-        <a
-          href="#/spacex"
-          className="hidden shrink-0 text-sm font-bold text-amber-200 transition hover:text-amber-100 sm:block"
-        >
+        <span className="pointer-events-none hidden shrink-0 text-sm font-bold text-amber-200 sm:block">
           🚀 SpaceX × HL
-        </a>
+        </span>
 
-        <span className="hidden h-3 w-px shrink-0 bg-white/15 sm:block" />
+        <span className="pointer-events-none hidden h-3 w-px shrink-0 bg-white/15 sm:block" />
 
-        <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="pointer-events-none min-w-0 flex-1 overflow-hidden">
           <div className="animate-marquee inline-flex gap-16 whitespace-nowrap">
             {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
               <span key={i} className="text-xs text-slate-400 sm:text-sm">
@@ -61,7 +61,7 @@ export const SpaceXBanner = () => {
           </div>
         </div>
 
-        <span className="hidden shrink-0 font-mono text-xs tabular-nums text-amber-300/70 lg:block">
+        <span className="pointer-events-none hidden shrink-0 font-mono text-xs tabular-nums text-amber-300/70 lg:block">
           残り {formatCountdown(remaining)}
         </span>
 
