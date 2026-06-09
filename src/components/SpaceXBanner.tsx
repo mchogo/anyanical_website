@@ -43,9 +43,7 @@ export const SpaceXBanner = () => {
         </span>
 
         <a
-          href="https://app.hyperliquid.xyz/"
-          rel="noopener noreferrer nofollow"
-          target="_blank"
+          href="#/spacex"
           className="hidden shrink-0 text-sm font-bold text-amber-200 transition hover:text-amber-100 sm:block"
         >
           🚀 SpaceX × HL

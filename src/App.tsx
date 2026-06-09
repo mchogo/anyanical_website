@@ -10,6 +10,7 @@ import { HomePage } from './components/HomePage';
 import { MarketBoard } from './components/MarketBoard';
 import { NewFeaturesTicker } from './components/NewFeaturesTicker';
 import { SpaceXBanner } from './components/SpaceXBanner';
+import { SpaceXCountdownPage } from './components/SpaceXCountdownPage';
 import { ToolPage, type ToolPageId } from './components/ToolPage';
 import { useAlerts } from './hooks/useAlerts';
 import { useHyperliquidMids } from './hooks/useHyperliquidMids';
@@ -65,6 +66,7 @@ export const App = () => {
   const toolPageId = parseToolPageId(route);
   const isHomeRoute = route === '' || route === 'home';
   const isBoardRoute = route === 'board';
+  const isSpaceXRoute = route === 'spacex';
 
   useEffect(() => {
     const timerId = window.setInterval(() => {
@@ -94,7 +96,9 @@ export const App = () => {
       <FloatingNav currentRoute={route} />
       <SpaceXBanner />
       <NewFeaturesTicker />
-      {isHomeRoute ? (
+      {isSpaceXRoute ? (
+        <SpaceXCountdownPage />
+      ) : isHomeRoute ? (
         <HomePage
           prices={prices}
           priceHistory={priceHistory}
