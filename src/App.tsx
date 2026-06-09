@@ -8,6 +8,7 @@ import { FloatingNav } from './components/FloatingNav';
 import { Header } from './components/Header';
 import { HomePage } from './components/HomePage';
 import { MarketBoard } from './components/MarketBoard';
+import { SpaceXBanner } from './components/SpaceXBanner';
 import { ToolPage, type ToolPageId } from './components/ToolPage';
 import { useAlerts } from './hooks/useAlerts';
 import { useHyperliquidMids } from './hooks/useHyperliquidMids';
@@ -90,6 +91,7 @@ export const App = () => {
   return (
     <div className="min-h-screen bg-slate-950 pt-16 text-slate-100">
       <FloatingNav currentRoute={route} />
+      <SpaceXBanner />
       {isHomeRoute ? (
         <HomePage
           prices={prices}
