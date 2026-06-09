@@ -49,9 +49,33 @@ const NavLinks = ({
   </>
 );
 
+const BANNER_KEYS = ['spacex-banner-dismissed', 'announce-banner-dismissed'];
+
+const hasDismissedBanners = () =>
+  BANNER_KEYS.some((key) => sessionStorage.getItem(key) === '1');
+
 export const FloatingNav = ({ currentRoute }: FloatingNavProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [showNotifDot, setShowNotifDot] = useState(() => hasDismissedBanners());
+
+  useEffect(() => {
+    const onDismissed = () => setShowNotifDot(true);
+    const onReset = () => setShowNotifDot(false);
+    window.addEventListener('banner:dismissed', onDismissed);
+    window.addEventListener('banner:reset', onReset);
+    return () => {
+      window.removeEventListener('banner:dismissed', onDismissed);
+      window.removeEventListener('banner:reset', onReset);
+    };
+  }, []);
+
+  const handleResetBanners = () => {
+    BANNER_KEYS.forEach((key) => sessionStorage.removeItem(key));
+    window.dispatchEvent(new Event('banner:reset'));
+    setIsOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -95,6 +119,19 @@ export const FloatingNav = ({ currentRoute }: FloatingNavProps) => {
 
         <div className="hidden items-center gap-2 overflow-x-auto md:flex">
           <NavLinks currentRoute={currentRoute} />
+          <div className="relative ml-1">
+            <button
+              type="button"
+              onClick={handleResetBanners}
+              title="お知らせを再表示"
+              className="inline-flex min-h-9 items-center justify-center rounded-full bg-white/[0.04] px-3 text-sm text-slate-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-slate-200"
+            >
+              🔔
+            </button>
+            {showNotifDot && (
+              <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-cyan-400" />
+            )}
+          </div>
         </div>
       </div>
 
@@ -104,6 +141,16 @@ export const FloatingNav = ({ currentRoute }: FloatingNavProps) => {
           className="animate-slide-down mx-auto mt-3 grid max-h-[calc(100vh-4.5rem)] max-w-7xl grid-cols-2 gap-2 overflow-y-auto border-t border-white/10 pt-3 md:hidden"
         >
           <NavLinks currentRoute={currentRoute} onNavigate={() => setIsOpen(false)} />
+          <button
+            type="button"
+            onClick={handleResetBanners}
+            className="col-span-2 mt-1 flex min-h-10 items-center justify-center gap-2 rounded-full bg-white/[0.04] px-4 text-sm font-semibold text-slate-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-slate-200"
+          >
+            🔔 お知らせを再表示
+            {showNotifDot && (
+              <span className="h-2 w-2 rounded-full bg-cyan-400" />
+            )}
+          </button>
         </div>
       ) : null}
     </nav>

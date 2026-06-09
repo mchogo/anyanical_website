@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const ANNOUNCEMENTS = [
   '半裁量EA 配布受付中',
@@ -15,6 +15,15 @@ export const NewFeaturesTicker = () => {
   const [dismissed, setDismissed] = useState(
     () => sessionStorage.getItem('announce-banner-dismissed') === '1',
   );
+
+  useEffect(() => {
+    const handler = () => {
+      sessionStorage.removeItem('announce-banner-dismissed');
+      setDismissed(false);
+    };
+    window.addEventListener('banner:reset', handler);
+    return () => window.removeEventListener('banner:reset', handler);
+  }, []);
 
   if (dismissed) return null;
 
@@ -41,6 +50,7 @@ export const NewFeaturesTicker = () => {
           onClick={() => {
             sessionStorage.setItem('announce-banner-dismissed', '1');
             setDismissed(true);
+            window.dispatchEvent(new Event('banner:dismissed'));
           }}
           className="ml-1 shrink-0 rounded-full p-1 text-slate-700 transition hover:bg-white/10 hover:text-slate-500"
           aria-label="閉じる"

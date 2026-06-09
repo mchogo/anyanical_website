@@ -27,6 +27,15 @@ export const SpaceXBanner = () => {
   );
 
   useEffect(() => {
+    const handler = () => {
+      sessionStorage.removeItem('spacex-banner-dismissed');
+      setDismissed(false);
+    };
+    window.addEventListener('banner:reset', handler);
+    return () => window.removeEventListener('banner:reset', handler);
+  }, []);
+
+  useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1_000);
     return () => window.clearInterval(id);
   }, []);
@@ -70,6 +79,7 @@ export const SpaceXBanner = () => {
           onClick={() => {
             sessionStorage.setItem('spacex-banner-dismissed', '1');
             setDismissed(true);
+            window.dispatchEvent(new Event('banner:dismissed'));
           }}
           className="ml-1 shrink-0 rounded-full p-1 text-slate-600 transition hover:bg-white/10 hover:text-slate-400"
           aria-label="バナーを閉じる"
