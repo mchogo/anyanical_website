@@ -75,13 +75,14 @@ const toolPages: Array<{
   {
     id: 'participation',
     title: 'プレミアム',
-    description: '限定コンテンツ、加入手続き、運用リンク',
+    description: 'noteメンバーシップ、加入手続き、Discord権限付与',
     href: '#/tools/participation',
   },
   {
     id: 'semi-auto-sign',
     title: '半裁量サイン',
-    description: 'XAUUSD専用のDiscord通知サイン。サイン種別・通知チャンネル・利用開始手順を確認します。',
+    description:
+      'XAUUSD専用のDiscord通知サイン。サイン種別・通知チャンネル・利用開始手順を確認します。',
     href: '#/tools/semi-auto-sign',
   },
 ];
@@ -159,7 +160,7 @@ const nextActions: Record<
     },
     {
       title: 'プレミアムを見る',
-      body: 'note加入、申請フォーム、運用リンクを確認します。',
+      body: 'note加入、申請フォーム、Discord権限付与の流れを確認します。',
       href: '#/tools/participation',
     },
   ],
@@ -171,7 +172,7 @@ const nextActions: Record<
     },
     {
       title: 'プレミアムへ',
-      body: 'noteメンバーシップ、申請、各種リンクを確認します。',
+      body: 'noteメンバーシップ、申請、Discord権限付与の流れを確認します。',
       href: '#/tools/participation',
     },
   ],
@@ -202,7 +203,7 @@ const nextActions: Record<
   participation: [
     {
       title: 'Discordコミュニティ',
-      body: 'プレミアム参加後に見られるチャンネル構成を確認します。',
+      body: 'note加入後に見られる限定チャンネル構成を確認します。',
       href: '#/tools/community',
     },
     {
@@ -242,9 +243,15 @@ export const ToolPage = ({
     <main className="animate-fade-in">
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="max-w-4xl">
-          <p className="animate-slide-left text-sm font-semibold text-cyan-200">アニャニカル</p>
-          <h1 className="animate-fade-up stagger-1 mt-1 text-3xl font-bold text-white">{page.title}</h1>
-          <p className="animate-fade-up stagger-2 mt-2 text-sm leading-6 text-slate-400">{pageDescription}</p>
+          <p className="animate-slide-left text-sm font-semibold text-cyan-200">
+            アニャニカル
+          </p>
+          <h1 className="animate-fade-up stagger-1 mt-1 text-3xl font-bold text-white">
+            {page.title}
+          </h1>
+          <p className="animate-fade-up stagger-2 mt-2 text-sm leading-6 text-slate-400">
+            {pageDescription}
+          </p>
         </div>
       </section>
 

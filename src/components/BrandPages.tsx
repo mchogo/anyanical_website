@@ -92,8 +92,8 @@ const premiumStats: StatEntry[] = [
   },
   {
     text: 'Tools',
-    label: '限定ツール',
-    body: 'オリジナルインジ、アラート、EA関連の案内をまとめ、必要な情報へ迷わず移動できるようにします。',
+    label: '限定案内',
+    body: 'note加入者向けの補足記事、Discord権限付与、関連リンクをまとめ、必要な情報へ迷わず移動できるようにします。',
   },
 ];
 
@@ -268,19 +268,60 @@ const participationRoutes = [
 const membershipSteps = [
   {
     title: 'noteメンバーシップへ参加',
-    body: 'まず通常プランへ加入してください。2025/04/01以降の加入は1日約150円のプランが適用されます。',
+    body: 'まず通常プランへ加入してください。募集状況を確認し、参加できる月のみ加入手続きへ進みます。',
+  },
+  {
+    title: 'Discordへ参加',
+    body: '公開チャンネルに入り、サーバー概要と限定チャンネルの案内を確認します。',
   },
   {
     title: '加入確認を送付',
-    body: 'noteのユーザーIDが分かるスクリーンショットを、DiscordまたはXのDMで送ってください。Xで送る場合はDiscord IDも添えてください。',
+    body: 'note会員証のスクリーンショット、note ID、Discord IDをDiscordまたはXのDMで送ってください。',
   },
   {
     title: 'フォーム申請も可能',
     body: 'DMのやり取りを簡略化したい場合は、note加入後に専用フォームから申請できます。',
   },
   {
-    title: '権限付与後に次ステップへ',
-    body: '基本的に1日以内に確認します。権限付与後、必要に応じてTradingView IDなど次の提出へ進んでください。',
+    title: '限定ロール付与を待つ',
+    body: '確認後、Discord側の限定チャンネル権限を付与します。基本的に1日以内の確認を目安にしています。',
+  },
+  {
+    title: '記事・インジ・サインを確認',
+    body: '週末の振り返り、ゴールド/ドル円の先出し考察、オリジナルインジ、半裁量サインの見方を確認します。',
+  },
+];
+
+const premiumFaqItems = [
+  {
+    question: '先出し考察は売買指示ですか？',
+    answer:
+      '売買指示ではありません。ゴールド/ドル円の方向感、注目ライン、崩れる条件を先に整理するものです。最終的なエントリー判断、ロット、損切りは必ず自分のルールで確認してください。',
+  },
+  {
+    question: '半裁量サインだけでエントリーしていいですか？',
+    answer:
+      '推奨していません。半裁量サインは天底候補や反転候補を拾うための通知です。通知をきっかけに、チャート、時間足、指標、リスク許容を確認してから判断してください。',
+  },
+  {
+    question: 'オリジナルインジはどこで使えますか？',
+    answer:
+      'TradingViewでの利用を想定しています。利用にはTradingView IDの連絡や、案内に沿った申請が必要になる場合があります。表示されたサインやラインは判断補助として扱ってください。',
+  },
+  {
+    question: 'note加入後、どれくらいでDiscord権限が付きますか？',
+    answer:
+      '通常は申請内容を確認後、1日以内を目安に権限付与します。note会員証、note ID、Discord IDが確認できない場合は付与が遅れることがあります。',
+  },
+  {
+    question: '初心者でも内容を追えますか？',
+    answer:
+      '追えますが、完全な初心者向けの売買指示サービスではありません。最初は週末の振り返りと毎日の目線を読み、慣れてきたらインジや半裁量サインを判断補助として使う流れがおすすめです。',
+  },
+  {
+    question: '退会したらDiscord権限はどうなりますか？',
+    answer:
+      'noteメンバーシップの退会後は、原則としてDiscordの限定チャンネル権限も対象外になります。再参加する場合は、再度加入確認と申請を行ってください。',
   },
 ];
 
@@ -294,6 +335,45 @@ const planStatus = [
     title: '個別サポート付きプラン',
     status: '満員・非公開',
     body: '現在は非公開です。再募集予定はありません。参加希望の場合はDMで待ちリストへの追加を相談してください。',
+  },
+];
+
+const premiumContentCards = [
+  {
+    title: '週末の振り返り記事',
+    badge: 'Weekend',
+    target: '週明けの見方を整理したい人',
+    body: '週末に出た材料、金曜クローズからの変化、月曜に見るべきポイントを記事でまとめます。',
+    items: ['週末材料', '金曜比の整理', '週明けの注目点'],
+    href: NOTE_MEMBERSHIP_URL,
+    label: 'noteで確認',
+  },
+  {
+    title: 'ゴールド/ドル円の先出し考察',
+    badge: 'Daily',
+    target: 'エントリー前に目線を作りたい人',
+    body: '毎日更新で、ゴールドとドル円の方向感、注目ライン、崩れる条件を先に出します。',
+    items: ['毎日更新', 'XAUUSD', 'USDJPY'],
+    href: NOTE_MEMBERSHIP_URL,
+    label: '考察を見る',
+  },
+  {
+    title: '相場の見方が変わるオリジナルインジ',
+    badge: 'Indicator',
+    target: 'チャート判断を補助したい人',
+    body: '注目すべき価格帯や反応を見つけやすくするための、オリジナルインジ案内を確認できます。',
+    items: ['TradingView', '注目価格帯', '判断補助'],
+    href: INDICATORS_NOTE_URL,
+    label: 'インジを見る',
+  },
+  {
+    title: '天底を捉える半裁量サイン',
+    badge: 'Signal',
+    target: '反転候補を通知で拾いたい人',
+    body: 'XAUUSDの天井・底になりやすい場面を、Discord通知で確認できる半裁量サインです。',
+    items: ['XAUUSD', 'Discord通知', '半裁量判断'],
+    href: '#/tools/semi-auto-sign',
+    label: 'サインを見る',
   },
 ];
 
@@ -340,7 +420,7 @@ const faqItems = [
   {
     question: 'なぜサブスク形式で運営しているのですか？',
     answer:
-      '完全に「気分」です。執着はしていないので、気分次第で突然やめるかもしれません。それくらいの温度感で運営している覗き部屋だと思ってください。1日150円で運営しているので、半裁量サインに適当に乗っていれば余裕でペイできます。',
+      '毎日の考察、週末の振り返り、インジや半裁量サインの案内を継続して見返せる場所にしたいからです。短期の煽りではなく、日々の目線作りに使う覗き部屋として運営しています。',
   },
   {
     question: 'デイスイングbotのチャンネルが見当たりません',
@@ -367,7 +447,7 @@ export const StrategyGuidePage = () => (
         <div>
           <p className="text-sm font-semibold text-emerald-200">おすすめ</p>
           <h3 className="mt-1 text-lg font-bold text-white">
-            興味に合わせて選べるプレミアム案内
+            興味に合わせて選べる関連案内
           </h3>
         </div>
         <p className="text-sm text-slate-400">
@@ -555,7 +635,7 @@ export const CommunityGuidePage = () => (
         href="#/tools/participation"
         className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg bg-cyan-300 px-5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200"
       >
-        プレミアムコンテンツを確認
+        プレミアムを確認
       </a>
     </section>
 
@@ -591,11 +671,11 @@ export const ParticipationGuidePage = () => (
   <section className="space-y-6">
     <section className="overflow-hidden rounded-lg border border-amber-300/20 bg-slate-900/90">
       <div className="bg-amber-300/10 p-5">
-        <p className="text-sm font-semibold text-amber-200">Premium contents</p>
-        <h2 className="mt-2 text-2xl font-bold text-white">プレミアムコンテンツ</h2>
+        <p className="text-sm font-semibold text-amber-200">Premium</p>
+        <h2 className="mt-2 text-2xl font-bold text-white">プレミアム案内</h2>
         <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">
-          noteメンバーシップ参加者向けに、日々の相場考察、Discord限定チャンネル、インジ関連情報、運用リンクをまとめています。
-          加入後に確認申請を行うと、限定チャンネル権限を付与します。
+          プレミアムはnoteメンバーシップです。週末の振り返り記事、ゴールド/ドル円の先出し考察、オリジナルインジ、半裁量サインをまとめています。
+          加入後に確認申請を行うと、Discord側の限定チャンネル権限を付与します。
         </p>
       </div>
       <div className="grid gap-0 border-t border-white/10 sm:grid-cols-2 lg:grid-cols-4">
@@ -607,6 +687,54 @@ export const ParticipationGuidePage = () => (
             <p className="text-3xl font-black text-amber-200">{renderStatValue(stat)}</p>
             <h3 className="mt-3 text-lg font-bold text-white">{stat.label}</h3>
             <p className="mt-3 text-sm leading-6 text-slate-400">{stat.body}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-semibold text-amber-200">Included contents</p>
+          <h3 className="mt-1 text-lg font-bold text-white">
+            プレミアムで確認できる内容
+          </h3>
+        </div>
+        <p className="text-sm text-slate-500">
+          相場を見る基準、週明けの準備、チャート判断の補助、通知サインをまとめています。
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-4">
+        {premiumContentCards.map((card) => (
+          <article
+            key={card.title}
+            className="flex min-h-full flex-col rounded-lg border border-white/10 bg-slate-950/40 p-5"
+          >
+            <span className="w-fit rounded-full bg-amber-300/10 px-3 py-1 text-xs font-bold text-amber-200 ring-1 ring-amber-300/20">
+              {card.badge}
+            </span>
+            <h4 className="mt-4 text-lg font-bold text-white">{card.title}</h4>
+            <p className="mt-2 text-xs font-semibold text-slate-500">{card.target}</p>
+            <p className="mt-3 text-sm leading-6 text-slate-400">{card.body}</p>
+            <ul className="mt-4 space-y-2 text-sm text-slate-300">
+              {card.items.map((item) => (
+                <li key={item} className="flex gap-2">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <a
+              href={card.href}
+              rel={
+                card.href.startsWith('http') ? 'nofollow noopener noreferrer' : undefined
+              }
+              target={card.href.startsWith('http') ? '_blank' : undefined}
+              className="mt-5 inline-flex min-h-10 items-center justify-center rounded-lg bg-amber-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-200"
+            >
+              {card.label}
+            </a>
           </article>
         ))}
       </div>
@@ -660,7 +788,15 @@ export const ParticipationGuidePage = () => (
     </section>
 
     <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
-      <h3 className="text-lg font-bold text-white">加入後の流れ</h3>
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-semibold text-amber-200">After joining</p>
+          <h3 className="mt-1 text-lg font-bold text-white">加入後の流れ</h3>
+        </div>
+        <p className="text-sm text-slate-500">
+          note加入後、Discord側の権限付与まで申請が必要です。
+        </p>
+      </div>
       <ol className="mt-4 grid gap-3 md:grid-cols-2">
         {membershipSteps.map((step, index) => (
           <li
@@ -680,7 +816,42 @@ export const ParticipationGuidePage = () => (
 
       <div className="mt-4 rounded-lg border border-red-300/20 bg-red-300/10 p-4 text-sm leading-6 text-red-100">
         最重要:
-        noteメンバーシップへの加入完了後に、DMまたはフォーム申請を行ってください。加入前の申請では確認できません。
+        noteメンバーシップへの加入完了後に、DMまたはフォーム申請を行ってください。申請がない場合、Discord限定チャンネルの権限付与ができません。
+      </div>
+    </section>
+
+    <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-semibold text-amber-200">Premium FAQ</p>
+          <h3 className="mt-1 text-lg font-bold text-white">プレミアムのよくある質問</h3>
+        </div>
+        <p className="text-sm text-slate-500">
+          加入前に迷いやすい、考察・インジ・サイン・権限付与の扱いです。
+        </p>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {premiumFaqItems.map((item) => (
+          <details
+            key={item.question}
+            className="rounded-lg border border-white/10 bg-white/[0.035]"
+          >
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 text-sm font-semibold text-white">
+              <span>{item.question}</span>
+              <span className="faq-icon grid h-7 w-7 shrink-0 place-items-center rounded-full bg-amber-300/10 text-amber-200 ring-1 ring-amber-300/20">
+                +
+              </span>
+            </summary>
+            <div className="faq-body border-t border-white/10">
+              <div className="faq-body-inner">
+                <p className="px-4 py-4 text-sm leading-6 text-slate-400">
+                  {item.answer}
+                </p>
+              </div>
+            </div>
+          </details>
+        ))}
       </div>
     </section>
 

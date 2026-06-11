@@ -83,7 +83,7 @@ const relatedTools = [
   },
   {
     title: 'プレミアム',
-    description: '限定コンテンツ、加入手続き、運用リンク',
+    description: 'noteメンバーシップ、加入手続き、Discord権限付与',
     href: '#/tools/participation',
   },
   {
