@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react';
 
-import { EXTERNAL_LINKS, INTERNAL_NAV_LINKS } from '../config/navigation';
+import { EXTERNAL_LINKS, NAV_LINK_GROUPS } from '../config/navigation';
 
 type FloatingNavProps = {
   currentRoute: string;
+};
+
+type NavLink = {
+  label: string;
+  href: string;
 };
 
 const isActiveRoute = (href: string, currentRoute: string) => {
@@ -11,29 +16,165 @@ const isActiveRoute = (href: string, currentRoute: string) => {
   return linkRoute === currentRoute || (linkRoute === '' && currentRoute === '');
 };
 
-const NavLinks = ({
+const isActiveGroup = (links: readonly NavLink[], currentRoute: string) =>
+  links.some((link) => isActiveRoute(link.href, currentRoute));
+
+const marketNavGroup = NAV_LINK_GROUPS[0];
+const standardNavLinks: NavLink[] = NAV_LINK_GROUPS.slice(1).flatMap((group) => [
+  ...group.links,
+]);
+
+const DesktopNavLinks = ({
   currentRoute,
   onNavigate,
-}: FloatingNavProps & { onNavigate?: () => void }) => (
-  <>
-    {INTERNAL_NAV_LINKS.map((link) => {
-      const isActive = isActiveRoute(link.href, currentRoute);
+}: FloatingNavProps & { onNavigate?: () => void }) => {
+  const [isMarketOpen, setIsMarketOpen] = useState(false);
+  const isMarketActive = isActiveGroup(marketNavGroup.links, currentRoute);
 
-      return (
-        <a
-          key={link.href}
-          href={link.href}
-          onClick={onNavigate}
-          className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold ring-1 transition ${
-            isActive
+  const handleNavigate = () => {
+    setIsMarketOpen(false);
+    onNavigate?.();
+  };
+
+  return (
+    <>
+      <div className="relative">
+        <button
+          type="button"
+          aria-expanded={isMarketOpen}
+          onClick={() => setIsMarketOpen((current) => !current)}
+          className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold ring-1 transition ${
+            isMarketActive
               ? 'bg-cyan-300 text-slate-950 ring-cyan-200'
               : 'bg-white/[0.04] text-slate-200 ring-white/10 hover:bg-cyan-300/10 hover:text-cyan-100 hover:ring-cyan-300/30'
           }`}
         >
+          {marketNavGroup.label}
+          <span className="text-xs opacity-70">{isMarketOpen ? '▲' : '▼'}</span>
+        </button>
+
+        {isMarketOpen ? (
+          <div className="absolute right-0 top-full z-50 mt-3 w-64 rounded-lg border border-white/10 bg-slate-950/95 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur">
+            <p className="px-3 py-2 text-xs font-semibold text-slate-500">
+              {marketNavGroup.description}
+            </p>
+            <div className="space-y-1">
+              {marketNavGroup.links.map((link) => {
+                const isLinkActive = isActiveRoute(link.href, currentRoute);
+
+                return (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={handleNavigate}
+                    className={`block rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                      isLinkActive
+                        ? 'bg-cyan-300 text-slate-950'
+                        : 'text-slate-200 hover:bg-white/[0.06] hover:text-cyan-100'
+                    }`}
+                  >
+                    {link.label}
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {standardNavLinks.map((link) => {
+        const isActive = isActiveRoute(link.href, currentRoute);
+
+        return (
+          <a
+            key={link.href}
+            href={link.href}
+            onClick={handleNavigate}
+            className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold ring-1 transition ${
+              isActive
+                ? 'bg-cyan-300 text-slate-950 ring-cyan-200'
+                : 'bg-white/[0.04] text-slate-200 ring-white/10 hover:bg-cyan-300/10 hover:text-cyan-100 hover:ring-cyan-300/30'
+            }`}
+          >
+            {link.label}
+          </a>
+        );
+      })}
+
+      {EXTERNAL_LINKS.map((link) => (
+        <a
+          key={link.href}
+          href={link.href}
+          rel="noopener noreferrer"
+          target="_blank"
+          onClick={onNavigate}
+          className="shrink-0 rounded-full bg-emerald-300/10 px-4 py-2 text-sm font-semibold text-emerald-200 ring-1 ring-emerald-300/30 transition hover:bg-emerald-300/20"
+        >
           {link.label}
         </a>
-      );
-    })}
+      ))}
+    </>
+  );
+};
+
+const MobileNavLinks = ({
+  currentRoute,
+  onNavigate,
+}: FloatingNavProps & { onNavigate?: () => void }) => (
+  <>
+    <details
+      className="col-span-2 rounded-lg border border-white/10 bg-white/[0.035] p-3"
+      open={isActiveGroup(marketNavGroup.links, currentRoute)}
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-white">
+        <span>{marketNavGroup.label}</span>
+        <span className="text-xs font-semibold text-slate-500">
+          {marketNavGroup.description}
+        </span>
+      </summary>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {marketNavGroup.links.map((link) => {
+          const isActive = isActiveRoute(link.href, currentRoute);
+
+          return (
+            <a
+              key={link.href}
+              href={link.href}
+              onClick={onNavigate}
+              className={`flex min-h-10 items-center justify-center rounded-full px-3 text-sm font-semibold ring-1 transition ${
+                isActive
+                  ? 'bg-cyan-300 text-slate-950 ring-cyan-200'
+                  : 'bg-white/[0.04] text-slate-200 ring-white/10 hover:bg-cyan-300/10 hover:text-cyan-100'
+              }`}
+            >
+              {link.label}
+            </a>
+          );
+        })}
+      </div>
+    </details>
+
+    <div className="col-span-2 grid grid-cols-2 gap-2">
+      {standardNavLinks.map((link) => {
+        const isActive = isActiveRoute(link.href, currentRoute);
+
+        return (
+          <a
+            key={link.href}
+            href={link.href}
+            onClick={onNavigate}
+            className={`flex min-h-10 items-center justify-center rounded-full px-3 text-sm font-semibold ring-1 transition ${
+              isActive
+                ? 'bg-cyan-300 text-slate-950 ring-cyan-200'
+                : 'bg-white/[0.04] text-slate-200 ring-white/10 hover:bg-cyan-300/10 hover:text-cyan-100'
+            }`}
+          >
+            {link.label}
+          </a>
+        );
+      })}
+    </div>
+
     {EXTERNAL_LINKS.map((link) => (
       <a
         key={link.href}
@@ -41,7 +182,7 @@ const NavLinks = ({
         rel="noopener noreferrer"
         target="_blank"
         onClick={onNavigate}
-        className="shrink-0 rounded-full bg-emerald-300/10 px-4 py-2 text-sm font-semibold text-emerald-200 ring-1 ring-emerald-300/30 transition hover:bg-emerald-300/20"
+        className="col-span-2 flex min-h-10 items-center justify-center rounded-full bg-emerald-300/10 px-4 text-sm font-semibold text-emerald-200 ring-1 ring-emerald-300/30 transition hover:bg-emerald-300/20"
       >
         {link.label}
       </a>
@@ -117,8 +258,8 @@ export const FloatingNav = ({ currentRoute }: FloatingNavProps) => {
           {isOpen ? '閉じる' : 'メニュー'}
         </button>
 
-        <div className="hidden items-center gap-2 overflow-x-auto md:flex">
-          <NavLinks currentRoute={currentRoute} />
+        <div className="hidden items-center gap-2 md:flex">
+          <DesktopNavLinks currentRoute={currentRoute} />
           <div className="relative ml-1">
             <button
               type="button"
@@ -140,16 +281,17 @@ export const FloatingNav = ({ currentRoute }: FloatingNavProps) => {
           id="mobile-primary-nav"
           className="animate-slide-down mx-auto mt-3 grid max-h-[calc(100vh-4.5rem)] max-w-7xl grid-cols-2 gap-2 overflow-y-auto border-t border-white/10 pt-3 md:hidden"
         >
-          <NavLinks currentRoute={currentRoute} onNavigate={() => setIsOpen(false)} />
+          <MobileNavLinks
+            currentRoute={currentRoute}
+            onNavigate={() => setIsOpen(false)}
+          />
           <button
             type="button"
             onClick={handleResetBanners}
             className="col-span-2 mt-1 flex min-h-10 items-center justify-center gap-2 rounded-full bg-white/[0.04] px-4 text-sm font-semibold text-slate-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-slate-200"
           >
             🔔 お知らせを再表示
-            {showNotifDot && (
-              <span className="h-2 w-2 rounded-full bg-cyan-400" />
-            )}
+            {showNotifDot && <span className="h-2 w-2 rounded-full bg-cyan-400" />}
           </button>
         </div>
       ) : null}

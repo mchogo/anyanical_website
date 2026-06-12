@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
+import recommendedSettingNote from '../assets/copytrade/recommended-setting-note.png';
+import recommendedSettingScreen from '../assets/copytrade/recommended-setting-screen.png';
 import cancelCountProof from '../assets/proof/cancel-count.png';
 import memberCountProof from '../assets/proof/member-count.png';
 import { EXTERNAL_LINKS } from '../config/navigation';
@@ -399,17 +401,55 @@ const premiumContentCards = [
 const copyTradeStrategies = [
   {
     title: 'Anya Gold Cent',
-    subtitle: 'セント口座ストラテジー',
+    subtitle: '公開中 / セント口座ストラテジー',
     body: '小さめの資金単位で始めたい人向け。ID: 153191918 / 0.01ロット / 2000セント',
     href: 'https://my.hfm.com/jp/copy-trading/provider-details?provider=153191918',
-    label: 'ストラテジー詳細',
+    label: '公開ページを見る',
   },
   {
     title: 'Anya Gold',
-    subtitle: 'ドル口座ストラテジー',
+    subtitle: '公開中 / ドル口座ストラテジー',
     body: 'ドル建て口座で標準的に運用したい人向け。ID: 147038068 / 0.01ロット / 1000ドル',
     href: 'https://my.hfm.com/jp/copy-trading/provider-details?provider=147038068',
-    label: 'ストラテジー詳細',
+    label: '公開ページを見る',
+  },
+];
+
+const copyTradeNoticeItems = [
+  {
+    title: '公開中のストラテジー',
+    badge: 'Public',
+    body: 'Anya Gold Cent と Anya Gold をHFM側で公開しています。上のストラテジーカードから各公開ページを確認してください。',
+  },
+  {
+    title: '取引ロジック',
+    badge: 'Logic',
+    body: '半裁量EAによる運用です。完全自動放置ではなく、相場環境に応じた裁量判断を組み合わせたハイブリッドなEA運用を行います。',
+  },
+  {
+    title: 'TradingView複合シグナル',
+    badge: 'Signal',
+    body: 'TradingView上の複数ストラテジーを複合的に組み合わせ、最適なエントリーシグナルを飛ばして発注しています。',
+  },
+  {
+    title: '資金管理・出金ルール',
+    badge: 'Risk',
+    body: 'リスクヘッジおよび倍率ズレを防ぐため、1000ドルを超えた分は週末に定期的に資金を抜く予定です。複利運用を止めるものではありませんが、リスク管理は必ず行ってください。',
+  },
+];
+
+const copyTradeRecommendedSettings = [
+  {
+    title: 'HFM設定画面',
+    body: 'Volume Allocation 100%、レスキューレベル 0% を目安にします。',
+    src: recommendedSettingScreen,
+    alt: 'HFMのコピー取引設定画面でVolume Allocationが100%、レスキューレベルが0%になっている推奨設定例',
+  },
+  {
+    title: '設定値のメモ',
+    body: '最小取引量はチェック、最大取引量は任意です。損切りを入れたい場合はレスキューレベルを調整してください。',
+    src: recommendedSettingNote,
+    alt: 'HFMコピー取引の推奨設定値をまとめたメモ',
   },
 ];
 
@@ -634,6 +674,103 @@ export const CopyTradeGuidePage = () => (
           </article>
         ))}
       </div>
+    </section>
+
+    <section className="rounded-lg border border-emerald-300/20 bg-slate-900/80 p-5">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-semibold text-emerald-200">Notice</p>
+          <h3 className="mt-1 text-lg font-bold text-white">
+            ストラテジー公開のお知らせ
+          </h3>
+        </div>
+        <p className="text-sm text-slate-500">参加前に必ず確認してください。</p>
+      </div>
+
+      <div className="mt-4 rounded-lg border border-white/10 bg-slate-950/40 p-4">
+        <p className="text-sm leading-6 text-slate-300">
+          HFMにてコピートレードのストラテジーを公開しました。半裁量EAを使ったストラテジーです。
+          運用の詳細および重要な資金管理ルールをまとめています。
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        {copyTradeNoticeItems.map((item) => (
+          <article
+            key={item.title}
+            className="rounded-lg border border-white/10 bg-white/[0.035] p-4"
+          >
+            <span className="rounded-full bg-emerald-300/10 px-3 py-1 text-xs font-bold text-emerald-200 ring-1 ring-emerald-300/20">
+              {item.badge}
+            </span>
+            <h4 className="mt-3 font-bold text-white">{item.title}</h4>
+            <p className="mt-2 text-sm leading-6 text-slate-400">{item.body}</p>
+          </article>
+        ))}
+      </div>
+
+      <div className="mt-4 rounded-lg border border-white/10 bg-slate-950/40 p-4">
+        <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+          <div>
+            <p className="text-sm font-semibold text-emerald-200">Recommended settings</p>
+            <h4 className="mt-1 font-bold text-white">推奨設定イメージ</h4>
+          </div>
+          <p className="text-sm text-slate-500">
+            参加前にHFM側の設定値を必ず確認してください。
+          </p>
+        </div>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+          {copyTradeRecommendedSettings.map((setting) => (
+            <article
+              key={setting.title}
+              className="overflow-hidden rounded-lg border border-white/10 bg-slate-950"
+            >
+              <a
+                href={setting.src}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block max-h-72 overflow-hidden bg-white transition opacity-95 hover:opacity-100"
+              >
+                <img
+                  src={setting.src}
+                  alt={setting.alt}
+                  className="h-auto w-full object-cover object-top"
+                  loading="lazy"
+                />
+              </a>
+              <div className="border-t border-white/10 bg-slate-950 p-4">
+                <h5 className="font-bold text-white">{setting.title}</h5>
+                <p className="mt-2 text-sm leading-6 text-slate-400">{setting.body}</p>
+                <a
+                  href={setting.src}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex min-h-9 items-center justify-center rounded-lg bg-white px-4 text-sm font-bold text-slate-950 transition hover:bg-slate-200"
+                >
+                  画像を大きく見る
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-lg border border-red-300/20 bg-red-300/10 p-4">
+        <h4 className="font-bold text-red-100">
+          重要: ナンピンおよびコピー倍率に関する注意点
+        </h4>
+        <p className="mt-2 text-sm leading-6 text-red-100/90">
+          本ストラテジーは、相場状況によってナンピン（ポジションの追加保有）を行うケースがあります。
+          コピー倍率のバランスによっては、ナンピンポジションが正しくコピーされない危険性があります。
+          その結果、親口座と比べて損失が発生したり、利益が目減りしたりする可能性があります。
+          倍率設定は慎重に行ってください。
+        </p>
+      </div>
+
+      <p className="mt-3 text-xs leading-5 text-slate-500">
+        投資は自己責任です。参加する場合は余剰資金で行い、損失リスクを理解したうえで判断してください。
+      </p>
     </section>
 
     <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
