@@ -6,6 +6,7 @@ import {
 } from './RelatedTools';
 import {
   CommunityGuidePage,
+  CopyTradeGuidePage,
   ParticipationGuidePage,
   SemiAutoSignPage,
   StrategyGuidePage,
@@ -19,6 +20,7 @@ export type ToolPageId =
   | 'gap-watch'
   | 'ea-checklist'
   | 'strategy'
+  | 'copytrade'
   | 'community'
   | 'participation'
   | 'semi-auto-sign';
@@ -63,8 +65,14 @@ const toolPages: Array<{
   {
     id: 'strategy',
     title: '戦略',
-    description: 'サブスク、Discord、コピトレ、半裁量EAの活用案内',
+    description: 'プレミアム、Discord、半裁量EAの活用案内',
     href: '#/tools/strategy',
+  },
+  {
+    id: 'copytrade',
+    title: 'HFMコピトレ',
+    description: 'Anya Gold Cent / Anya Gold のストラテジー情報',
+    href: '#/tools/copytrade',
   },
   {
     id: 'community',
@@ -110,6 +118,8 @@ const renderTool = (
       return <EaChecklistTool />;
     case 'strategy':
       return <StrategyGuidePage />;
+    case 'copytrade':
+      return <CopyTradeGuidePage />;
     case 'community':
       return <CommunityGuidePage />;
     case 'participation':
@@ -148,7 +158,7 @@ const nextActions: Record<
     },
     {
       title: '戦略ページへ',
-      body: 'サブスク、コピトレ、半裁量EAの活用イメージを確認します。',
+      body: 'プレミアム、Discord、半裁量EAの活用イメージを確認します。',
       href: '#/tools/strategy',
     },
   ],
@@ -183,9 +193,21 @@ const nextActions: Record<
       href: '#/tools/participation',
     },
     {
-      title: 'Discordコミュニティ',
-      body: '限定チャンネル、インジ、EA関連の見方を確認します。',
-      href: '#/tools/community',
+      title: 'HFMコピトレ',
+      body: 'Anya Gold Cent / Anya Gold のストラテジー情報を確認します。',
+      href: '#/tools/copytrade',
+    },
+  ],
+  copytrade: [
+    {
+      title: '戦略ページへ',
+      body: 'プレミアム、Discord、半裁量EAの使い分けを確認します。',
+      href: '#/tools/strategy',
+    },
+    {
+      title: 'EAチェック',
+      body: '稼働前のリスク確認、ロット、停止条件を確認します。',
+      href: '#/tools/ea-checklist',
     },
   ],
   community: [
@@ -196,7 +218,7 @@ const nextActions: Record<
     },
     {
       title: '戦略ページへ',
-      body: 'サブスク、コピトレ、半裁量EAの活用イメージを確認します。',
+      body: 'プレミアム、半裁量EA、コピトレの位置づけを確認します。',
       href: '#/tools/strategy',
     },
   ],
@@ -219,9 +241,9 @@ const nextActions: Record<
       href: '#/tools/ea-checklist',
     },
     {
-      title: '戦略ページへ',
-      body: 'EA導入手順、Exness口座開設、HFMストラテジーの概要を確認します。',
-      href: '#/tools/strategy',
+      title: 'HFMコピトレ',
+      body: 'HFM側のストラテジー情報を確認します。',
+      href: '#/tools/copytrade',
     },
   ],
 };

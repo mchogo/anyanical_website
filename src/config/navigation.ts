@@ -24,6 +24,10 @@ export const INTERNAL_NAV_LINKS = [
     href: '#/tools/strategy',
   },
   {
+    label: 'コピトレ',
+    href: '#/tools/copytrade',
+  },
+  {
     label: 'コミュニティ',
     href: '#/tools/community',
   },

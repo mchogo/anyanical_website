@@ -119,15 +119,15 @@ const strategyOfferCards = [
     title: 'HFMコピートレード',
     badge: 'Copy trade',
     body: 'Anya Gold Cent / Anya Gold のストラテジー情報を確認できます。資金量とロット比率を理解したうえで検討してください。',
-    href: '#/tools/participation',
-    label: 'ストラテジーを見る',
+    href: '#/tools/copytrade',
+    label: 'コピトレを見る',
   },
   {
     title: '半裁量EA',
     badge: 'Semi-auto EA',
     body: '指定リンクで開設したExness口座を認証し、MT5へEAを設置して使う半裁量運用です。申請フォームと稼働前チェックを確認してください。',
-    href: '#/tools/strategy',
-    label: '導入手順を見る',
+    href: '#/tools/ea-checklist',
+    label: 'EAチェックを見る',
   },
 ];
 
@@ -377,6 +377,23 @@ const premiumContentCards = [
   },
 ];
 
+const copyTradeStrategies = [
+  {
+    title: 'Anya Gold Cent',
+    subtitle: 'セント口座ストラテジー',
+    body: '小さめの資金単位で始めたい人向け。ID: 153191918 / 0.01ロット / 2000セント',
+    href: 'https://my.hfm.com/jp/copy-trading/provider-details?provider=153191918',
+    label: 'ストラテジー詳細',
+  },
+  {
+    title: 'Anya Gold',
+    subtitle: 'ドル口座ストラテジー',
+    body: 'ドル建て口座で標準的に運用したい人向け。ID: 147038068 / 0.01ロット / 1000ドル',
+    href: 'https://my.hfm.com/jp/copy-trading/provider-details?provider=147038068',
+    label: 'ストラテジー詳細',
+  },
+];
+
 const operationLinks = [
   {
     title: 'Exness口座開設',
@@ -384,20 +401,6 @@ const operationLinks = [
     body: 'EA運用環境を準備したい場合の口座開設リンクです。',
     href: EXNESS_SIGNUP_URL,
     label: 'Exnessで口座開設',
-  },
-  {
-    title: 'Anya Gold Cent',
-    subtitle: 'セント口座ストラテジー',
-    body: 'ID: 153191918 / 0.01ロット / 2000セント',
-    href: 'https://my.hfm.com/jp/copy-trading/provider-details?provider=153191918',
-    label: 'ストラテジー詳細',
-  },
-  {
-    title: 'Anya Gold',
-    subtitle: 'ドル口座ストラテジー',
-    body: 'ID: 147038068 / 0.01ロット / 1000ドル',
-    href: 'https://my.hfm.com/jp/copy-trading/provider-details?provider=147038068',
-    label: 'ストラテジー詳細',
   },
 ];
 
@@ -437,7 +440,7 @@ export const StrategyGuidePage = () => (
         相場を見る習慣を、ひとりで終わらせないために
       </h2>
       <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">
-        相場ボードやチャートは、見るだけでは使い切れません。noteメンバーシップ、Discord限定チャンネル、コピートレード、半裁量EAを組み合わせて、
+        相場ボードやチャートは、見るだけでは使い切れません。プレミアム、Discord、半裁量EA、HFMコピトレを目的別に切り分け、
         日々の相場考察、補助ツール、運用前チェックまで見返せるようにしています。
       </p>
     </section>
@@ -562,6 +565,83 @@ export const StrategyGuidePage = () => (
         <div className="rounded-lg border border-red-300/20 bg-red-300/10 p-4 text-sm leading-6 text-red-100">
           既存Exness口座のパートナー紐付け変更はできません。未紐付けの場合は、別メールアドレスまたはGmailエイリアスで指定リンクから新規登録してください。
         </div>
+      </div>
+    </section>
+  </section>
+);
+
+export const CopyTradeGuidePage = () => (
+  <section className="space-y-6">
+    <section className="rounded-lg border border-emerald-300/20 bg-emerald-300/10 p-5">
+      <p className="text-sm font-semibold text-emerald-200">HFM Copy trade</p>
+      <h2 className="mt-2 text-2xl font-bold text-white">HFMコピートレード</h2>
+      <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">
+        HFM側で公開している Anya Gold Cent / Anya Gold
+        のストラテジー情報をまとめています。
+        週利10〜20%をひとつの目安としていますが、相場状況により結果は変動します。資金量、ロット比率、損失リスクを理解したうえで検討してください。
+      </p>
+    </section>
+
+    <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-semibold text-emerald-200">Strategies</p>
+          <h3 className="mt-1 text-lg font-bold text-white">口座タイプ別ストラテジー</h3>
+        </div>
+        <p className="text-sm text-slate-500">
+          ロット比率は運用目安です。開始前にHFM側の条件を必ず確認してください。
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        {copyTradeStrategies.map((strategy) => (
+          <article
+            key={strategy.href}
+            className="rounded-lg border border-white/10 bg-slate-950/40 p-5"
+          >
+            <p className="text-xs font-semibold uppercase text-slate-500">
+              {strategy.subtitle}
+            </p>
+            <h4 className="mt-2 text-xl font-bold text-white">{strategy.title}</h4>
+            <p className="mt-3 text-sm leading-6 text-slate-400">{strategy.body}</p>
+            <a
+              href={strategy.href}
+              rel="nofollow noopener noreferrer"
+              target="_blank"
+              className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg bg-emerald-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-emerald-200"
+            >
+              {strategy.label}
+            </a>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
+      <h3 className="text-lg font-bold text-white">確認してから始めること</h3>
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        {[
+          {
+            title: '資金量とロット比率',
+            body: 'セント口座とドル口座で前提が違います。自分の資金量に合う設定か確認してください。',
+          },
+          {
+            title: 'ドローダウン許容',
+            body: 'コピートレードは損失が出る可能性があります。最大損失を想定してから始めてください。',
+          },
+          {
+            title: '利益目安',
+            body: '週利10〜20%が目安です。ただし相場状況により変動し、利益を保証するものではありません。',
+          },
+        ].map((item) => (
+          <article
+            key={item.title}
+            className="rounded-lg border border-white/10 bg-white/[0.035] p-4"
+          >
+            <h4 className="font-bold text-white">{item.title}</h4>
+            <p className="mt-2 text-sm leading-6 text-slate-400">{item.body}</p>
+          </article>
+        ))}
       </div>
     </section>
   </section>
@@ -856,10 +936,9 @@ export const ParticipationGuidePage = () => (
     </section>
 
     <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
-      <h3 className="text-lg font-bold text-white">運用リンク</h3>
+      <h3 className="text-lg font-bold text-white">EA運用リンク</h3>
       <p className="mt-2 text-sm leading-6 text-slate-500">
-        口座開設、EA、HFM Copy
-        Tradingは任意の運用メニューです。条件やリスクを確認してから利用してください。
+        口座開設やEA関連は任意の運用メニューです。条件やリスクを確認してから利用してください。
       </p>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">

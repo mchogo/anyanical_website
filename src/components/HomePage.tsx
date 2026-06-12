@@ -1,4 +1,5 @@
 import { MARKETS, type MarketPrice } from '../config/markets';
+import { EXTERNAL_LINKS } from '../config/navigation';
 import type { ConnectionStatus, PriceHistoryPoint } from '../hooks/useHyperliquidMids';
 import { SparkLine } from './SparkLine';
 
@@ -57,13 +58,18 @@ const toolRoutes = [
   },
   {
     title: '戦略',
-    body: 'サブスク、コピトレ、半裁量EAの使い分けを確認します。',
+    body: 'プレミアム、Discord、半裁量EAの使い分けを確認します。',
     href: '#/tools/strategy',
+  },
+  {
+    title: 'コピトレ',
+    body: 'HFMのAnya Gold Cent / Anya Gold ストラテジー情報を確認します。',
+    href: '#/tools/copytrade',
   },
   {
     title: 'リンク集',
     body: 'Discord、X、note、各種案内をまとめて確認します。',
-    href: 'https://lit.link/anyafx',
+    href: EXTERNAL_LINKS[0].href,
     external: true,
   },
   {

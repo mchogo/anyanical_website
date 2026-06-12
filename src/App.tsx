@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ChartSection } from './components/ChartSection';
 import { Disclaimer } from './components/Disclaimer';
 import { ExplainerSections } from './components/ExplainerSections';
+import { AnyaAiAssistant } from './components/AnyaAiAssistant';
 import { AlertToasts } from './components/AlertToasts';
 import { FloatingNav } from './components/FloatingNav';
 import { Header } from './components/Header';
@@ -30,6 +31,7 @@ const toolPageIds: ToolPageId[] = [
   'gap-watch',
   'ea-checklist',
   'strategy',
+  'copytrade',
   'community',
   'participation',
   'semi-auto-sign',
@@ -160,6 +162,7 @@ export const App = () => {
         notifications={notifications}
         dismissNotification={dismissNotification}
       />
+      <AnyaAiAssistant />
     </div>
   );
 };

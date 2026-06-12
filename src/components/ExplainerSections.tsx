@@ -73,8 +73,13 @@ const relatedTools = [
   },
   {
     title: '戦略ガイド',
-    description: 'サブスク、コピトレ、半裁量EAの概要',
+    description: 'プレミアム、Discord、半裁量EAの概要',
     href: '#/tools/strategy',
+  },
+  {
+    title: 'HFMコピートレード',
+    description: 'Anya Gold Cent / Anya Gold のストラテジー情報',
+    href: '#/tools/copytrade',
   },
   {
     title: 'コミュニティ案内',
@@ -95,25 +100,6 @@ const relatedTools = [
 ];
 
 const EXNESS_SIGNUP_URL = 'https://x.gd/CxfuR';
-
-const anyaGoldStrategies = [
-  {
-    accountType: 'セント口座ストラテジー',
-    strategyName: 'Anya Gold Cent',
-    strategyId: '153191918',
-    lotRatio: '0.01ロット / 2000セント',
-    note: '小さめの資金単位で運用を始めたい人向け',
-    href: 'https://my.hfm.com/jp/copy-trading/provider-details?provider=153191918',
-  },
-  {
-    accountType: 'ドル口座ストラテジー',
-    strategyName: 'Anya Gold',
-    strategyId: '147038068',
-    lotRatio: '0.01ロット / 1000ドル',
-    note: 'ドル建て口座で標準的に運用したい人向け',
-    href: 'https://my.hfm.com/jp/copy-trading/provider-details?provider=147038068',
-  },
-];
 
 export const ExplainerSections = () => (
   <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
@@ -232,53 +218,25 @@ export const ExplainerSections = () => (
       <div className="mt-5 rounded-lg border border-white/10 bg-slate-950/40 p-4">
         <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-semibold text-emerald-200">Anya Gold strategy</p>
-            <h3 className="mt-1 text-xl font-bold text-white">
-              口座タイプ別ストラテジー
-            </h3>
+            <p className="text-sm font-semibold text-emerald-200">HFM copy trade</p>
+            <h3 className="mt-1 text-xl font-bold text-white">コピトレは専用ページへ</h3>
           </div>
           <p className="text-xs text-slate-500">
-            ロット比率は運用目安です。稼働前に必ず設定を確認してください。
+            週利10〜20%目安。相場状況により変動します。
           </p>
         </div>
 
-        <div className="mt-4 grid gap-3 lg:grid-cols-2">
-          {anyaGoldStrategies.map((strategy) => (
-            <article
-              key={strategy.strategyId}
-              className="rounded-lg border border-white/10 bg-white/[0.035] p-4"
-            >
-              <p className="text-xs font-semibold uppercase text-slate-500">
-                {strategy.accountType}
-              </p>
-              <h4 className="mt-2 text-lg font-bold text-white">
-                {strategy.strategyName}
-              </h4>
-              <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-                <div>
-                  <dt className="text-slate-500">ストラテジーID</dt>
-                  <dd className="mt-1 font-semibold text-slate-200 tabular-nums">
-                    {strategy.strategyId}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-slate-500">ロット比率</dt>
-                  <dd className="mt-1 font-semibold text-emerald-200">
-                    {strategy.lotRatio}
-                  </dd>
-                </div>
-              </dl>
-              <p className="mt-4 text-sm leading-6 text-slate-400">{strategy.note}</p>
-              <a
-                href={strategy.href}
-                rel="nofollow noopener noreferrer"
-                target="_blank"
-                className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg bg-white px-4 text-sm font-bold text-slate-950 transition hover:bg-slate-200"
-              >
-                ストラテジー詳細を見る
-              </a>
-            </article>
-          ))}
+        <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
+          <p className="text-sm leading-6 text-slate-400">
+            Anya Gold Cent / Anya Gold
+            のストラテジー情報、資金目安、注意点はコピトレ専用ページに分けています。資金量と損失リスクを確認してから検討してください。
+          </p>
+          <a
+            href="#/tools/copytrade"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-emerald-300 px-5 text-sm font-bold text-slate-950 transition hover:bg-emerald-200"
+          >
+            HFMコピトレを見る
+          </a>
         </div>
       </div>
     </section>
