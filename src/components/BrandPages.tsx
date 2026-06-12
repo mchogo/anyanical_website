@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
+import cancelCountProof from '../assets/proof/cancel-count.png';
+import memberCountProof from '../assets/proof/member-count.png';
 import { EXTERNAL_LINKS } from '../config/navigation';
 
 const CountUp = ({
@@ -94,6 +96,23 @@ const premiumStats: StatEntry[] = [
     text: 'Tools',
     label: '限定案内',
     body: 'note加入者向けの補足記事、Discord権限付与、関連リンクをまとめ、必要な情報へ迷わず移動できるようにします。',
+  },
+];
+
+const membershipProofImages = [
+  {
+    title: '参加メンバー数',
+    label: '151人参加中',
+    body: 'noteメンバーシップ管理画面のスクリーンショットです。参加人数の規模感を確認できます。',
+    src: memberCountProof,
+    alt: 'noteメンバーシップの参加メンバー数が151人と表示されている管理画面',
+  },
+  {
+    title: '退会予定者数',
+    label: '退会予定3人',
+    body: '継続率の参考として、退会予定者数もあわせて掲載しています。',
+    src: cancelCountProof,
+    alt: 'noteメンバーシップの退会予定者数が3人と表示されている管理画面',
   },
 ];
 
@@ -770,6 +789,47 @@ export const ParticipationGuidePage = () => (
           </article>
         ))}
       </div>
+    </section>
+
+    <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-semibold text-amber-200">Membership proof</p>
+          <h3 className="mt-1 text-lg font-bold text-white">参加状況の実績</h3>
+        </div>
+        <p className="text-sm text-slate-500">
+          noteメンバーシップ管理画面の一部を掲載しています。
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        {membershipProofImages.map((image) => (
+          <article
+            key={image.title}
+            className="overflow-hidden rounded-lg border border-white/10 bg-slate-950/40"
+          >
+            <div className="border-b border-white/10 p-4">
+              <span className="rounded-full bg-amber-300/10 px-3 py-1 text-xs font-bold text-amber-200 ring-1 ring-amber-300/20">
+                {image.label}
+              </span>
+              <h4 className="mt-3 text-lg font-bold text-white">{image.title}</h4>
+              <p className="mt-2 text-sm leading-6 text-slate-400">{image.body}</p>
+            </div>
+            <div className="bg-white p-2">
+              <img
+                src={image.src}
+                alt={image.alt}
+                className="h-auto w-full rounded-md object-cover"
+                loading="lazy"
+              />
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <p className="mt-3 text-xs leading-5 text-slate-500">
+        掲載画像は確認時点の画面です。人数や退会予定数は時期により変動します。
+      </p>
     </section>
 
     <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
