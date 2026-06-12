@@ -50,7 +50,24 @@ const DesktopNavLinks = ({
           }`}
         >
           {marketNavGroup.label}
-          <span className="text-xs opacity-70">{isMarketOpen ? '▲' : '▼'}</span>
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${
+              isMarketActive
+                ? 'bg-slate-950/10 text-slate-800 ring-slate-950/15'
+                : 'bg-cyan-300/10 text-cyan-100 ring-cyan-300/20'
+            }`}
+          >
+            メニュー
+          </span>
+          <span
+            className={`grid h-5 w-5 place-items-center rounded-full text-xs font-black ring-1 transition ${
+              isMarketActive
+                ? 'bg-slate-950/10 text-slate-900 ring-slate-950/15'
+                : 'bg-white/[0.06] text-cyan-100 ring-white/10'
+            } ${isMarketOpen ? 'rotate-180' : ''}`}
+          >
+            ▼
+          </span>
         </button>
 
         {isMarketOpen ? (
@@ -127,9 +144,17 @@ const MobileNavLinks = ({
       open={isActiveGroup(marketNavGroup.links, currentRoute)}
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-white">
-        <span>{marketNavGroup.label}</span>
-        <span className="text-xs font-semibold text-slate-500">
+        <span className="flex items-center gap-2">
+          {marketNavGroup.label}
+          <span className="rounded-full bg-cyan-300/10 px-2 py-0.5 text-[10px] font-bold text-cyan-100 ring-1 ring-cyan-300/20">
+            開閉
+          </span>
+        </span>
+        <span className="flex items-center gap-2 text-xs font-semibold text-slate-500">
           {marketNavGroup.description}
+          <span className="grid h-6 w-6 place-items-center rounded-full bg-white/[0.06] text-cyan-100 ring-1 ring-white/10">
+            ▼
+          </span>
         </span>
       </summary>
       <div className="mt-3 grid grid-cols-2 gap-2">
