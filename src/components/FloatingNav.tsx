@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { EXTERNAL_LINKS, NAV_LINK_GROUPS } from '../config/navigation';
 
@@ -29,7 +29,39 @@ const DesktopNavLinks = ({
   onNavigate,
 }: FloatingNavProps & { onNavigate?: () => void }) => {
   const [isMarketOpen, setIsMarketOpen] = useState(false);
+  const marketMenuRef = useRef<HTMLDivElement>(null);
   const isMarketActive = isActiveGroup(marketNavGroup.links, currentRoute);
+
+  useEffect(() => {
+    if (!isMarketOpen) return undefined;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        marketMenuRef.current &&
+        !marketMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsMarketOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsMarketOpen(false);
+      }
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMarketOpen]);
+
+  useEffect(() => {
+    setIsMarketOpen(false);
+  }, [currentRoute]);
 
   const handleNavigate = () => {
     setIsMarketOpen(false);
@@ -38,7 +70,7 @@ const DesktopNavLinks = ({
 
   return (
     <>
-      <div className="relative">
+      <div ref={marketMenuRef} className="relative">
         <button
           type="button"
           aria-expanded={isMarketOpen}
