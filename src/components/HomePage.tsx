@@ -516,7 +516,7 @@ export const HomePage = ({
               href={action.href}
               rel={action.external ? 'noopener noreferrer' : undefined}
               target={action.external ? '_blank' : undefined}
-              className="home-card card-interactive animate-fade-up rounded-lg border border-white/10 bg-slate-900/80 p-5 hover:border-cyan-300/30 hover:bg-cyan-300/[0.07]"
+              className="card-interactive animate-fade-up rounded-lg border border-white/10 bg-slate-900/80 p-5 hover:border-cyan-300/30 hover:bg-cyan-300/[0.07]"
               style={{ animationDelay: `${index * 60}ms` }}
             >
               <h3 className="text-xl font-bold text-white">{action.title}</h3>
