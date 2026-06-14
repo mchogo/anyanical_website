@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { EXTERNAL_LINKS, NAV_LINK_GROUPS } from '../config/navigation';
 
@@ -28,53 +28,17 @@ const DesktopNavLinks = ({
   currentRoute,
   onNavigate,
 }: FloatingNavProps & { onNavigate?: () => void }) => {
-  const [isMarketOpen, setIsMarketOpen] = useState(false);
-  const marketMenuRef = useRef<HTMLDivElement>(null);
   const isMarketActive = isActiveGroup(marketNavGroup.links, currentRoute);
 
-  useEffect(() => {
-    if (!isMarketOpen) return undefined;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (
-        marketMenuRef.current &&
-        !marketMenuRef.current.contains(event.target as Node)
-      ) {
-        setIsMarketOpen(false);
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsMarketOpen(false);
-      }
-    };
-
-    window.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isMarketOpen]);
-
-  useEffect(() => {
-    setIsMarketOpen(false);
-  }, [currentRoute]);
-
   const handleNavigate = () => {
-    setIsMarketOpen(false);
     onNavigate?.();
   };
 
   return (
     <>
-      <div ref={marketMenuRef} className="relative">
+      <div className="group relative">
         <button
           type="button"
-          aria-expanded={isMarketOpen}
-          onClick={() => setIsMarketOpen((current) => !current)}
           className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold ring-1 transition ${
             isMarketActive
               ? 'bg-cyan-300 text-slate-950 ring-cyan-200'
@@ -96,39 +60,37 @@ const DesktopNavLinks = ({
               isMarketActive
                 ? 'bg-slate-950/10 text-slate-900 ring-slate-950/15'
                 : 'bg-white/[0.06] text-cyan-100 ring-white/10'
-            } ${isMarketOpen ? 'rotate-180' : ''}`}
+            } group-hover:rotate-180 group-focus-within:rotate-180`}
           >
             ▼
           </span>
         </button>
 
-        {isMarketOpen ? (
-          <div className="absolute right-0 top-full z-50 mt-3 w-64 rounded-lg border border-white/10 bg-slate-950/95 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur">
-            <p className="px-3 py-2 text-xs font-semibold text-slate-500">
-              {marketNavGroup.description}
-            </p>
-            <div className="space-y-1">
-              {marketNavGroup.links.map((link) => {
-                const isLinkActive = isActiveRoute(link.href, currentRoute);
+        <div className="invisible absolute right-0 top-full z-50 w-64 translate-y-2 rounded-lg border border-white/10 bg-slate-950/95 p-2 opacity-0 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur transition group-hover:visible group-hover:translate-y-3 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-3 group-focus-within:opacity-100">
+          <p className="px-3 py-2 text-xs font-semibold text-slate-500">
+            {marketNavGroup.description}
+          </p>
+          <div className="space-y-1">
+            {marketNavGroup.links.map((link) => {
+              const isLinkActive = isActiveRoute(link.href, currentRoute);
 
-                return (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    onClick={handleNavigate}
-                    className={`block rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                      isLinkActive
-                        ? 'bg-cyan-300 text-slate-950'
-                        : 'text-slate-200 hover:bg-white/[0.06] hover:text-cyan-100'
-                    }`}
-                  >
-                    {link.label}
-                  </a>
-                );
-              })}
-            </div>
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={handleNavigate}
+                  className={`block rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                    isLinkActive
+                      ? 'bg-cyan-300 text-slate-950'
+                      : 'text-slate-200 hover:bg-white/[0.06] hover:text-cyan-100'
+                  }`}
+                >
+                  {link.label}
+                </a>
+              );
+            })}
           </div>
-        ) : null}
+        </div>
       </div>
 
       {standardNavLinks.map((link) => {
