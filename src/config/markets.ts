@@ -28,6 +28,12 @@ export type MarketPrice = {
   updatedAt: number | null;
 };
 
+const hyperliquidTradeUrl = (symbol: string) =>
+  `https://app.hyperliquid.xyz/trade/${symbol}`;
+
+const tradingViewChartUrl = (symbol: string) =>
+  `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(symbol)}`;
+
 export const MARKETS: MarketConfig[] = [
   {
     label: 'SPCX',
@@ -38,7 +44,7 @@ export const MARKETS: MarketConfig[] = [
     mode: 'ipo',
     sourceLabel: 'SPCX参考価格 / IPO前後の参考マーケット',
     officialMarketLabel: 'Hyperliquid参考マーケット',
-    externalChartUrl: 'https://app.hyperliquid.xyz/trade/xyz:SPCX',
+    externalChartUrl: hyperliquidTradeUrl('xyz:SPCX'),
   },
   {
     label: 'GOLD',
@@ -58,6 +64,7 @@ export const MARKETS: MarketConfig[] = [
     mode: 'weekend',
     sourceLabel: '24時間取引価格 / GOLD',
     officialMarketLabel: 'COMEX Gold',
+    externalChartUrl: hyperliquidTradeUrl('xyz:GOLD'),
     fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
@@ -77,6 +84,7 @@ export const MARKETS: MarketConfig[] = [
     mode: 'weekend',
     sourceLabel: '24時間取引価格 / SILVER',
     officialMarketLabel: 'COMEX Silver',
+    externalChartUrl: hyperliquidTradeUrl('xyz:SILVER'),
     fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
@@ -89,6 +97,7 @@ export const MARKETS: MarketConfig[] = [
     mode: 'weekend',
     sourceLabel: '24時間取引価格 / 原油',
     officialMarketLabel: 'NYMEX WTI Crude Oil',
+    externalChartUrl: hyperliquidTradeUrl('xyz:CL'),
     fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
@@ -101,6 +110,7 @@ export const MARKETS: MarketConfig[] = [
     mode: 'weekend',
     sourceLabel: '24時間取引価格 / 米国株価指数',
     officialMarketLabel: 'CME E-mini S&P 500',
+    externalChartUrl: hyperliquidTradeUrl('xyz:SP500'),
     fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
@@ -113,6 +123,7 @@ export const MARKETS: MarketConfig[] = [
     mode: 'weekend',
     sourceLabel: '24時間取引価格 / 日経225',
     officialMarketLabel: '大阪取引所・CME Nikkei 225',
+    externalChartUrl: hyperliquidTradeUrl('xyz:JP225'),
     fridayCloseUtc: { hour: 6, minute: 0 },
   },
   {
@@ -123,6 +134,7 @@ export const MARKETS: MarketConfig[] = [
     category: 'crypto',
     mode: 'crypto',
     sourceLabel: '24時間取引価格 / BTC',
+    externalChartUrl: tradingViewChartUrl('OANDA:BTCUSD'),
     fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
@@ -133,6 +145,7 @@ export const MARKETS: MarketConfig[] = [
     category: 'crypto',
     mode: 'crypto',
     sourceLabel: '24時間取引価格 / ETH',
+    externalChartUrl: tradingViewChartUrl('OANDA:ETHUSD'),
     fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
@@ -143,6 +156,7 @@ export const MARKETS: MarketConfig[] = [
     category: 'crypto',
     mode: 'crypto',
     sourceLabel: '24時間取引価格 / HYPE',
+    externalChartUrl: hyperliquidTradeUrl('HYPE'),
     fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
@@ -155,6 +169,7 @@ export const MARKETS: MarketConfig[] = [
     mode: 'weekend',
     sourceLabel: '24時間取引価格 / USDJPY参考',
     officialMarketLabel: 'OTC FX',
+    externalChartUrl: hyperliquidTradeUrl('xyz:JPY'),
     fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
@@ -166,6 +181,7 @@ export const MARKETS: MarketConfig[] = [
     mode: 'forex',
     sourceLabel: '24時間取引価格 / EURUSD参考',
     officialMarketLabel: 'OTC FX',
+    externalChartUrl: tradingViewChartUrl('OANDA:EURUSD'),
     fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
@@ -177,6 +193,7 @@ export const MARKETS: MarketConfig[] = [
     mode: 'forex',
     sourceLabel: '24時間取引価格 / GBPUSD参考',
     officialMarketLabel: 'OTC FX',
+    externalChartUrl: tradingViewChartUrl('OANDA:GBPUSD'),
     fridayCloseUtc: { hour: 21, minute: 0 },
   },
   {
@@ -188,6 +205,7 @@ export const MARKETS: MarketConfig[] = [
     mode: 'forex',
     sourceLabel: '24時間取引価格 / USDKRW参考',
     officialMarketLabel: 'OTC FX',
+    externalChartUrl: tradingViewChartUrl('OANDA:USDKRW'),
     fridayCloseUtc: { hour: 21, minute: 0 },
   },
 ];
