@@ -66,29 +66,31 @@ const DesktopNavLinks = ({
           </span>
         </button>
 
-        <div className="invisible absolute right-0 top-full z-50 w-64 translate-y-2 rounded-lg border border-white/10 bg-slate-950/95 p-2 opacity-0 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur transition group-hover:visible group-hover:translate-y-3 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-3 group-focus-within:opacity-100">
-          <p className="px-3 py-2 text-xs font-semibold text-slate-500">
-            {marketNavGroup.description}
-          </p>
-          <div className="space-y-1">
-            {marketNavGroup.links.map((link) => {
-              const isLinkActive = isActiveRoute(link.href, currentRoute);
+        <div className="invisible absolute right-0 top-full z-50 w-64 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+          <div className="rounded-lg border border-white/10 bg-slate-950/95 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur">
+            <p className="px-3 py-2 text-xs font-semibold text-slate-500">
+              {marketNavGroup.description}
+            </p>
+            <div className="space-y-1">
+              {marketNavGroup.links.map((link) => {
+                const isLinkActive = isActiveRoute(link.href, currentRoute);
 
-              return (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={handleNavigate}
-                  className={`block rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                    isLinkActive
-                      ? 'bg-cyan-300 text-slate-950'
-                      : 'text-slate-200 hover:bg-white/[0.06] hover:text-cyan-100'
-                  }`}
-                >
-                  {link.label}
-                </a>
-              );
-            })}
+                return (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={handleNavigate}
+                    className={`block rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                      isLinkActive
+                        ? 'bg-cyan-300 text-slate-950'
+                        : 'text-slate-200 hover:bg-white/[0.06] hover:text-cyan-100'
+                    }`}
+                  >
+                    {link.label}
+                  </a>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
