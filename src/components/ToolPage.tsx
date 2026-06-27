@@ -11,6 +11,7 @@ import {
   SemiAutoSignPage,
   StrategyGuidePage,
 } from './BrandPages';
+import { PnLCalendarTool } from './PnLCalendar';
 import type { MarketPrice } from '../config/markets';
 import type { PriceHistoryPoint } from '../hooks/useHyperliquidMids';
 
@@ -23,7 +24,8 @@ export type ToolPageId =
   | 'copytrade'
   | 'community'
   | 'participation'
-  | 'semi-auto-sign';
+  | 'semi-auto-sign'
+  | 'trade-journal';
 
 type ToolPageProps = {
   pageId: ToolPageId;
@@ -93,6 +95,13 @@ const toolPages: Array<{
       'XAUUSD専用のDiscord通知サイン。サイン種別・通知チャンネル・利用開始手順を確認します。',
     href: '#/tools/semi-auto-sign',
   },
+  {
+    id: 'trade-journal',
+    title: 'トレード日誌',
+    description:
+      '口座ごとの日次損益をカレンダーで管理するプレミアム限定ツール。複数口座に対応。データはブラウザに保存されます。',
+    href: '#/tools/trade-journal',
+  },
 ];
 
 const renderTool = (
@@ -126,6 +135,8 @@ const renderTool = (
       return <ParticipationGuidePage />;
     case 'semi-auto-sign':
       return <SemiAutoSignPage />;
+    case 'trade-journal':
+      return <PnLCalendarTool />;
   }
 };
 
@@ -244,6 +255,18 @@ const nextActions: Record<
       title: 'HFMコピトレ',
       body: 'HFM側のストラテジー情報を確認します。',
       href: '#/tools/copytrade',
+    },
+  ],
+  'trade-journal': [
+    {
+      title: 'EAチェック',
+      body: '次の取引前に稼働条件・ロット・停止条件を確認します。',
+      href: '#/tools/ea-checklist',
+    },
+    {
+      title: '戦略ページへ',
+      body: 'プレミアム、半裁量EA、コピトレの活用方針を確認します。',
+      href: '#/tools/strategy',
     },
   ],
 };

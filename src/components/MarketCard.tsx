@@ -80,7 +80,10 @@ const elapsedSeconds = (updatedAt: number | null, now: number) => {
   return Math.max(0, Math.floor((now - updatedAt) / 1_000));
 };
 
-const getOfficialMarketStatus = (market: MarketConfig, now: number): 'open' | 'closed' => {
+const getOfficialMarketStatus = (
+  market: MarketConfig,
+  now: number,
+): 'open' | 'closed' => {
   const date = new Date(now);
   const utcDay = date.getUTCDay();
   const utcHour = date.getUTCHours();
@@ -158,10 +161,13 @@ export const MarketCard = ({
 
   const handleCopyPrice = () => {
     if (price.price === null) return;
-    navigator.clipboard.writeText(String(price.price)).then(() => {
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
-    }).catch(() => {});
+    navigator.clipboard
+      .writeText(String(price.price))
+      .then(() => {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1500);
+      })
+      .catch(() => {});
   };
 
   return (
@@ -181,7 +187,9 @@ export const MarketCard = ({
               type="button"
               onClick={onTogglePin}
               className={`text-xl leading-none transition ${
-                isPinned ? 'text-amber-300 hover:text-amber-200' : 'text-slate-700 hover:text-slate-500'
+                isPinned
+                  ? 'text-amber-300 hover:text-amber-200'
+                  : 'text-slate-700 hover:text-slate-500'
               }`}
               title={isPinned ? 'お気に入りから削除' : 'お気に入りに追加'}
             >

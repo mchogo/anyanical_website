@@ -8,12 +8,14 @@ import { AlertToasts } from './components/AlertToasts';
 import { FloatingNav } from './components/FloatingNav';
 import { Header } from './components/Header';
 import { HomePage } from './components/HomePage';
+import { LoginPage } from './components/LoginPage';
 import { MarketBoard } from './components/MarketBoard';
 import { NewFeaturesTicker } from './components/NewFeaturesTicker';
 import { SpaceXBanner } from './components/SpaceXBanner';
 import { SpaceXCountdownPage } from './components/SpaceXCountdownPage';
 import { ToolPage, type ToolPageId } from './components/ToolPage';
 import { useAlerts } from './hooks/useAlerts';
+import { isDiscordOAuthRedirect, useDiscordAuth } from './hooks/useDiscordAuth';
 import { useHyperliquidMids } from './hooks/useHyperliquidMids';
 
 const isWeekendModeInJst = (timestamp: number) => {
@@ -35,6 +37,7 @@ const toolPageIds: ToolPageId[] = [
   'community',
   'participation',
   'semi-auto-sign',
+  'trade-journal',
 ];
 
 const getRoute = () => window.location.hash.replace(/^#\/?/, '');
@@ -51,6 +54,7 @@ const parseToolPageId = (route: string): ToolPageId | null => {
 };
 
 export const App = () => {
+  const discordAuth = useDiscordAuth();
   const { prices, priceHistory, connectionStatus, tickCount, lastUpdatedAt } =
     useHyperliquidMids();
   const {
@@ -69,6 +73,8 @@ export const App = () => {
   const isHomeRoute = route === '' || route === 'home';
   const isBoardRoute = route === 'board';
   const isSpaceXRoute = route === 'spacex';
+  const isLoginRoute = route === 'login';
+  const isDiscordCallbackRoute = isDiscordOAuthRedirect(route);
 
   useEffect(() => {
     const timerId = window.setInterval(() => {
@@ -95,10 +101,12 @@ export const App = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 pt-16 text-slate-100">
-      <FloatingNav currentRoute={route} />
+      <FloatingNav currentRoute={route} auth={discordAuth} />
       <SpaceXBanner />
       <NewFeaturesTicker />
-      {isSpaceXRoute ? (
+      {isLoginRoute || isDiscordCallbackRoute ? (
+        <LoginPage auth={discordAuth} isCallbackRoute={isDiscordCallbackRoute} />
+      ) : isSpaceXRoute ? (
         <SpaceXCountdownPage
           prices={prices}
           priceHistory={priceHistory}

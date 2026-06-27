@@ -67,8 +67,12 @@ export const ChartSection = () => {
     <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
       <div className="mb-5 flex flex-col justify-between gap-3 lg:flex-row lg:items-end">
         <div>
-          <p className="animate-slide-left text-sm font-semibold text-cyan-200">CFD / FX chart</p>
-          <h2 className="animate-fade-up stagger-1 mt-1 text-2xl font-bold text-white">チャートで推移を確認</h2>
+          <p className="animate-slide-left text-sm font-semibold text-cyan-200">
+            CFD / FX chart
+          </p>
+          <h2 className="animate-fade-up stagger-1 mt-1 text-2xl font-bold text-white">
+            チャートで推移を確認
+          </h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
             下のチャートはTradingViewの金属・原油・指数・FX参考チャートです。先物シンボルは外部埋め込みで制限される場合があるため、表示されやすい汎用シンボルを使います。
           </p>

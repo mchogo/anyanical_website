@@ -31,14 +31,43 @@ dist/
 
 ## Cloudflare Pages例
 
-| 項目                   | 値              |
-| ---------------------- | --------------- |
-| Build command          | `npm run build` |
-| Build output directory | `dist`          |
-| Framework preset       | Vite            |
-| Environment variables  | 現状不要        |
+| 項目                   | 値                       |
+| ---------------------- | ------------------------ |
+| Build command          | `npm run build`          |
+| Build output directory | `dist`                   |
+| Framework preset       | Vite                     |
+| Environment variables  | `VITE_DISCORD_CLIENT_ID` |
 
 ハッシュルーティングのため、`#/tools/...` のページは追加rewriteなしで動作します。
+
+## Discordログイン設定
+
+Discord Developer PortalでApplicationを作成し、OAuth2 Redirectsに本番URLを登録します。
+
+例:
+
+```text
+https://example.com/
+```
+
+Cloudflare側の環境変数:
+
+```text
+VITE_DISCORD_CLIENT_ID=Discord ApplicationのClient ID
+VITE_DISCORD_REDIRECT_URI=https://example.com/
+VITE_DISCORD_GUILD_ID=Discord Server ID
+VITE_DISCORD_PREMIUM_ROLE_IDS=Premium Role ID
+VITE_DISCORD_ADMIN_ROLE_IDS=Admin Role ID
+```
+
+`VITE_DISCORD_REDIRECT_URI` は省略可能ですが、本番では明示しておくとプレビューURLや独自ドメイン差し替え時の事故を避けやすくなります。
+
+ロールIDを使う場合:
+
+- Discordユーザー設定の詳細設定で開発者モードを有効にする
+- 対象サーバーを右クリックしてサーバーIDをコピーする
+- 対象ロールを右クリックしてロールIDをコピーする
+- 複数ロールは `,` 区切りで環境変数へ指定する
 
 ## Cloudflare Workers Static Assets例
 
@@ -69,6 +98,7 @@ npm run build
 - `#/tools/economic-calendar` が表示される
 - `#/tools/gap-watch` が表示される
 - `#/tools/ea-checklist` が表示される
+- `#/login` にDiscordログインボタンが表示される
 - 固定ナビがモバイルで本文を隠しすぎない
 
 ## 障害時の切り分け

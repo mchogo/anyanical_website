@@ -22,12 +22,15 @@ export const SparkLine = ({ data, width = 120, height = 36 }: SparkLineProps) =>
   const coords = data.map((point) => {
     const normalizedTime = timeRange === 0 ? 0 : (point.time - minTime) / timeRange;
     const x = normalizedTime * width;
-    const normalizedValue = valueRange === 0 ? 0.5 : (point.price - minValue) / valueRange;
+    const normalizedValue =
+      valueRange === 0 ? 0.5 : (point.price - minValue) / valueRange;
     const y = height - normalizedValue * height;
     return { x, y };
   });
 
-  const linePoints = coords.map(({ x, y }) => `${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
+  const linePoints = coords
+    .map(({ x, y }) => `${x.toFixed(2)},${y.toFixed(2)}`)
+    .join(' ');
 
   const firstCoord = coords[0];
   const lastCoord = coords[coords.length - 1];
@@ -59,10 +62,7 @@ export const SparkLine = ({ data, width = 120, height = 36 }: SparkLineProps) =>
           <stop offset="100%" stopColor={stroke} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <polygon
-        fill={`url(#${gradientId})`}
-        points={areaPoints}
-      />
+      <polygon fill={`url(#${gradientId})`} points={areaPoints} />
       <polyline
         fill="none"
         points={linePoints}

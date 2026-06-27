@@ -39,6 +39,10 @@ export const INTERNAL_NAV_LINKS = [
     label: '半裁量サイン',
     href: '#/tools/semi-auto-sign',
   },
+  {
+    label: 'トレード日誌',
+    href: '#/tools/trade-journal',
+  },
 ] as const;
 
 export const NAV_LINK_GROUPS = [
@@ -65,8 +69,8 @@ export const NAV_LINK_GROUPS = [
     ],
   },
   {
-    label: '運用ツール',
-    description: 'EA、戦略、コピトレ、サイン',
+    label: 'EA・コピトレ',
+    description: 'EAチェック、戦略、コピトレ、サイン',
     links: [
       {
         label: 'EAチェック',
@@ -87,16 +91,20 @@ export const NAV_LINK_GROUPS = [
     ],
   },
   {
-    label: '参加案内',
-    description: 'Discord、プレミアム',
+    label: 'プレミアム',
+    description: 'コミュニティ、参加案内、日誌',
     links: [
       {
         label: 'コミュニティ',
         href: '#/tools/community',
       },
       {
-        label: 'プレミアム',
+        label: '参加案内',
         href: '#/tools/participation',
+      },
+      {
+        label: 'トレード日誌',
+        href: '#/tools/trade-journal',
       },
     ],
   },

@@ -183,7 +183,9 @@ export const MarketBoard = ({
           <p className="animate-slide-left text-sm font-semibold text-cyan-200">
             {isWeekendMode ? 'Weekend mode' : 'Market mode'}
           </p>
-          <h2 className="animate-fade-up stagger-1 mt-1 text-2xl font-bold text-white">24時間価格モニター</h2>
+          <h2 className="animate-fade-up stagger-1 mt-1 text-2xl font-bold text-white">
+            24時間価格モニター
+          </h2>
         </div>
         <p className="text-sm text-slate-400">
           {isWeekendMode
@@ -230,7 +232,13 @@ export const MarketBoard = ({
       )}
 
       {filteredWeekendMarkets.length > 0
-        ? renderMarketCards(filteredWeekendMarkets, cardProps, undefined, pinnedSymbols, togglePin)
+        ? renderMarketCards(
+            filteredWeekendMarkets,
+            cardProps,
+            undefined,
+            pinnedSymbols,
+            togglePin,
+          )
         : null}
 
       {filteredCryptoMarkets.length > 0 ? (

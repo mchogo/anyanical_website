@@ -6,4 +6,11 @@
     "directory": "./dist",
     "not_found_handling": "single-page-application",
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "pnl-calendar",
+      "database_id": "6929f3da-bbc9-4137-8e67-66a0cc57aff7",
+    },
+  ],
 }

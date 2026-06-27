@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react';
 
 import { EXTERNAL_LINKS, NAV_LINK_GROUPS } from '../config/navigation';
+import type { useDiscordAuth } from '../hooks/useDiscordAuth';
 
 type FloatingNavProps = {
   currentRoute: string;
+};
+
+type DiscordAuth = ReturnType<typeof useDiscordAuth>;
+
+type FloatingNavContainerProps = FloatingNavProps & {
+  auth: DiscordAuth;
 };
 
 type NavLink = {
@@ -19,182 +26,124 @@ const isActiveRoute = (href: string, currentRoute: string) => {
 const isActiveGroup = (links: readonly NavLink[], currentRoute: string) =>
   links.some((link) => isActiveRoute(link.href, currentRoute));
 
-const marketNavGroup = NAV_LINK_GROUPS[0];
-const standardNavLinks: NavLink[] = NAV_LINK_GROUPS.slice(1).flatMap((group) => [
-  ...group.links,
-]);
-
 const DesktopNavLinks = ({
   currentRoute,
   onNavigate,
-}: FloatingNavProps & { onNavigate?: () => void }) => {
-  const isMarketActive = isActiveGroup(marketNavGroup.links, currentRoute);
+}: FloatingNavProps & { onNavigate?: () => void }) => (
+  <>
+    {NAV_LINK_GROUPS.map((group) => {
+      const isGroupActive = isActiveGroup(group.links, currentRoute);
 
-  const handleNavigate = () => {
-    onNavigate?.();
-  };
-
-  return (
-    <>
-      <div className="group relative">
-        <button
-          type="button"
-          className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold ring-1 transition ${
-            isMarketActive
-              ? 'bg-cyan-300 text-slate-950 ring-cyan-200'
-              : 'bg-white/[0.04] text-slate-200 ring-white/10 hover:bg-cyan-300/10 hover:text-cyan-100 hover:ring-cyan-300/30'
-          }`}
-        >
-          {marketNavGroup.label}
-          <span
-            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${
-              isMarketActive
-                ? 'bg-slate-950/10 text-slate-800 ring-slate-950/15'
-                : 'bg-cyan-300/10 text-cyan-100 ring-cyan-300/20'
-            }`}
-          >
-            メニュー
-          </span>
-          <span
-            className={`grid h-5 w-5 place-items-center rounded-full text-xs font-black ring-1 transition ${
-              isMarketActive
-                ? 'bg-slate-950/10 text-slate-900 ring-slate-950/15'
-                : 'bg-white/[0.06] text-cyan-100 ring-white/10'
-            } group-hover:rotate-180 group-focus-within:rotate-180`}
-          >
-            ▼
-          </span>
-        </button>
-
-        <div className="invisible absolute right-0 top-full z-50 w-64 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-          <div className="rounded-lg border border-white/10 bg-slate-950/95 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur">
-            <p className="px-3 py-2 text-xs font-semibold text-slate-500">
-              {marketNavGroup.description}
-            </p>
-            <div className="space-y-1">
-              {marketNavGroup.links.map((link) => {
-                const isLinkActive = isActiveRoute(link.href, currentRoute);
-
-                return (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    onClick={handleNavigate}
-                    className={`block rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                      isLinkActive
-                        ? 'bg-cyan-300 text-slate-950'
-                        : 'text-slate-200 hover:bg-white/[0.06] hover:text-cyan-100'
-                    }`}
-                  >
-                    {link.label}
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {standardNavLinks.map((link) => {
-        const isActive = isActiveRoute(link.href, currentRoute);
-
-        return (
-          <a
-            key={link.href}
-            href={link.href}
-            onClick={handleNavigate}
-            className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold ring-1 transition ${
-              isActive
+      return (
+        <div key={group.label} className="group relative">
+          <button
+            type="button"
+            className={`inline-flex min-h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold ring-1 transition ${
+              isGroupActive
                 ? 'bg-cyan-300 text-slate-950 ring-cyan-200'
                 : 'bg-white/[0.04] text-slate-200 ring-white/10 hover:bg-cyan-300/10 hover:text-cyan-100 hover:ring-cyan-300/30'
             }`}
           >
-            {link.label}
-          </a>
-        );
-      })}
+            {group.label}
+            <span
+              className={`grid h-5 w-5 place-items-center rounded-full text-xs font-black ring-1 transition group-hover:rotate-180 group-focus-within:rotate-180 ${
+                isGroupActive
+                  ? 'bg-slate-950/10 text-slate-900 ring-slate-950/15'
+                  : 'bg-white/[0.06] text-cyan-100 ring-white/10'
+              }`}
+            >
+              ▼
+            </span>
+          </button>
 
-      {EXTERNAL_LINKS.map((link) => (
-        <a
-          key={link.href}
-          href={link.href}
-          rel="noopener noreferrer"
-          target="_blank"
-          onClick={onNavigate}
-          className="shrink-0 rounded-full bg-emerald-300/10 px-4 py-2 text-sm font-semibold text-emerald-200 ring-1 ring-emerald-300/30 transition hover:bg-emerald-300/20"
-        >
-          {link.label}
-        </a>
-      ))}
-    </>
-  );
-};
+          <div className="invisible absolute left-0 top-full z-50 w-52 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+            <div className="rounded-lg border border-white/10 bg-slate-950/95 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur">
+              <p className="px-3 py-2 text-xs font-semibold text-slate-500">
+                {group.description}
+              </p>
+              <div className="space-y-1">
+                {group.links.map((link) => {
+                  const isLinkActive = isActiveRoute(link.href, currentRoute);
+
+                  return (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      onClick={onNavigate}
+                      className={`block rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                        isLinkActive
+                          ? 'bg-cyan-300 text-slate-950'
+                          : 'text-slate-200 hover:bg-white/[0.06] hover:text-cyan-100'
+                      }`}
+                    >
+                      {link.label}
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    })}
+
+    {EXTERNAL_LINKS.map((link) => (
+      <a
+        key={link.href}
+        href={link.href}
+        rel="noopener noreferrer"
+        target="_blank"
+        onClick={onNavigate}
+        className="shrink-0 rounded-full bg-emerald-300/10 px-4 py-2 text-sm font-semibold text-emerald-200 ring-1 ring-emerald-300/30 transition hover:bg-emerald-300/20"
+      >
+        {link.label}
+      </a>
+    ))}
+  </>
+);
 
 const MobileNavLinks = ({
   currentRoute,
   onNavigate,
 }: FloatingNavProps & { onNavigate?: () => void }) => (
   <>
-    <details
-      className="col-span-2 rounded-lg border border-white/10 bg-white/[0.035] p-3"
-      open={isActiveGroup(marketNavGroup.links, currentRoute)}
-    >
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-white">
-        <span className="flex items-center gap-2">
-          {marketNavGroup.label}
-          <span className="rounded-full bg-cyan-300/10 px-2 py-0.5 text-[10px] font-bold text-cyan-100 ring-1 ring-cyan-300/20">
-            開閉
+    {NAV_LINK_GROUPS.map((group) => (
+      <details
+        key={group.label}
+        className="col-span-2 rounded-lg border border-white/10 bg-white/[0.035] p-3"
+        open={isActiveGroup(group.links, currentRoute)}
+      >
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-white">
+          <span>{group.label}</span>
+          <span className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+            {group.description}
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-white/[0.06] text-cyan-100 ring-1 ring-white/10">
+              ▼
+            </span>
           </span>
-        </span>
-        <span className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-          {marketNavGroup.description}
-          <span className="grid h-6 w-6 place-items-center rounded-full bg-white/[0.06] text-cyan-100 ring-1 ring-white/10">
-            ▼
-          </span>
-        </span>
-      </summary>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        {marketNavGroup.links.map((link) => {
-          const isActive = isActiveRoute(link.href, currentRoute);
+        </summary>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {group.links.map((link) => {
+            const isActive = isActiveRoute(link.href, currentRoute);
 
-          return (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={onNavigate}
-              className={`flex min-h-10 items-center justify-center rounded-full px-3 text-sm font-semibold ring-1 transition ${
-                isActive
-                  ? 'bg-cyan-300 text-slate-950 ring-cyan-200'
-                  : 'bg-white/[0.04] text-slate-200 ring-white/10 hover:bg-cyan-300/10 hover:text-cyan-100'
-              }`}
-            >
-              {link.label}
-            </a>
-          );
-        })}
-      </div>
-    </details>
-
-    <div className="col-span-2 grid grid-cols-2 gap-2">
-      {standardNavLinks.map((link) => {
-        const isActive = isActiveRoute(link.href, currentRoute);
-
-        return (
-          <a
-            key={link.href}
-            href={link.href}
-            onClick={onNavigate}
-            className={`flex min-h-10 items-center justify-center rounded-full px-3 text-sm font-semibold ring-1 transition ${
-              isActive
-                ? 'bg-cyan-300 text-slate-950 ring-cyan-200'
-                : 'bg-white/[0.04] text-slate-200 ring-white/10 hover:bg-cyan-300/10 hover:text-cyan-100'
-            }`}
-          >
-            {link.label}
-          </a>
-        );
-      })}
-    </div>
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={onNavigate}
+                className={`flex min-h-10 items-center justify-center rounded-full px-3 text-sm font-semibold ring-1 transition ${
+                  isActive
+                    ? 'bg-cyan-300 text-slate-950 ring-cyan-200'
+                    : 'bg-white/[0.04] text-slate-200 ring-white/10 hover:bg-cyan-300/10 hover:text-cyan-100'
+                }`}
+              >
+                {link.label}
+              </a>
+            );
+          })}
+        </div>
+      </details>
+    ))}
 
     {EXTERNAL_LINKS.map((link) => (
       <a
@@ -216,7 +165,103 @@ const BANNER_KEYS = ['spacex-banner-dismissed', 'announce-banner-dismissed'];
 const hasDismissedBanners = () =>
   BANNER_KEYS.some((key) => sessionStorage.getItem(key) === '1');
 
-export const FloatingNav = ({ currentRoute }: FloatingNavProps) => {
+const AuthControls = ({
+  auth,
+  onNavigate,
+  mobile = false,
+}: {
+  auth: DiscordAuth;
+  onNavigate?: () => void;
+  mobile?: boolean;
+}) => {
+  if (!auth.isAuthenticated || !auth.session) {
+    return (
+      <a
+        href="#/login"
+        onClick={onNavigate}
+        className={
+          mobile
+            ? 'col-span-2 flex min-h-10 items-center justify-center rounded-full bg-indigo-400 px-4 text-sm font-bold text-white ring-1 ring-indigo-300/60 transition hover:bg-indigo-300'
+            : 'shrink-0 rounded-full bg-indigo-400 px-4 py-2 text-sm font-bold text-white ring-1 ring-indigo-300/60 transition hover:bg-indigo-300'
+        }
+      >
+        Discordログイン
+      </a>
+    );
+  }
+
+  const avatarUrl = auth.getAvatarUrl(auth.session.user);
+  const displayName = auth.getDisplayName(auth.session.user);
+
+  if (mobile) {
+    return (
+      <div className="col-span-2 rounded-lg border border-white/10 bg-white/[0.035] p-3">
+        <div className="flex items-center gap-3">
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt=""
+              className="h-9 w-9 rounded-full border border-white/10 bg-slate-900"
+            />
+          ) : (
+            <div className="grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-indigo-400/20 text-sm font-black text-indigo-100">
+              {displayName.slice(0, 1)}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-bold text-white">{displayName}</p>
+            <p className="text-xs text-slate-500">Discordログイン中</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              auth.signOut();
+              onNavigate?.();
+            }}
+            className="shrink-0 rounded-full bg-white/[0.04] px-3 py-2 text-xs font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+          >
+            ログアウト
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group relative">
+      <a
+        href="#/login"
+        className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white/[0.04] px-3 text-sm font-semibold text-slate-200 ring-1 ring-white/10 transition hover:bg-indigo-400/10 hover:text-indigo-100 hover:ring-indigo-300/30"
+      >
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt=""
+            className="h-6 w-6 rounded-full border border-white/10 bg-slate-900"
+          />
+        ) : (
+          <span className="grid h-6 w-6 place-items-center rounded-full bg-indigo-400/20 text-xs font-black text-indigo-100">
+            {displayName.slice(0, 1)}
+          </span>
+        )}
+        <span className="max-w-28 truncate">{displayName}</span>
+      </a>
+      <div className="invisible absolute right-0 top-full z-50 w-44 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+        <div className="rounded-lg border border-white/10 bg-slate-950/95 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur">
+          <button
+            type="button"
+            onClick={auth.signOut}
+            className="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-200 transition hover:bg-white/[0.06] hover:text-indigo-100"
+          >
+            ログアウト
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const FloatingNav = ({ currentRoute, auth }: FloatingNavContainerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
   const [showNotifDot, setShowNotifDot] = useState(() => hasDismissedBanners());
@@ -281,6 +326,7 @@ export const FloatingNav = ({ currentRoute }: FloatingNavProps) => {
 
         <div className="hidden items-center gap-2 md:flex">
           <DesktopNavLinks currentRoute={currentRoute} />
+          <AuthControls auth={auth} />
           <div className="relative ml-1">
             <button
               type="button"
@@ -306,6 +352,7 @@ export const FloatingNav = ({ currentRoute }: FloatingNavProps) => {
             currentRoute={currentRoute}
             onNavigate={() => setIsOpen(false)}
           />
+          <AuthControls auth={auth} mobile onNavigate={() => setIsOpen(false)} />
           <button
             type="button"
             onClick={handleResetBanners}

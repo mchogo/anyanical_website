@@ -49,8 +49,8 @@ const getProgress = (now: number) => {
 // Static stars — generated once on module load for stability
 const STARS = Array.from({ length: 80 }, (_, i) => ({
   id: i,
-  x: ((i * 137.508) % 100),
-  y: ((i * 97.332) % 100),
+  x: (i * 137.508) % 100,
+  y: (i * 97.332) % 100,
   r: (i % 3) * 0.5 + 0.5,
   o: (i % 5) * 0.08 + 0.08,
 }));
@@ -166,9 +166,7 @@ export const SpaceXCountdownPage = ({
         </div>
 
         {done && (
-          <p className="mt-6 text-lg font-bold text-amber-300">
-            🎉 上場しました！
-          </p>
+          <p className="mt-6 text-lg font-bold text-amber-300">🎉 上場しました！</p>
         )}
 
         {/* Progress bar */}

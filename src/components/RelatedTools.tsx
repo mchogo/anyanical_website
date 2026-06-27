@@ -310,7 +310,9 @@ export const GapWatchTool = ({
                   onClick={handleSort}
                 >
                   週末変動率
-                  <span className={`ml-1 ${sortDir !== null ? 'text-cyan-300' : 'text-slate-600'}`}>
+                  <span
+                    className={`ml-1 ${sortDir !== null ? 'text-cyan-300' : 'text-slate-600'}`}
+                  >
                     {sortDir === null ? '↕' : sortDir === 'desc' ? '↓' : '↑'}
                   </span>
                 </th>
@@ -325,7 +327,9 @@ export const GapWatchTool = ({
                   onClick={handleSort}
                 >
                   直近6時間
-                  <span className={`ml-1 ${sortDir !== null ? 'text-cyan-300' : 'text-slate-600'}`}>
+                  <span
+                    className={`ml-1 ${sortDir !== null ? 'text-cyan-300' : 'text-slate-600'}`}
+                  >
                     {sortDir === null ? '↕' : sortDir === 'desc' ? '↓' : '↑'}
                   </span>
                 </th>

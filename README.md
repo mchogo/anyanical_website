@@ -15,6 +15,7 @@
 - TradingViewチャートタブ
 - 通貨強弱、経済指標、窓開け監視、EAチェックリストの別ページ
 - 戦略ガイド、コミュニティ案内、プレミアムコンテンツの別ページ
+- Discord OAuthログイン
 - サブスク、コピートレード、半裁量EAの案内
 - 新EA導入・セットアップガイド
 - Exness/HFM/Anya Goldストラテジーリンク
@@ -33,6 +34,23 @@
 - npm
 
 バックエンドはありません。ブラウザから外部Public API / widgetを直接利用します。
+
+Discordログインを使う場合は `.env` にClient IDを設定します。
+
+```bash
+cp .env.example .env
+```
+
+```text
+VITE_DISCORD_CLIENT_ID=Discord ApplicationのClient ID
+VITE_DISCORD_REDIRECT_URI=http://127.0.0.1:5173/
+VITE_DISCORD_GUILD_ID=Discord Server ID
+VITE_DISCORD_PREMIUM_ROLE_IDS=Premium Role ID
+VITE_DISCORD_ADMIN_ROLE_IDS=Admin Role ID
+```
+
+Discord Developer Portal のOAuth2 Redirectsにも同じURLを登録してください。
+サーバー内ロールで表示を分岐する場合は、Discordの開発者モードを有効にして、サーバーIDと対象ロールIDをコピーします。複数ロールはカンマ区切りで指定できます。
 
 ---
 
@@ -64,6 +82,7 @@ http://127.0.0.1:5173/
 | `#/tools/strategy`          | 戦略ガイド             |
 | `#/tools/community`         | コミュニティ案内       |
 | `#/tools/participation`     | プレミアムコンテンツ   |
+| `#/login`                   | Discordログイン        |
 
 ハッシュルーティングのため、Cloudflare Pagesなどの静的ホスティングで追加rewriteなしに動作します。
 
