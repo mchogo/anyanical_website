@@ -39,6 +39,7 @@ const toolPageIds: ToolPageId[] = [
   'participation',
   'semi-auto-sign',
   'trade-journal',
+  'trader-quiz',
 ];
 
 const categoryPageIds: CategoryPageId[] = ['market', 'ea-copytrade', 'premium'];

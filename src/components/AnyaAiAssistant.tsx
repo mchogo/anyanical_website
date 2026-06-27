@@ -147,6 +147,78 @@ const answerEntries: AnswerEntry[] = [
     cta: '加入案内を見る',
     keywords: ['初めて', '最初', 'どこ', '見る', '始め方', '案内'],
   },
+  {
+    title: 'トレーダータイプ診断について',
+    shortLabel: 'タイプ診断',
+    answer:
+      '12問に答えるとあなたのトレードスタイルを4つの軸（判断スタイル・時間軸・リスク管理・売買方針）で分析し、16タイプから最も近いタイプを診断します。強み・弱み・おすすめスタイルも確認できます。',
+    href: '#/tools/trader-quiz',
+    cta: 'タイプ診断を受ける',
+    keywords: ['タイプ', '診断', 'mbti', '性格', 'スタイル', '16', '分析型', '感覚型', 'スキャル', 'スイング'],
+  },
+  {
+    title: 'トレード日誌（損益カレンダー）について',
+    shortLabel: 'トレード日誌',
+    answer:
+      'プレミアム向けの損益管理ツールです。Discordログイン後に複数口座を登録し、日ごとの損益をカレンダー形式で記録できます。データはクラウドに保存されデバイス間で共有できます。',
+    href: '#/tools/trade-journal',
+    cta: 'トレード日誌を開く',
+    keywords: ['日誌', '損益', 'カレンダー', '記録', '口座', 'トレード記録', 'ログ', '管理'],
+  },
+  {
+    title: '通貨強弱ツールの使い方',
+    shortLabel: '通貨強弱の見方',
+    answer:
+      '通貨強弱ツールでは、主要8通貨の相対的な強弱をリアルタイムで確認できます。強い通貨を買い、弱い通貨を売る方向性の参考に使います。ゴールド（XAU）の強弱も確認できます。',
+    href: '#/tools/currency-strength',
+    cta: '通貨強弱を見る',
+    keywords: ['通貨強弱', '強弱', '通貨', 'usd', 'eur', 'jpy', 'gbp', 'aud', 'xau', 'ゴールド'],
+  },
+  {
+    title: '経済指標カレンダーの使い方',
+    shortLabel: '指標カレンダー',
+    answer:
+      '経済指標ツールでは今週・来週の重要指標を東京時間で確認できます。★3の重要指標は前後に大きな動きが出やすいため、EA稼働やポジション保有に注意が必要です。',
+    href: '#/tools/economic-calendar',
+    cta: '指標カレンダーを見る',
+    keywords: ['指標', 'カレンダー', '経済', 'cpi', '雇用統計', 'fomc', '政策金利', 'イベント'],
+  },
+  {
+    title: '窓開け監視ツールについて',
+    shortLabel: '窓開け監視',
+    answer:
+      '窓開け監視ツールでは週末の金曜終値と現在価格の差を確認できます。月曜の窓が大きいほど窓埋めの動きが出やすい傾向があります。週末ポジション管理の参考に使います。',
+    href: '#/tools/gap-watch',
+    cta: '窓開けを確認する',
+    keywords: ['窓開け', '窓', 'gap', '金曜', '差分', '月曜', 'オープン'],
+  },
+  {
+    title: 'ゴールド（XAUUSD）の見方',
+    shortLabel: 'ゴールドの見方',
+    answer:
+      'ゴールドは週末の価格変動が大きくなりやすい銘柄です。相場ボードで金曜終値比較、先出し考察（プレミアム）でライン・目線確認、半裁量サインで天底候補の通知を活用できます。',
+    href: '#/board',
+    cta: '相場ボードを見る',
+    keywords: ['ゴールド', 'xauusd', 'gold', '金', 'ライン', '天底', '反転'],
+  },
+  {
+    title: 'ドル円の見方',
+    shortLabel: 'ドル円の見方',
+    answer:
+      'ドル円はFOMCや日銀政策などのイベントに敏感に反応します。指標カレンダーで重要イベントを把握し、プレミアムの先出し考察でその週の注目ラインを確認するのがおすすめです。',
+    href: '#/tools/economic-calendar',
+    cta: '指標カレンダーを見る',
+    keywords: ['ドル円', 'usdjpy', 'ドル', '円', '為替', '日銀', 'fomc', '金利'],
+  },
+  {
+    title: 'Discordログインについて',
+    shortLabel: 'Discordログイン',
+    answer:
+      'サイト右上またはログインページからDiscordでログインできます。ログインするとトレード日誌などのプレミアムツールが使えます。取得する情報はDiscordのユーザー名とアイコンのみです。',
+    href: '#/login',
+    cta: 'ログインページへ',
+    keywords: ['ログイン', 'discord', '認証', 'サインイン', 'アカウント', 'ログインできない'],
+  },
 ];
 
 const normalize = (value: string) => value.trim().toLowerCase();
@@ -163,7 +235,7 @@ const scoreEntry = (query: string, entry: AnswerEntry) => {
   return terms.reduce((score, term) => score + (haystack.includes(term) ? 1 : 0), 0);
 };
 
-const defaultChoices = answerEntries.slice(0, 10);
+const defaultChoices = answerEntries.slice(0, 12);
 
 export const AnyaAiAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);

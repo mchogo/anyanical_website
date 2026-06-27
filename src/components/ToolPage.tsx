@@ -12,6 +12,7 @@ import {
   StrategyGuidePage,
 } from './BrandPages';
 import { PnLCalendarTool } from './PnLCalendar';
+import { TraderQuiz } from './TraderQuiz';
 import type { MarketPrice } from '../config/markets';
 import type { PriceHistoryPoint } from '../hooks/useHyperliquidMids';
 
@@ -25,7 +26,8 @@ export type ToolPageId =
   | 'community'
   | 'participation'
   | 'semi-auto-sign'
-  | 'trade-journal';
+  | 'trade-journal'
+  | 'trader-quiz';
 
 type ToolPageProps = {
   pageId: ToolPageId;
@@ -102,6 +104,13 @@ const toolPages: Array<{
       '口座ごとの日次損益をカレンダーで管理するプレミアム限定ツール。複数口座に対応。データはブラウザに保存されます。',
     href: '#/tools/trade-journal',
   },
+  {
+    id: 'trader-quiz',
+    title: 'トレーダータイプ16診断',
+    description:
+      '12問に答えて4つの軸であなたのトレードスタイルを分析。16タイプから診断結果を表示します。',
+    href: '#/tools/trader-quiz',
+  },
 ];
 
 const renderTool = (
@@ -137,6 +146,8 @@ const renderTool = (
       return <SemiAutoSignPage />;
     case 'trade-journal':
       return <PnLCalendarTool />;
+    case 'trader-quiz':
+      return <TraderQuiz />;
   }
 };
 
@@ -267,6 +278,18 @@ const nextActions: Record<
       title: '戦略ページへ',
       body: 'プレミアム、半裁量EA、コピトレの活用方針を確認します。',
       href: '#/tools/strategy',
+    },
+  ],
+  'trader-quiz': [
+    {
+      title: '戦略ページへ',
+      body: '診断結果を参考に、プレミアムや半裁量EAの活用方針を確認します。',
+      href: '#/tools/strategy',
+    },
+    {
+      title: 'プレミアムを見る',
+      body: 'あなたのスタイルに合った考察・インジ・サインを確認します。',
+      href: '#/tools/participation',
     },
   ],
 };

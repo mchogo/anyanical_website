@@ -308,7 +308,7 @@ const DayCellForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="absolute left-0 top-full z-20 mt-1 w-64 rounded-lg border border-white/20 bg-slate-900 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+      className="absolute left-0 top-full z-20 mt-1 w-64 max-w-[calc(100vw-2rem)] rounded-lg border border-white/20 bg-slate-900 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
       onClick={(e) => e.stopPropagation()}
     >
       <p className="mb-2 text-xs font-bold text-white">{date}</p>

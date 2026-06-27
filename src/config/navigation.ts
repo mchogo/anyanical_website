@@ -43,6 +43,10 @@ export const INTERNAL_NAV_LINKS = [
     label: 'トレード日誌',
     href: '#/tools/trade-journal',
   },
+  {
+    label: 'タイプ診断',
+    href: '#/tools/trader-quiz',
+  },
 ] as const;
 
 export const NAV_LINK_GROUPS = [
@@ -66,6 +70,10 @@ export const NAV_LINK_GROUPS = [
       {
         label: '窓開け監視',
         href: '#/tools/gap-watch',
+      },
+      {
+        label: 'タイプ診断',
+        href: '#/tools/trader-quiz',
       },
     ],
   },

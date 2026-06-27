@@ -128,7 +128,7 @@ const MobileNavLinks = ({
             </span>
           </span>
         </summary>
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-3 grid grid-cols-1 min-[360px]:grid-cols-2 gap-2">
           {group.links.map((link) => {
             const isActive = isActiveRoute(link.href, currentRoute);
 

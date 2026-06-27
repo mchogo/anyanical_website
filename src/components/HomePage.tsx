@@ -602,8 +602,8 @@ export const HomePage = ({
               </a>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="min-w-[760px] w-full text-left text-sm">
+            <div className="overflow-x-auto hidden sm:block">
+              <table className="min-w-[640px] w-full text-left text-sm">
                 <thead className="bg-white/[0.04] text-xs uppercase tracking-[0.16em] text-slate-500">
                   <tr>
                     <th className="px-4 py-4">無料で見られるもの</th>
@@ -623,6 +623,18 @@ export const HomePage = ({
                   ))}
                 </tbody>
               </table>
+            </div>
+            <div className="sm:hidden divide-y divide-white/10">
+              {freePremiumRows.map((row) => (
+                <div key={row.premium} className="px-5 py-4">
+                  <div className="flex items-start gap-2 text-sm">
+                    <span className="shrink-0 text-slate-400">{row.free}</span>
+                    <span className="shrink-0 text-amber-200">→</span>
+                    <span className="font-bold text-white">{row.premium}</span>
+                  </div>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">{row.note}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
