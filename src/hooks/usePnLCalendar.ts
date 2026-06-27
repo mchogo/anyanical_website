@@ -57,7 +57,10 @@ export const usePnLCalendar = () => {
         setRecords(recs);
         setError(null);
       })
-      .catch(() => setError('データの読み込みに失敗しました'))
+      .catch((err: unknown) => {
+        const detail = err instanceof Error ? err.message : String(err);
+        setError(`データの読み込みに失敗しました (${detail})`);
+      })
       .finally(() => setIsLoading(false));
   }, [token]);
 
