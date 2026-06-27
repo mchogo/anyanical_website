@@ -81,9 +81,7 @@ export const LoginPage = ({ auth, isCallbackRoute }: LoginPageProps) => {
       }
 
       if (result.status === 'success') {
-        const returnHash = result.returnRoute.replace(/^#?/, '#');
-        window.history.replaceState(null, '', returnHash);
-        window.dispatchEvent(new HashChangeEvent('hashchange'));
+        window.location.replace(result.returnRoute.replace(/^#?/, '#'));
         return;
       }
 
@@ -134,7 +132,7 @@ export const LoginPage = ({ auth, isCallbackRoute }: LoginPageProps) => {
               </div>
             ) : null}
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               {auth.isAuthenticated ? (
                 <>
                   <a
@@ -149,6 +147,21 @@ export const LoginPage = ({ auth, isCallbackRoute }: LoginPageProps) => {
                   >
                     損益カレンダーへ
                   </a>
+                  <button
+                    type="button"
+                    onClick={() => void handleRefreshRoles()}
+                    disabled={isRefreshing}
+                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-white/[0.04] px-5 text-sm font-bold text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10 disabled:opacity-50"
+                  >
+                    {isRefreshing ? 'ロール確認中...' : 'ロールを再確認'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={auth.signOut}
+                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-white/[0.04] px-5 text-sm font-bold text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"
+                  >
+                    ログアウト
+                  </button>
                 </>
               ) : (
                 <button
@@ -160,16 +173,6 @@ export const LoginPage = ({ auth, isCallbackRoute }: LoginPageProps) => {
                   {isProcessing ? '認証中...' : 'Discordでログイン'}
                 </button>
               )}
-
-              {auth.isAuthenticated ? (
-                <button
-                  type="button"
-                  onClick={auth.signOut}
-                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-white/[0.04] px-5 text-sm font-bold text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"
-                >
-                  ログアウト
-                </button>
-              ) : null}
             </div>
           </div>
 
@@ -200,27 +203,15 @@ export const LoginPage = ({ auth, isCallbackRoute }: LoginPageProps) => {
                 </div>
 
                 <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        Discord role access
-                      </p>
-                      <p className="mt-2 text-xl font-bold text-white">{roleAccessLabel}</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-500">
-                        {auth.isGuildMember
-                          ? `${auth.session.guildMember?.roles.length ?? 0}件のロールを確認しました。`
-                          : '対象Discordサーバーのメンバー情報を確認できませんでした。'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => void handleRefreshRoles()}
-                      disabled={isRefreshing}
-                      className="shrink-0 rounded-full bg-white/[0.04] px-3 py-1.5 text-xs font-bold text-slate-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-slate-200 disabled:opacity-50"
-                    >
-                      {isRefreshing ? '確認中...' : 'ロールを更新'}
-                    </button>
-                  </div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Discord role access
+                  </p>
+                  <p className="mt-2 text-xl font-bold text-white">{roleAccessLabel}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    {auth.isGuildMember
+                      ? `${auth.session.guildMember?.roles.length ?? 0}件のロールを確認しました。`
+                      : '対象Discordサーバーのメンバー情報を確認できませんでした。'}
+                  </p>
                 </div>
 
                 {!auth.canAccessPremium ? <NonPremiumGuide /> : null}
