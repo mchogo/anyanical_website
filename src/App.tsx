@@ -5,6 +5,7 @@ import { Disclaimer } from './components/Disclaimer';
 import { ExplainerSections } from './components/ExplainerSections';
 import { AnyaAiAssistant } from './components/AnyaAiAssistant';
 import { AlertToasts } from './components/AlertToasts';
+import { CategoryPage, type CategoryPageId } from './components/CategoryPage';
 import { FloatingNav } from './components/FloatingNav';
 import { Header } from './components/Header';
 import { HomePage } from './components/HomePage';
@@ -40,6 +41,8 @@ const toolPageIds: ToolPageId[] = [
   'trade-journal',
 ];
 
+const categoryPageIds: CategoryPageId[] = ['market', 'ea-copytrade', 'premium'];
+
 const getRoute = () => window.location.hash.replace(/^#\/?/, '');
 
 const parseToolPageId = (route: string): ToolPageId | null => {
@@ -50,6 +53,13 @@ const parseToolPageId = (route: string): ToolPageId | null => {
     return pageId as ToolPageId;
   }
 
+  return null;
+};
+
+const parseCategoryPageId = (route: string): CategoryPageId | null => {
+  if (categoryPageIds.includes(route as CategoryPageId)) {
+    return route as CategoryPageId;
+  }
   return null;
 };
 
@@ -70,6 +80,7 @@ export const App = () => {
   const [route, setRoute] = useState(getRoute);
   const isWeekendMode = isWeekendModeInJst(now);
   const toolPageId = parseToolPageId(route);
+  const categoryPageId = parseCategoryPageId(route);
   const isHomeRoute = route === '' || route === 'home';
   const isBoardRoute = route === 'board';
   const isSpaceXRoute = route === 'spacex';
@@ -126,6 +137,8 @@ export const App = () => {
           lastUpdatedAt={lastUpdatedAt}
           isWeekendMode={isWeekendMode}
         />
+      ) : categoryPageId ? (
+        <CategoryPage pageId={categoryPageId} />
       ) : toolPageId ? (
         <ToolPage
           pageId={toolPageId}

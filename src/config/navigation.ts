@@ -48,6 +48,7 @@ export const INTERNAL_NAV_LINKS = [
 export const NAV_LINK_GROUPS = [
   {
     label: '相場ツール',
+    href: '#/market',
     description: '価格、強弱、指標、窓開け',
     links: [
       {
@@ -70,6 +71,7 @@ export const NAV_LINK_GROUPS = [
   },
   {
     label: 'EA・コピトレ',
+    href: '#/ea-copytrade',
     description: 'EAチェック、戦略、コピトレ、サイン',
     links: [
       {
@@ -92,6 +94,7 @@ export const NAV_LINK_GROUPS = [
   },
   {
     label: 'プレミアム',
+    href: '#/premium',
     description: 'コミュニティ、参加案内、日誌',
     links: [
       {

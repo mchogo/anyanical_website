@@ -23,8 +23,13 @@ const isActiveRoute = (href: string, currentRoute: string) => {
   return linkRoute === currentRoute || (linkRoute === '' && currentRoute === '');
 };
 
-const isActiveGroup = (links: readonly NavLink[], currentRoute: string) =>
-  links.some((link) => isActiveRoute(link.href, currentRoute));
+const isActiveGroup = (
+  group: { href: string; links: readonly NavLink[] },
+  currentRoute: string,
+) => {
+  const groupRoute = group.href.replace(/^#\/?/, '');
+  return groupRoute === currentRoute || group.links.some((link) => isActiveRoute(link.href, currentRoute));
+};
 
 const DesktopNavLinks = ({
   currentRoute,
@@ -32,12 +37,13 @@ const DesktopNavLinks = ({
 }: FloatingNavProps & { onNavigate?: () => void }) => (
   <>
     {NAV_LINK_GROUPS.map((group) => {
-      const isGroupActive = isActiveGroup(group.links, currentRoute);
+      const isGroupActive = isActiveGroup(group, currentRoute);
 
       return (
         <div key={group.label} className="group relative">
-          <button
-            type="button"
+          <a
+            href={group.href}
+            onClick={onNavigate}
             className={`inline-flex min-h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold ring-1 transition ${
               isGroupActive
                 ? 'bg-cyan-300 text-slate-950 ring-cyan-200'
@@ -54,7 +60,7 @@ const DesktopNavLinks = ({
             >
               ▼
             </span>
-          </button>
+          </a>
 
           <div className="invisible absolute left-0 top-full z-50 w-52 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
             <div className="rounded-lg border border-white/10 bg-slate-950/95 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur">
@@ -111,7 +117,7 @@ const MobileNavLinks = ({
       <details
         key={group.label}
         className="col-span-2 rounded-lg border border-white/10 bg-white/[0.035] p-3"
-        open={isActiveGroup(group.links, currentRoute)}
+        open={isActiveGroup(group, currentRoute)}
       >
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-white">
           <span>{group.label}</span>
@@ -141,6 +147,15 @@ const MobileNavLinks = ({
               </a>
             );
           })}
+        </div>
+        <div className="mt-2 border-t border-white/10 pt-2">
+          <a
+            href={group.href}
+            onClick={onNavigate}
+            className="flex min-h-9 items-center justify-center rounded-full px-3 text-xs font-semibold text-slate-400 ring-1 ring-white/[0.06] transition hover:text-slate-200"
+          >
+            {group.label}の一覧ページへ →
+          </a>
         </div>
       </details>
     ))}
