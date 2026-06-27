@@ -2,7 +2,11 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "anyanicalwebsite",
   "compatibility_date": "2026-06-07",
-  "pages_build_output_dir": "./dist",
+  "main": "worker/index.ts",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application",
+  },
   "d1_databases": [
     {
       "binding": "DB",

@@ -1,4 +1,5 @@
 interface Env {
+  ASSETS: Fetcher;
   DB: D1Database;
 }
 
@@ -37,35 +38,29 @@ async function verifyToken(request: Request): Promise<string | null> {
   }
 }
 
-export const onRequest: PagesFunction<Env> = async ({ request, env, params }) => {
+async function handleApi(request: Request, env: Env): Promise<Response> {
   const userId = await verifyToken(request);
   if (!userId) return json({ error: 'Unauthorized' }, 401);
 
-  const segments = params['path'] as string[];
-  const path = segments.join('/');
+  const pathname = new URL(request.url).pathname;
+  const apiPath = pathname.replace(/^\/api\//, '');
+  const segments = apiPath.split('/');
   const method = request.method;
   const db = env.DB;
 
   // ── GET /api/pnl/accounts ────────────────────────────────────────────────
-  if (path === 'pnl/accounts' && method === 'GET') {
+  if (apiPath === 'pnl/accounts' && method === 'GET') {
     const { results } = await db
-      .prepare(
-        'SELECT id, name, unit, created_at FROM accounts WHERE discord_user_id = ?',
-      )
+      .prepare('SELECT id, name, unit, created_at FROM accounts WHERE discord_user_id = ?')
       .bind(userId)
       .all<AccountRow>();
     return json(
-      results.map((r) => ({
-        id: r.id,
-        name: r.name,
-        unit: r.unit,
-        createdAt: r.created_at,
-      })),
+      results.map((r) => ({ id: r.id, name: r.name, unit: r.unit, createdAt: r.created_at })),
     );
   }
 
   // ── POST /api/pnl/accounts ───────────────────────────────────────────────
-  if (path === 'pnl/accounts' && method === 'POST') {
+  if (apiPath === 'pnl/accounts' && method === 'POST') {
     const body = (await request.json()) as {
       id: string;
       name: string;
@@ -78,14 +73,11 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, params }) =>
       )
       .bind(body.id, userId, body.name.trim(), body.unit.trim(), body.createdAt)
       .run();
-    return json(
-      { id: body.id, name: body.name, unit: body.unit, createdAt: body.createdAt },
-      201,
-    );
+    return json({ id: body.id, name: body.name, unit: body.unit, createdAt: body.createdAt }, 201);
   }
 
   // ── DELETE /api/pnl/accounts/:id ────────────────────────────────────────
-  if (path.startsWith('pnl/accounts/') && method === 'DELETE') {
+  if (apiPath.startsWith('pnl/accounts/') && method === 'DELETE') {
     const accountId = segments[2];
     const row = await db
       .prepare('SELECT id FROM accounts WHERE id = ? AND discord_user_id = ?')
@@ -100,7 +92,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, params }) =>
   }
 
   // ── GET /api/pnl/records ─────────────────────────────────────────────────
-  if (path === 'pnl/records' && method === 'GET') {
+  if (apiPath === 'pnl/records' && method === 'GET') {
     const { results } = await db
       .prepare(
         'SELECT id, account_id, date, pnl, notes FROM daily_records WHERE discord_user_id = ?',
@@ -119,7 +111,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, params }) =>
   }
 
   // ── POST /api/pnl/records ────────────────────────────────────────────────
-  if (path === 'pnl/records' && method === 'POST') {
+  if (apiPath === 'pnl/records' && method === 'POST') {
     const body = (await request.json()) as {
       accountId: string;
       date: string;
@@ -127,8 +119,6 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, params }) =>
       notes?: string;
       id?: string;
     };
-
-    // Verify the account belongs to the user
     const account = await db
       .prepare('SELECT id FROM accounts WHERE id = ? AND discord_user_id = ?')
       .bind(body.accountId, userId)
@@ -137,7 +127,6 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, params }) =>
 
     const id = body.id ?? crypto.randomUUID();
     const notes = body.notes?.trim() || null;
-
     await db
       .prepare(
         `INSERT INTO daily_records (id, account_id, discord_user_id, date, pnl, notes)
@@ -146,18 +135,11 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, params }) =>
       )
       .bind(id, body.accountId, userId, body.date, body.pnl, notes)
       .run();
-
-    return json({
-      id,
-      accountId: body.accountId,
-      date: body.date,
-      pnl: body.pnl,
-      notes: notes ?? undefined,
-    });
+    return json({ id, accountId: body.accountId, date: body.date, pnl: body.pnl, notes: notes ?? undefined });
   }
 
   // ── DELETE /api/pnl/records/:accountId/:date ─────────────────────────────
-  if (path.startsWith('pnl/records/') && method === 'DELETE' && segments.length === 4) {
+  if (apiPath.startsWith('pnl/records/') && method === 'DELETE' && segments.length === 4) {
     const accountId = segments[2];
     const date = segments[3];
     await db
@@ -170,4 +152,14 @@ export const onRequest: PagesFunction<Env> = async ({ request, env, params }) =>
   }
 
   return json({ error: 'Not Found' }, 404);
-};
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    if (url.pathname.startsWith('/api/')) {
+      return handleApi(request, env);
+    }
+    return env.ASSETS.fetch(request);
+  },
+} satisfies ExportedHandler<Env>;
