@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 import type { useDiscordAuth } from '../hooks/useDiscordAuth';
 
@@ -46,7 +46,14 @@ const NonPremiumGuide = () => (
 export const LoginPage = ({ auth, isCallbackRoute }: LoginPageProps) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(isCallbackRoute);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const hasCompletedCallback = useRef(false);
+
+  const handleRefreshRoles = useCallback(async () => {
+    setIsRefreshing(true);
+    await auth.refreshRoles();
+    setIsRefreshing(false);
+  }, [auth]);
   const avatarUrl = auth.session ? auth.getAvatarUrl(auth.session.user) : null;
   const roleAccessLabel =
     auth.roleAccess === 'admin'
@@ -74,7 +81,9 @@ export const LoginPage = ({ auth, isCallbackRoute }: LoginPageProps) => {
       }
 
       if (result.status === 'success') {
-        window.location.hash = result.returnRoute.replace(/^#?/, '#');
+        const returnHash = result.returnRoute.replace(/^#?/, '#');
+        window.history.replaceState(null, '', returnHash);
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
         return;
       }
 
@@ -191,15 +200,27 @@ export const LoginPage = ({ auth, isCallbackRoute }: LoginPageProps) => {
                 </div>
 
                 <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Discord role access
-                  </p>
-                  <p className="mt-2 text-xl font-bold text-white">{roleAccessLabel}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
-                    {auth.isGuildMember
-                      ? `${auth.session.guildMember?.roles.length ?? 0}件のロールを確認しました。`
-                      : '対象Discordサーバーのメンバー情報を確認できませんでした。'}
-                  </p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        Discord role access
+                      </p>
+                      <p className="mt-2 text-xl font-bold text-white">{roleAccessLabel}</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-500">
+                        {auth.isGuildMember
+                          ? `${auth.session.guildMember?.roles.length ?? 0}件のロールを確認しました。`
+                          : '対象Discordサーバーのメンバー情報を確認できませんでした。'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void handleRefreshRoles()}
+                      disabled={isRefreshing}
+                      className="shrink-0 rounded-full bg-white/[0.04] px-3 py-1.5 text-xs font-bold text-slate-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-slate-200 disabled:opacity-50"
+                    >
+                      {isRefreshing ? '確認中...' : 'ロールを更新'}
+                    </button>
+                  </div>
                 </div>
 
                 {!auth.canAccessPremium ? <NonPremiumGuide /> : null}

@@ -41,6 +41,14 @@ export const usePnLCalendar = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!token) {
+      setAccounts([]);
+      setRecords([]);
+      setError(null);
+    }
+  }, [token]);
+
   const fetchAll = useCallback(() => {
     if (!token) return;
     setIsLoading(true);

@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const DISCORD_AUTHORIZE_URL = 'https://discord.com/oauth2/authorize';
 const DISCORD_API_URL = 'https://discord.com/api/v10';
 const SESSION_STORAGE_KEY = 'wmb.discord.session';
 const OAUTH_STATE_STORAGE_KEY = 'wmb.discord.oauthState';
+const SIGNOUT_EVENT = 'wmb:auth:signout';
+const ROLE_REFRESH_INTERVAL = 30 * 60_000;
 const BASE_OAUTH_SCOPES = ['identify'];
 const MEMBER_OAUTH_SCOPES = ['guilds.members.read'];
 
@@ -31,6 +33,7 @@ export type DiscordAuthSession = {
   scope: string;
   user: DiscordUser;
   guildMember: DiscordGuildMember | null;
+  guildMemberCheckedAt?: number;
 };
 
 type PendingOAuthState = {
@@ -146,8 +149,13 @@ export const useDiscordAuth = () => {
   const [session, setSession] = useState<DiscordAuthSession | null>(() =>
     getStoredSession(),
   );
+  const sessionRef = useRef(session);
 
   const isConfigured = Boolean(getDiscordClientId());
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   useEffect(() => {
     if (!isSessionValid(session)) {
@@ -155,6 +163,13 @@ export const useDiscordAuth = () => {
       setSession(null);
     }
   }, [session]);
+
+  // Sync signout across multiple hook instances (e.g. nav + calendar)
+  useEffect(() => {
+    const handleSignout = () => setSession(null);
+    window.addEventListener(SIGNOUT_EVENT, handleSignout);
+    return () => window.removeEventListener(SIGNOUT_EVENT, handleSignout);
+  }, []);
 
   const signIn = useCallback((returnRoute = window.location.hash || '#/home') => {
     const clientId = getDiscordClientId();
@@ -187,6 +202,30 @@ export const useDiscordAuth = () => {
     window.localStorage.removeItem(SESSION_STORAGE_KEY);
     window.localStorage.removeItem(OAUTH_STATE_STORAGE_KEY);
     setSession(null);
+    window.dispatchEvent(new Event(SIGNOUT_EVENT));
+  }, []);
+
+  const refreshRoles = useCallback(async (): Promise<void> => {
+    const sess = sessionRef.current;
+    if (!sess?.accessToken) return;
+    const guildId = getDiscordGuildId();
+    if (!guildId) return;
+    try {
+      const res = await fetch(`${DISCORD_API_URL}/users/@me/guilds/${guildId}/member`, {
+        headers: { Authorization: `${sess.tokenType} ${sess.accessToken}` },
+      });
+      if (!res.ok) return;
+      const guildMember = (await res.json()) as DiscordGuildMember;
+      const updated: DiscordAuthSession = {
+        ...sess,
+        guildMember,
+        guildMemberCheckedAt: Date.now(),
+      };
+      writeJson(SESSION_STORAGE_KEY, updated);
+      setSession(updated);
+    } catch {
+      // silently fail
+    }
   }, []);
 
   const completeLoginFromRedirect = useCallback(async (): Promise<LoginResult> => {
@@ -291,6 +330,30 @@ export const useDiscordAuth = () => {
     };
   }, []);
 
+  // Auto-refresh roles on visibility restore or every 30 min
+  useEffect(() => {
+    const maybeRefresh = () => {
+      const sess = sessionRef.current;
+      if (!sess?.accessToken) return;
+      const checkedAt = sess.guildMemberCheckedAt ?? 0;
+      if (Date.now() - checkedAt > ROLE_REFRESH_INTERVAL) {
+        void refreshRoles();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) maybeRefresh();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    const timerId = setInterval(maybeRefresh, ROLE_REFRESH_INTERVAL);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(timerId);
+    };
+  }, [refreshRoles]);
+
   return useMemo(
     () => ({
       session,
@@ -298,6 +361,7 @@ export const useDiscordAuth = () => {
       isConfigured,
       signIn,
       signOut,
+      refreshRoles,
       completeLoginFromRedirect,
       getDisplayName,
       getAvatarUrl,
@@ -310,6 +374,6 @@ export const useDiscordAuth = () => {
       ),
       isGuildMember: Boolean(session?.guildMember),
     }),
-    [completeLoginFromRedirect, isConfigured, session, signIn, signOut],
+    [completeLoginFromRedirect, isConfigured, refreshRoles, session, signIn, signOut],
   );
 };

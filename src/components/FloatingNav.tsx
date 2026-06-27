@@ -184,16 +184,26 @@ const AuthControls = ({
   auth,
   onNavigate,
   mobile = false,
+  isOnLoginPage = false,
 }: {
   auth: DiscordAuth;
   onNavigate?: () => void;
   mobile?: boolean;
+  isOnLoginPage?: boolean;
 }) => {
   if (!auth.isAuthenticated || !auth.session) {
+    const handleLoginClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+      if (isOnLoginPage) {
+        e.preventDefault();
+        auth.signIn('#/home');
+      }
+      onNavigate?.();
+    };
+
     return (
       <a
         href="#/login"
-        onClick={onNavigate}
+        onClick={handleLoginClick}
         className={
           mobile
             ? 'col-span-2 flex min-h-10 items-center justify-center rounded-full bg-indigo-400 px-4 text-sm font-bold text-white ring-1 ring-indigo-300/60 transition hover:bg-indigo-300'
@@ -341,7 +351,7 @@ export const FloatingNav = ({ currentRoute, auth }: FloatingNavContainerProps) =
 
         <div className="hidden items-center gap-2 md:flex">
           <DesktopNavLinks currentRoute={currentRoute} />
-          <AuthControls auth={auth} />
+          <AuthControls auth={auth} isOnLoginPage={currentRoute === 'login'} />
           <div className="relative ml-1">
             <button
               type="button"
@@ -367,7 +377,7 @@ export const FloatingNav = ({ currentRoute, auth }: FloatingNavContainerProps) =
             currentRoute={currentRoute}
             onNavigate={() => setIsOpen(false)}
           />
-          <AuthControls auth={auth} mobile onNavigate={() => setIsOpen(false)} />
+          <AuthControls auth={auth} mobile isOnLoginPage={currentRoute === 'login'} onNavigate={() => setIsOpen(false)} />
           <button
             type="button"
             onClick={handleResetBanners}
