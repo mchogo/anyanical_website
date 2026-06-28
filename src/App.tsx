@@ -16,6 +16,7 @@ import { MarketBoard } from './components/MarketBoard';
 import { NewFeaturesTicker } from './components/NewFeaturesTicker';
 import { SpaceXBanner } from './components/SpaceXBanner';
 import { SpaceXCountdownPage } from './components/SpaceXCountdownPage';
+import { AdminPage } from './components/AdminPage';
 import { ToolPage, type ToolPageId } from './components/ToolPage';
 import { useAlerts } from './hooks/useAlerts';
 import { isDiscordOAuthRedirect, useDiscordAuth } from './hooks/useDiscordAuth';
@@ -174,6 +175,7 @@ export const App = () => {
   const isBoardRoute = route === 'board';
   const isSpaceXRoute = route === 'spacex';
   const isLoginRoute = route === 'login';
+  const isAdminRoute = route === 'admin';
   const isDiscordCallbackRoute = isDiscordOAuthRedirect(route);
 
   useEffect(() => {
@@ -250,7 +252,9 @@ export const App = () => {
       <SpaceXBanner />
       <NewFeaturesTicker />
       <div key={route} className="animate-fade-in">
-      {isLoginRoute || isDiscordCallbackRoute ? (
+      {isAdminRoute ? (
+        <AdminPage auth={discordAuth} />
+      ) : isLoginRoute || isDiscordCallbackRoute ? (
         <LoginPage auth={discordAuth} isCallbackRoute={isDiscordCallbackRoute} />
       ) : isSpaceXRoute ? (
         <SpaceXCountdownPage

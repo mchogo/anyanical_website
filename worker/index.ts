@@ -1,6 +1,7 @@
 interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
+  ADMIN_USER_IDS?: string; // comma-separated Discord user IDs — set via wrangler secret
 }
 
 interface AccountRow {
@@ -37,6 +38,11 @@ async function verifyToken(request: Request): Promise<string | null> {
     return null;
   }
 }
+
+const isAdmin = (userId: string, env: Env): boolean => {
+  if (!env.ADMIN_USER_IDS) return false;
+  return env.ADMIN_USER_IDS.split(',').map((id) => id.trim()).includes(userId);
+};
 
 async function handleApi(request: Request, env: Env): Promise<Response> {
   const userId = await verifyToken(request);
@@ -196,6 +202,82 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       .bind(accountId, date, userId)
       .run();
     return json({ ok: true });
+  }
+
+  // ── GET /api/admin/overview ─────────────────────────────────────────────
+  if (apiPath === 'admin/overview' && method === 'GET') {
+    if (!isAdmin(userId, env)) return json({ error: 'Forbidden' }, 403);
+    const [usersRes, accountsRes, recordsRes, settingsRes] = await db.batch([
+      db.prepare('SELECT COUNT(DISTINCT discord_user_id) as count FROM accounts'),
+      db.prepare('SELECT COUNT(*) as count FROM accounts'),
+      db.prepare('SELECT COUNT(*) as count FROM daily_records'),
+      db.prepare('SELECT COUNT(*) as count FROM user_settings'),
+    ]);
+    return json({
+      userCount: (usersRes.results[0] as { count: number }).count,
+      accountCount: (accountsRes.results[0] as { count: number }).count,
+      recordCount: (recordsRes.results[0] as { count: number }).count,
+      favoritesUserCount: (settingsRes.results[0] as { count: number }).count,
+    });
+  }
+
+  // ── GET /api/admin/users ─────────────────────────────────────────────────
+  if (apiPath === 'admin/users' && method === 'GET') {
+    if (!isAdmin(userId, env)) return json({ error: 'Forbidden' }, 403);
+    const { results } = await db
+      .prepare(
+        `SELECT a.discord_user_id,
+                COUNT(DISTINCT a.id)    AS account_count,
+                COUNT(r.id)             AS record_count,
+                MAX(r.date)             AS last_record_date
+         FROM accounts a
+         LEFT JOIN daily_records r ON r.discord_user_id = a.discord_user_id
+         GROUP BY a.discord_user_id
+         ORDER BY record_count DESC`,
+      )
+      .all<{
+        discord_user_id: string;
+        account_count: number;
+        record_count: number;
+        last_record_date: string | null;
+      }>();
+    return json(
+      results.map((r) => ({
+        discordUserId: r.discord_user_id,
+        accountCount: r.account_count,
+        recordCount: r.record_count,
+        lastRecordDate: r.last_record_date,
+      })),
+    );
+  }
+
+  // ── GET /api/admin/users/:discordId ──────────────────────────────────────
+  if (apiPath.startsWith('admin/users/') && method === 'GET' && segments.length === 3) {
+    if (!isAdmin(userId, env)) return json({ error: 'Forbidden' }, 403);
+    const targetId = segments[2];
+    const [accountsRes, recordsRes] = await db.batch([
+      db.prepare('SELECT id, name, unit, created_at FROM accounts WHERE discord_user_id = ?').bind(targetId),
+      db
+        .prepare(
+          'SELECT id, account_id, date, pnl, notes FROM daily_records WHERE discord_user_id = ? ORDER BY date DESC',
+        )
+        .bind(targetId),
+    ]);
+    return json({
+      accounts: (accountsRes.results as AccountRow[]).map((r) => ({
+        id: r.id,
+        name: r.name,
+        unit: r.unit,
+        createdAt: r.created_at,
+      })),
+      records: (recordsRes.results as RecordRow[]).map((r) => ({
+        id: r.id,
+        accountId: r.account_id,
+        date: r.date,
+        pnl: r.pnl,
+        notes: r.notes ?? undefined,
+      })),
+    });
   }
 
   return json({ error: 'Not Found' }, 404);
