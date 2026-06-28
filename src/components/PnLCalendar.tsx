@@ -929,6 +929,130 @@ const CalendarGrid = ({
   );
 };
 
+// ── Week grid ─────────────────────────────────────────────────────────────────
+
+const WeekGrid = ({
+  weekStart,
+  records,
+  unit,
+  onSave,
+  onDelete,
+}: {
+  weekStart: Date;
+  records: DailyRecord[];
+  unit: string;
+  onSave: (date: string, pnl: number, notes?: string) => void;
+  onDelete: (date: string) => void;
+}) => {
+  const [openDate, setOpenDate] = useState<string | null>(null);
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+  const recordMap = new Map(records.map((r) => [r.date, r]));
+  const pnlValues = records.map((r) => Math.abs(r.pnl));
+  const maxAbs = pnlValues.length > 0 ? Math.max(...pnlValues) : 0;
+  const today = toYMD(new Date());
+  const openRecord = openDate ? recordMap.get(openDate) : undefined;
+  const startMonth = weekStart.getMonth();
+
+  return (
+    <div>
+      <div className="mb-2 grid grid-cols-7 gap-1">
+        {WEEKDAYS.map((d) => (
+          <div key={d} className="text-center text-xs font-semibold text-slate-500">
+            {d}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1.5">
+        {days.map((date) => {
+          const ymd = toYMD(date);
+          const record = recordMap.get(ymd);
+          const isToday = ymd === today;
+          const isOpen = openDate === ymd;
+          const isOtherMonth = date.getMonth() !== startMonth;
+          const bg = record ? cellBg(record.pnl, maxAbs) : undefined;
+
+          return (
+            <button
+              key={ymd}
+              type="button"
+              onClick={() => setOpenDate(isOpen ? null : ymd)}
+              className={`min-h-20 w-full rounded-lg border p-2 text-left transition ${
+                isToday
+                  ? 'border-cyan-300/40'
+                  : isOpen
+                    ? 'border-white/30'
+                    : isOtherMonth
+                      ? 'border-white/[0.05] opacity-40'
+                      : 'border-white/10 hover:border-white/20'
+              }`}
+              style={bg ? { backgroundColor: bg } : undefined}
+            >
+              {isOtherMonth && (
+                <span className="block text-[10px] text-slate-600">{date.getMonth() + 1}月</span>
+              )}
+              <span
+                className={`block text-sm font-bold ${
+                  isToday ? 'text-cyan-200' : isOtherMonth ? 'text-slate-600' : 'text-slate-300'
+                }`}
+              >
+                {date.getDate()}
+              </span>
+              {record ? (
+                <>
+                  <span
+                    className={`mt-1 block text-xs font-bold leading-tight ${
+                      record.pnl > 0 ? 'text-emerald-200' : 'text-rose-200'
+                    }`}
+                  >
+                    {record.pnl > 0 ? '+' : ''}
+                    {record.pnl.toLocaleString('ja-JP')}
+                  </span>
+                  {record.notes && (
+                    <span className="mt-0.5 block truncate text-[10px] leading-tight text-slate-500">
+                      {record.notes}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="mt-1 block text-[10px] text-slate-700">―</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {openDate && (
+        <>
+          <div
+            className="fixed inset-0 z-[60] bg-slate-950/70 backdrop-blur-sm animate-fade-in"
+            onClick={() => setOpenDate(null)}
+          />
+          <div className="fixed inset-x-0 bottom-0 z-[61] flex justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))] animate-slide-up sm:inset-0 sm:items-center">
+            <DayCellForm
+              date={openDate}
+              existing={openRecord}
+              unit={unit}
+              onSave={(pnl, notes) => {
+                onSave(openDate, pnl, notes);
+                setOpenDate(null);
+              }}
+              onDelete={() => {
+                onDelete(openDate);
+                setOpenDate(null);
+              }}
+              onCancel={() => setOpenDate(null)}
+            />
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 // ── CSV export / Twitter share helpers ───────────────────────────────────────
 
 const exportMonthCsv = (
@@ -990,6 +1114,13 @@ export const PnLCalendarTool = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showPremiumUpsell, setShowPremiumUpsell] = useState(false);
+  const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
+  const [weekStart, setWeekStart] = useState<Date>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - d.getDay());
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
   const canUseMultiAccount = auth.canAccessPremium;
 
   if (!auth.isAuthenticated) {
@@ -1040,6 +1171,36 @@ export const PnLCalendarTool = () => {
   const stats = calcStats(monthRecords);
   const unit = isAllAccounts ? '' : (selectedAccount?.unit ?? '');
 
+  // ── Weekly data ──
+  const weekDates = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    return toYMD(d);
+  });
+  const weekDateSet = new Set(weekDates);
+  const weekRecords: DailyRecord[] = isAllAccounts
+    ? (() => {
+        const byDate = new Map<string, number>();
+        records
+          .filter((r) => weekDateSet.has(r.date))
+          .forEach((r) => { byDate.set(r.date, (byDate.get(r.date) ?? 0) + r.pnl); });
+        return Array.from(byDate.entries()).map(([date, pnl]) => ({
+          id: date,
+          accountId: '__all__',
+          date,
+          pnl,
+        }));
+      })()
+    : accountRecords.filter((r) => weekDateSet.has(r.date));
+  const weekStats = calcStats(weekRecords);
+
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  const weekLabel =
+    weekStart.getMonth() === weekEnd.getMonth()
+      ? `${weekStart.getFullYear()}年${weekStart.getMonth() + 1}月${weekStart.getDate()}日〜${weekEnd.getDate()}日`
+      : `${weekStart.getFullYear()}年${weekStart.getMonth() + 1}/${weekStart.getDate()}〜${weekEnd.getMonth() + 1}/${weekEnd.getDate()}`;
+
   const prevMonth = () => {
     if (month === 0) { setYear((y) => y - 1); setMonth(11); }
     else setMonth((m) => m - 1);
@@ -1048,6 +1209,25 @@ export const PnLCalendarTool = () => {
     if (month === 11) { setYear((y) => y + 1); setMonth(0); }
     else setMonth((m) => m + 1);
   };
+  const prevWeek = () =>
+    setWeekStart((d) => { const n = new Date(d); n.setDate(n.getDate() - 7); return n; });
+  const nextWeek = () =>
+    setWeekStart((d) => { const n = new Date(d); n.setDate(n.getDate() + 7); return n; });
+
+  const switchToWeek = () => {
+    const first = new Date(year, month, 1);
+    first.setDate(first.getDate() - first.getDay());
+    first.setHours(0, 0, 0, 0);
+    setWeekStart(first);
+    setViewMode('week');
+  };
+  const switchToMonth = () => {
+    setYear(weekStart.getFullYear());
+    setMonth(weekStart.getMonth());
+    setViewMode('month');
+  };
+
+  const displayStats = viewMode === 'week' ? weekStats : stats;
 
   if (accounts.length === 0) {
     return (
@@ -1175,27 +1355,55 @@ export const PnLCalendarTool = () => {
         }}
       />
 
-      <StatsBar stats={stats} unit={unit} />
+      <StatsBar stats={displayStats} unit={unit} />
 
       <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
         <div className="mb-4 flex items-center justify-between gap-2">
           <button
-            onClick={prevMonth}
+            onClick={viewMode === 'week' ? prevWeek : prevMonth}
             className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/[0.04] text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
           >
             ←
           </button>
-          <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
+          <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
             <p className="text-sm font-bold text-white">
-              {year}年{month + 1}月
+              {viewMode === 'week' ? weekLabel : `${year}年${month + 1}月`}
             </p>
+            <div className="flex rounded-full bg-white/[0.04] p-0.5 ring-1 ring-white/10">
+              <button
+                onClick={switchToMonth}
+                className={`rounded-full px-3 py-0.5 text-xs font-bold transition ${
+                  viewMode === 'month'
+                    ? 'bg-cyan-300 text-slate-950'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                月
+              </button>
+              <button
+                onClick={switchToWeek}
+                className={`rounded-full px-3 py-0.5 text-xs font-bold transition ${
+                  viewMode === 'week'
+                    ? 'bg-cyan-300 text-slate-950'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                週
+              </button>
+            </div>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
-            {!isAllAccounts && monthRecords.length > 0 && (
+            {!isAllAccounts && (viewMode === 'week' ? weekRecords : monthRecords).length > 0 && (
               <>
                 <button
                   onClick={() =>
-                    shareOnX(stats, year, month, unit, selectedAccount?.name ?? '')
+                    shareOnX(
+                      displayStats,
+                      viewMode === 'week' ? weekStart.getFullYear() : year,
+                      viewMode === 'week' ? weekStart.getMonth() : month,
+                      unit,
+                      selectedAccount?.name ?? '',
+                    )
                   }
                   title="X (Twitter) でシェア"
                   className="grid h-8 w-8 place-items-center rounded-full bg-white/[0.04] text-xs text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
@@ -1204,7 +1412,13 @@ export const PnLCalendarTool = () => {
                 </button>
                 <button
                   onClick={() =>
-                    exportMonthCsv(monthRecords, year, month, selectedAccount?.name ?? 'account', unit)
+                    exportMonthCsv(
+                      viewMode === 'week' ? weekRecords : monthRecords,
+                      viewMode === 'week' ? weekStart.getFullYear() : year,
+                      viewMode === 'week' ? weekStart.getMonth() : month,
+                      selectedAccount?.name ?? 'account',
+                      unit,
+                    )
                   }
                   title="CSVエクスポート"
                   className="grid h-8 w-8 place-items-center rounded-full bg-white/[0.04] text-xs text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
@@ -1214,7 +1428,7 @@ export const PnLCalendarTool = () => {
               </>
             )}
             <button
-              onClick={nextMonth}
+              onClick={viewMode === 'week' ? nextWeek : nextMonth}
               className="grid h-8 w-8 place-items-center rounded-full bg-white/[0.04] text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
             >
               →
@@ -1222,7 +1436,19 @@ export const PnLCalendarTool = () => {
           </div>
         </div>
 
-        {isAllAccounts ? (
+        {viewMode === 'week' ? (
+          isAllAccounts ? (
+            <WeekGrid weekStart={weekStart} records={weekRecords} unit="" onSave={() => {}} onDelete={() => {}} />
+          ) : (
+            <WeekGrid
+              weekStart={weekStart}
+              records={weekRecords}
+              unit={unit}
+              onSave={(date, pnl, notes) => setRecord(effectiveAccountId, date, pnl, notes)}
+              onDelete={(date) => deleteRecord(effectiveAccountId, date)}
+            />
+          )
+        ) : isAllAccounts ? (
           <CalendarGrid
             year={year}
             month={month}
