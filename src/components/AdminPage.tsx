@@ -39,7 +39,7 @@ type QuizRow = {
 
 type Tab = 'overview' | 'users' | 'gap' | 'quiz';
 
-const apiFetch = async <T>(path: string, token: string): Promise<T | null> => {
+const apiFetch = async <T,>(path: string, token: string): Promise<T | null> => {
   try {
     const res = await fetch(`/api/${path}`, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) return null;
