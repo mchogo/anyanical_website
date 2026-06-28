@@ -145,7 +145,7 @@ export const NAV_LINK_GROUPS = [
         href: '#/tools/participation',
       },
       {
-        label: 'トレード日誌',
+        label: '損益カレンダー',
         href: '#/tools/trade-journal',
       },
     ],
