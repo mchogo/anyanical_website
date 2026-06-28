@@ -290,7 +290,7 @@ const parseTradeCsv = (text: string): Map<string, number> => {
 // ── Gate components ───────────────────────────────────────────────────────────
 
 const LoginGate = ({ onSignIn }: { onSignIn: () => void }) => (
-  <div className="rounded-lg border border-white/10 bg-white/[0.035] p-8 text-center">
+  <div className="rounded-lg border border-white/10 bg-white/[0.035] p-8 text-center animate-slide-up">
     <p className="text-base font-bold text-white">Discordログインが必要です</p>
     <p className="mt-2 text-sm leading-6 text-slate-400">
       損益カレンダーはDiscordログイン後にご利用いただけます。
