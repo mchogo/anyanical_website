@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 
+import { SITE_URL } from '../config/pageMeta';
 import { useDiscordAuth } from '../hooks/useDiscordAuth';
 import { usePnLCalendar, type Account, type DailyRecord } from '../hooks/usePnLCalendar';
+
+const TRADE_JOURNAL_URL = `${SITE_URL}/#/tools/trade-journal`;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -1403,13 +1406,13 @@ type SharePhase =
 
 const ShareModal = ({
   sharePhase,
-  tweetText,
+  xHref,
   onScreenshot,
   onTextOnly,
   onClose,
 }: {
   sharePhase: SharePhase;
-  tweetText: string;
+  xHref: string;
   onScreenshot: () => void;
   onTextOnly: () => void;
   onClose: () => void;
@@ -1474,7 +1477,7 @@ const ShareModal = ({
             </p>
             <div className="mt-3 flex flex-col gap-2">
               <a
-                href={`https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`}
+                href={xHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => {
@@ -1672,6 +1675,7 @@ export const PnLCalendarTool = () => {
   const periodLabel =
     viewMode === 'week' ? weekLabel : `${year}年${month + 1}月`;
   const tweetText = buildTweetText(displayStats, periodLabel, unit, selectedAccount?.name ?? '');
+  const xHref = `https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(TRADE_JOURNAL_URL)}`;
 
   const handleShareScreenshot = async () => {
     setShareModal({ phase: 'generating' });
@@ -1997,10 +2001,10 @@ export const PnLCalendarTool = () => {
       {shareModal && (
         <ShareModal
           sharePhase={shareModal}
-          tweetText={tweetText}
+          xHref={xHref}
           onScreenshot={handleShareScreenshot}
           onTextOnly={() => {
-            window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`, '_blank');
+            window.open(xHref, '_blank');
             setShareModal(null);
           }}
           onClose={() => {
