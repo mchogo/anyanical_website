@@ -218,7 +218,7 @@ export const App = () => {
       {canGoBack && !isHomeRoute && !showMissionReturn && (
         <button
           onClick={goBack}
-          className="fixed bottom-4 left-1/2 z-[60] inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full bg-slate-700 px-5 text-sm font-black text-white shadow-[0_16px_50px_rgba(0,0,0,0.4)] transition hover:bg-slate-600"
+          className="fixed bottom-4 left-1/2 z-[60] inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full bg-slate-700 px-5 text-sm font-black text-white shadow-[0_16px_50px_rgba(0,0,0,0.4)] transition hover:bg-slate-600 animate-slide-up"
         >
           ← 前のページ
         </button>

@@ -354,14 +354,18 @@ const AccountTabs = ({
   </div>
 );
 
-const PremiumUpsellModal = ({ onClose }: { onClose: () => void }) => (
+const PremiumUpsellModal = ({ onClose }: { onClose: () => void }) => {
+  const [closing, setClosing] = useState(false);
+  const close = () => setClosing(true);
+  return (
   <div
-    className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm animate-fade-in"
-    onClick={onClose}
+    className={`fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}
+    onClick={close}
   >
     <div
-      className="w-full max-w-md rounded-lg border border-amber-300/30 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)] animate-slide-up"
+      className={`w-full max-w-md rounded-lg border border-amber-300/30 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)] ${closing ? 'animate-slide-down' : 'animate-slide-up'}`}
       onClick={(e) => e.stopPropagation()}
+      onAnimationEnd={() => { if (closing) onClose(); }}
     >
       <p className="text-sm font-semibold text-amber-100">Premium feature</p>
       <h3 className="mt-1 text-xl font-bold text-white">複数口座はプレミアム限定です</h3>
@@ -371,14 +375,14 @@ const PremiumUpsellModal = ({ onClose }: { onClose: () => void }) => (
       <div className="mt-5 flex flex-wrap gap-2">
         <a
           href="#/tools/participation"
-          onClick={onClose}
+          onClick={close}
           className="inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
         >
           プレミアム内容を見る
         </a>
         <button
           type="button"
-          onClick={onClose}
+          onClick={close}
           className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
         >
           閉じる
@@ -386,7 +390,8 @@ const PremiumUpsellModal = ({ onClose }: { onClose: () => void }) => (
       </div>
     </div>
   </div>
-);
+  );
+};
 
 // ── Account forms ──────────────────────────────────────────────────────────────
 
@@ -419,7 +424,7 @@ const AccountForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="mb-4 rounded-lg border border-cyan-300/20 bg-cyan-300/5 p-4"
+      className="mb-4 rounded-lg border border-cyan-300/20 bg-cyan-300/5 p-4 animate-slide-up"
     >
       <p className="mb-3 text-sm font-bold text-white">
         {mode === 'add' ? '口座を追加' : '口座を編集'}
@@ -474,19 +479,23 @@ const AccountForm = ({
 
 // ── Import guide overlay ──────────────────────────────────────────────────────
 
-const ImportGuideModal = ({ onClose }: { onClose: () => void }) => (
+const ImportGuideModal = ({ onClose }: { onClose: () => void }) => {
+  const [closing, setClosing] = useState(false);
+  const close = () => setClosing(true);
+  return (
   <div
-    className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm animate-fade-in"
-    onClick={onClose}
+    className={`fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}
+    onClick={close}
   >
     <div
-      className="w-full max-w-lg rounded-xl border border-white/10 bg-slate-900 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.6)] animate-slide-up"
+      className={`w-full max-w-lg rounded-xl border border-white/10 bg-slate-900 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.6)] ${closing ? 'animate-slide-down' : 'animate-slide-up'}`}
       onClick={(e) => e.stopPropagation()}
+      onAnimationEnd={() => { if (closing) onClose(); }}
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <h3 className="text-base font-bold text-white">MT4 / MT5 履歴の取り込み方法</h3>
         <button
-          onClick={onClose}
+          onClick={close}
           className="shrink-0 text-slate-500 transition hover:text-white"
           aria-label="閉じる"
         >
@@ -555,14 +564,15 @@ const ImportGuideModal = ({ onClose }: { onClose: () => void }) => (
       </div>
 
       <button
-        onClick={onClose}
+        onClick={close}
         className="mt-5 inline-flex min-h-9 w-full items-center justify-center rounded-full bg-white/[0.06] text-sm font-bold text-slate-300 transition hover:bg-white/10"
       >
         閉じる
       </button>
     </div>
   </div>
-);
+  );
+};
 
 // ── CSV import panel ──────────────────────────────────────────────────────────
 
@@ -743,7 +753,7 @@ const DayCellForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="absolute left-0 top-full z-20 mt-1 w-64 max-w-[calc(100vw-2rem)] rounded-lg border border-white/20 bg-slate-900 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+      className="absolute left-0 top-full z-20 mt-1 w-64 max-w-[calc(100vw-2rem)] rounded-lg border border-white/20 bg-slate-900 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)] animate-slide-up"
       onClick={(e) => e.stopPropagation()}
     >
       <p className="mb-2 text-xs font-bold text-white">{date}</p>
