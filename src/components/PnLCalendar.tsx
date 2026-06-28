@@ -727,6 +727,51 @@ const StatsBar = ({ stats, unit }: { stats: MonthStats; unit: string }) => {
   );
 };
 
+// ── Keyboard-aware modal shell ────────────────────────────────────────────────
+
+const DayCellModal = ({
+  onClose,
+  children,
+}: {
+  onClose: () => void;
+  children: React.ReactNode;
+}) => {
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      setKeyboardOffset(Math.max(0, window.innerHeight - (vv.offsetTop + vv.height)));
+    };
+    update();
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
+  }, []);
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-[60] bg-slate-950/70 backdrop-blur-sm animate-fade-in"
+        onClick={onClose}
+      />
+      <div
+        className="fixed inset-x-0 z-[61] flex justify-center px-4 animate-slide-up transition-[bottom] duration-75 sm:inset-0 sm:items-center sm:p-4"
+        style={{
+          bottom: keyboardOffset,
+          paddingBottom: keyboardOffset > 0 ? '1rem' : 'max(1rem, env(safe-area-inset-bottom))',
+        }}
+      >
+        {children}
+      </div>
+    </>
+  );
+};
+
 // ── Day cell input form ───────────────────────────────────────────────────────
 
 const DayCellForm = ({
@@ -902,28 +947,22 @@ const CalendarGrid = ({
       </div>
 
       {openDate && (
-        <>
-          <div
-            className="fixed inset-0 z-[60] bg-slate-950/70 backdrop-blur-sm animate-fade-in"
-            onClick={() => setOpenDate(null)}
+        <DayCellModal onClose={() => setOpenDate(null)}>
+          <DayCellForm
+            date={openDate}
+            existing={openRecord}
+            unit={unit}
+            onSave={(pnl, notes) => {
+              onSave(openDate, pnl, notes);
+              setOpenDate(null);
+            }}
+            onDelete={() => {
+              onDelete(openDate);
+              setOpenDate(null);
+            }}
+            onCancel={() => setOpenDate(null)}
           />
-          <div className="fixed inset-x-0 bottom-0 z-[61] flex justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))] animate-slide-up sm:inset-0 sm:items-center">
-            <DayCellForm
-              date={openDate}
-              existing={openRecord}
-              unit={unit}
-              onSave={(pnl, notes) => {
-                onSave(openDate, pnl, notes);
-                setOpenDate(null);
-              }}
-              onDelete={() => {
-                onDelete(openDate);
-                setOpenDate(null);
-              }}
-              onCancel={() => setOpenDate(null)}
-            />
-          </div>
-        </>
+        </DayCellModal>
       )}
     </div>
   );
@@ -1026,28 +1065,22 @@ const WeekGrid = ({
       </div>
 
       {openDate && (
-        <>
-          <div
-            className="fixed inset-0 z-[60] bg-slate-950/70 backdrop-blur-sm animate-fade-in"
-            onClick={() => setOpenDate(null)}
+        <DayCellModal onClose={() => setOpenDate(null)}>
+          <DayCellForm
+            date={openDate}
+            existing={openRecord}
+            unit={unit}
+            onSave={(pnl, notes) => {
+              onSave(openDate, pnl, notes);
+              setOpenDate(null);
+            }}
+            onDelete={() => {
+              onDelete(openDate);
+              setOpenDate(null);
+            }}
+            onCancel={() => setOpenDate(null)}
           />
-          <div className="fixed inset-x-0 bottom-0 z-[61] flex justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))] animate-slide-up sm:inset-0 sm:items-center">
-            <DayCellForm
-              date={openDate}
-              existing={openRecord}
-              unit={unit}
-              onSave={(pnl, notes) => {
-                onSave(openDate, pnl, notes);
-                setOpenDate(null);
-              }}
-              onDelete={() => {
-                onDelete(openDate);
-                setOpenDate(null);
-              }}
-              onCancel={() => setOpenDate(null)}
-            />
-          </div>
-        </>
+        </DayCellModal>
       )}
     </div>
   );
