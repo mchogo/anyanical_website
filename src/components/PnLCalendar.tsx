@@ -1402,7 +1402,7 @@ const generatePnLCard = async (opts: CardOpts): Promise<Blob> => {
 type SharePhase =
   | { phase: 'options' }
   | { phase: 'generating' }
-  | { phase: 'preview'; imageUrl: string; filename: string };
+  | { phase: 'preview'; imageUrl: string; filename: string; file: File };
 
 const ShareModal = ({
   sharePhase,
@@ -1476,13 +1476,29 @@ const ShareModal = ({
               <div className="flex items-center gap-3">
                 <span className="w-5 shrink-0 text-center text-xs font-bold text-slate-500">①</span>
                 <button
-                  onClick={() => {
-                    const link = document.createElement('a');
-                    link.href = sharePhase.imageUrl;
-                    link.download = sharePhase.filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                  onClick={async () => {
+                    const isTouchPrimary = navigator.maxTouchPoints > 1;
+                    if (isTouchPrimary && navigator.canShare?.({ files: [sharePhase.file] })) {
+                      try {
+                        await navigator.share({ files: [sharePhase.file] });
+                      } catch (e) {
+                        if ((e as Error)?.name === 'AbortError') return;
+                        // share failed — fall through to download
+                        const link = document.createElement('a');
+                        link.href = sharePhase.imageUrl;
+                        link.download = sharePhase.filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }
+                    } else {
+                      const link = document.createElement('a');
+                      link.href = sharePhase.imageUrl;
+                      link.download = sharePhase.filename;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }
                   }}
                   className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full bg-slate-700 px-4 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-slate-600"
                 >
@@ -1690,8 +1706,9 @@ export const PnLCalendarTool = () => {
       });
       const safeName = (selectedAccount?.name ?? 'account').replace(/[^\w぀-ヿ一-鿿]/g, '_');
       const filename = `pnl_${safeName}_${periodLabel.replace(/[年月 \/〜]/g, '')}.png`;
+      const file = new File([blob], filename, { type: 'image/png' });
       const imageUrl = URL.createObjectURL(blob);
-      setShareModal({ phase: 'preview', imageUrl, filename });
+      setShareModal({ phase: 'preview', imageUrl, filename, file });
     } catch (e) {
       console.error(e);
       setShareModal(null);
