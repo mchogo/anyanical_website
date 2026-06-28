@@ -39,11 +39,68 @@ const isActiveGroup = (
   );
 };
 
-const FavoritesDropdown = ({ onNavigate }: { onNavigate?: () => void }) => {
-  const { favorites, canAccessPremium } = useFavoritesContext();
-  if (!canAccessPremium) return null;
+const FavUpsellOverlay = ({ onClose, isAuthenticated }: { onClose: () => void; isAuthenticated: boolean }) => (
+  <div
+    className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm animate-fade-in"
+    onClick={onClose}
+  >
+    <div
+      className="w-full max-w-md rounded-lg border border-amber-300/30 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)] animate-slide-up"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <p className="text-sm font-semibold text-amber-100">Premium feature</p>
+      <h3 className="mt-1 text-xl font-bold text-white">お気に入りはプレミアム限定です</h3>
+      <p className="mt-3 text-sm leading-6 text-slate-400">
+        よく使うページを登録してナビバーからすぐアクセスできます。プレミアム会員向け機能です。
+      </p>
+      <div className="mt-5 flex flex-wrap gap-2">
+        <a
+          href="#/tools/participation"
+          onClick={onClose}
+          className="inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
+        >
+          プレミアム内容を見る
+        </a>
+        {!isAuthenticated && (
+          <a
+            href="#/login"
+            onClick={onClose}
+            className="inline-flex min-h-10 items-center justify-center rounded-full bg-indigo-400 px-4 text-sm font-bold text-white transition hover:bg-indigo-300"
+          >
+            Discordログイン
+          </a>
+        )}
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+        >
+          閉じる
+        </button>
+      </div>
+    </div>
+  </div>
+);
 
-  // Empty state: direct link to guide (マイページ)
+const FavoritesDropdown = ({ onNavigate }: { onNavigate?: () => void }) => {
+  const { favorites, canAccessPremium, isAuthenticated } = useFavoritesContext();
+  const [showUpsell, setShowUpsell] = useState(false);
+
+  if (!canAccessPremium) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setShowUpsell(true)}
+          className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-white/[0.04] px-4 text-sm font-semibold text-slate-400 ring-1 ring-white/10 transition hover:bg-amber-300/10 hover:text-amber-200"
+        >
+          ☆ お気に入り
+        </button>
+        {showUpsell && <FavUpsellOverlay onClose={() => setShowUpsell(false)} isAuthenticated={isAuthenticated} />}
+      </>
+    );
+  }
+
   if (favorites.length === 0) {
     return (
       <a
@@ -98,10 +155,24 @@ const FavoritesDropdown = ({ onNavigate }: { onNavigate?: () => void }) => {
 };
 
 const MobileFavoritesSection = ({ onNavigate }: { onNavigate?: () => void }) => {
-  const { favorites, canAccessPremium } = useFavoritesContext();
-  if (!canAccessPremium) return null;
+  const { favorites, canAccessPremium, isAuthenticated } = useFavoritesContext();
+  const [showUpsell, setShowUpsell] = useState(false);
 
-  // Empty state: guide link
+  if (!canAccessPremium) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setShowUpsell(true)}
+          className="col-span-2 flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-semibold text-slate-400 ring-1 ring-white/10 transition hover:bg-amber-300/10 hover:text-amber-200"
+        >
+          ☆ お気に入り
+        </button>
+        {showUpsell && <FavUpsellOverlay onClose={() => setShowUpsell(false)} isAuthenticated={isAuthenticated} />}
+      </>
+    );
+  }
+
   if (favorites.length === 0) {
     return (
       <a

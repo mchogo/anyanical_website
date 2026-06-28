@@ -16,12 +16,14 @@ const readLocal = (): string[] => {
 export type FavoritesContextValue = {
   favorites: string[];
   canAccessPremium: boolean;
+  isAuthenticated: boolean;
   toggleFavorite: (route: string) => void;
 };
 
 export const FavoritesContext = createContext<FavoritesContextValue>({
   favorites: [],
   canAccessPremium: false,
+  isAuthenticated: false,
   toggleFavorite: () => {},
 });
 
@@ -30,6 +32,7 @@ export const useFavoritesContext = () => useContext(FavoritesContext);
 export const useFavorites = (
   session: DiscordAuthSession | null,
   canAccessPremium: boolean,
+  isAuthenticated: boolean,
 ): FavoritesContextValue => {
   const [favorites, setFavorites] = useState<string[]>(readLocal);
 
@@ -76,5 +79,5 @@ export const useFavorites = (
     [canAccessPremium, session?.accessToken],
   );
 
-  return { favorites, canAccessPremium, toggleFavorite };
+  return { favorites, canAccessPremium, isAuthenticated, toggleFavorite };
 };

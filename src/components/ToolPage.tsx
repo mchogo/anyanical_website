@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   CurrencyStrengthTool,
   EaChecklistTool,
@@ -363,6 +364,55 @@ const nextActions: Record<
   ],
 };
 
+const FavUpsellOverlay = ({
+  onClose,
+  isAuthenticated,
+}: {
+  onClose: () => void;
+  isAuthenticated: boolean;
+}) => (
+  <div
+    className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm"
+    onClick={onClose}
+  >
+    <div
+      className="w-full max-w-md rounded-lg border border-amber-300/30 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <p className="text-sm font-semibold text-amber-100">Premium feature</p>
+      <h3 className="mt-1 text-xl font-bold text-white">お気に入りはプレミアム限定です</h3>
+      <p className="mt-3 text-sm leading-6 text-slate-400">
+        よく使うページを登録してナビバーからすぐアクセスできます。プレミアム会員向け機能です。
+      </p>
+      <div className="mt-5 flex flex-wrap gap-2">
+        <a
+          href="#/tools/participation"
+          onClick={onClose}
+          className="inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
+        >
+          プレミアム内容を見る
+        </a>
+        {!isAuthenticated && (
+          <a
+            href="#/login"
+            onClick={onClose}
+            className="inline-flex min-h-10 items-center justify-center rounded-full bg-indigo-400 px-4 text-sm font-bold text-white transition hover:bg-indigo-300"
+          >
+            Discordログイン
+          </a>
+        )}
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+        >
+          閉じる
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
 export const ToolPage = ({
   pageId,
   prices,
@@ -376,12 +426,27 @@ export const ToolPage = ({
     pageId === 'gap-watch' && !isWeekendMode
       ? '平日は現在値と直近6時間の動きで、短期の偏りを確認します'
       : page.description;
-  const { favorites, toggleFavorite } = useFavoritesContext();
+  const { favorites, toggleFavorite, isAuthenticated } = useFavoritesContext();
   const pageRoute = `tools/${pageId}`;
   const isFavorited = favorites.includes(pageRoute);
+  const [showFavUpsell, setShowFavUpsell] = useState(false);
+
+  const handleFavClick = () => {
+    if (canAccessPremium) {
+      toggleFavorite(pageRoute);
+    } else {
+      setShowFavUpsell(true);
+    }
+  };
 
   return (
     <main className="animate-fade-in">
+      {showFavUpsell && (
+        <FavUpsellOverlay
+          onClose={() => setShowFavUpsell(false)}
+          isAuthenticated={isAuthenticated}
+        />
+      )}
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex max-w-4xl items-start gap-3">
           <div className="flex-1">
@@ -395,21 +460,19 @@ export const ToolPage = ({
               {pageDescription}
             </p>
           </div>
-          {canAccessPremium && (
-            <button
-              type="button"
-              onClick={() => toggleFavorite(pageRoute)}
-              aria-label={isFavorited ? 'お気に入りから削除' : 'お気に入りに追加'}
-              title={isFavorited ? 'お気に入りから削除' : 'お気に入りに追加'}
-              className={`mt-7 shrink-0 grid h-10 w-10 place-items-center rounded-full text-xl ring-1 transition ${
-                isFavorited
-                  ? 'bg-amber-300/20 text-amber-300 ring-amber-300/40 hover:bg-amber-300/10'
-                  : 'bg-white/[0.04] text-slate-600 ring-white/10 hover:bg-amber-300/10 hover:text-amber-300'
-              }`}
-            >
-              {isFavorited ? '★' : '☆'}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleFavClick}
+            aria-label={isFavorited ? 'お気に入りから削除' : 'お気に入りに追加'}
+            title={isFavorited ? 'お気に入りから削除' : 'お気に入りに追加'}
+            className={`mt-7 shrink-0 grid h-10 w-10 place-items-center rounded-full text-xl ring-1 transition ${
+              isFavorited
+                ? 'bg-amber-300/20 text-amber-300 ring-amber-300/40 hover:bg-amber-300/10'
+                : 'bg-white/[0.04] text-slate-600 ring-white/10 hover:bg-amber-300/10 hover:text-amber-300'
+            }`}
+          >
+            {isFavorited ? '★' : '☆'}
+          </button>
         </div>
       </section>
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { DEFAULT_META, ROUTE_META, SITE_URL } from './config/pageMeta';
-import { FavoritesContext, useFavorites } from './hooks/useFavorites';
+import { FavoritesContext, useFavorites, useFavoritesContext } from './hooks/useFavorites';
 import { ChartSection } from './components/ChartSection';
 import { Disclaimer } from './components/Disclaimer';
 import { ExplainerSections } from './components/ExplainerSections';
@@ -20,6 +20,80 @@ import { ToolPage, type ToolPageId } from './components/ToolPage';
 import { useAlerts } from './hooks/useAlerts';
 import { isDiscordOAuthRedirect, useDiscordAuth } from './hooks/useDiscordAuth';
 import { useHyperliquidMids } from './hooks/useHyperliquidMids';
+
+const BoardFavButton = () => {
+  const { favorites, canAccessPremium, isAuthenticated, toggleFavorite } = useFavoritesContext();
+  const [showUpsell, setShowUpsell] = useState(false);
+  const route = 'board';
+  const isFav = favorites.includes(route);
+
+  const handleClick = () => {
+    if (canAccessPremium) {
+      toggleFavorite(route);
+    } else {
+      setShowUpsell(true);
+    }
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={handleClick}
+        aria-label={isFav ? 'お気に入りから削除' : 'お気に入りに追加'}
+        className={`fixed right-4 top-20 z-[55] grid h-10 w-10 place-items-center rounded-full text-xl ring-1 transition ${
+          isFav
+            ? 'bg-amber-300/20 text-amber-300 ring-amber-300/40 hover:bg-amber-300/10'
+            : 'bg-white/[0.04] text-slate-600 ring-white/10 hover:bg-amber-300/10 hover:text-amber-300'
+        }`}
+      >
+        {isFav ? '★' : '☆'}
+      </button>
+      {showUpsell && (
+        <div
+          className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm"
+          onClick={() => setShowUpsell(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-lg border border-amber-300/30 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm font-semibold text-amber-100">Premium feature</p>
+            <h3 className="mt-1 text-xl font-bold text-white">お気に入りはプレミアム限定です</h3>
+            <p className="mt-3 text-sm leading-6 text-slate-400">
+              よく使うページを登録してナビバーからすぐアクセスできます。プレミアム会員向け機能です。
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <a
+                href="#/tools/participation"
+                onClick={() => setShowUpsell(false)}
+                className="inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
+              >
+                プレミアム内容を見る
+              </a>
+              {!isAuthenticated && (
+                <a
+                  href="#/login"
+                  onClick={() => setShowUpsell(false)}
+                  className="inline-flex min-h-10 items-center justify-center rounded-full bg-indigo-400 px-4 text-sm font-bold text-white transition hover:bg-indigo-300"
+                >
+                  Discordログイン
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowUpsell(false)}
+                className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
 
 const isWeekendModeInJst = (timestamp: number) => {
   const weekday = new Intl.DateTimeFormat('en-US', {
@@ -92,7 +166,7 @@ export const App = () => {
       window.sessionStorage.getItem(MISSION_RETURN_STORAGE_KEY) === '1' &&
       getRoute() !== 'tools/daily-mission',
   );
-  const favoritesCtx = useFavorites(discordAuth.session, discordAuth.canAccessPremium);
+  const favoritesCtx = useFavorites(discordAuth.session, discordAuth.canAccessPremium, discordAuth.isAuthenticated);
   const isWeekendMode = isWeekendModeInJst(now);
   const toolPageId = parseToolPageId(route);
   const categoryPageId = parseCategoryPageId(route);
@@ -210,6 +284,7 @@ export const App = () => {
         />
       ) : isBoardRoute ? (
         <main>
+          <BoardFavButton />
           <Header
             connectionStatus={connectionStatus}
             tickCount={tickCount}
@@ -249,7 +324,7 @@ export const App = () => {
       {canGoBack && !isHomeRoute && !showMissionReturn && (
         <button
           onClick={goBack}
-          className="fixed bottom-4 left-1/2 z-[60] inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full bg-slate-700 px-5 text-sm font-black text-white shadow-[0_16px_50px_rgba(0,0,0,0.4)] transition hover:bg-slate-600 animate-slide-up"
+          className="fixed bottom-20 left-1/2 z-[60] inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full bg-slate-700 px-5 text-sm font-black text-white shadow-[0_16px_50px_rgba(0,0,0,0.4)] transition hover:bg-slate-600 animate-slide-up sm:bottom-4"
         >
           ← 前のページ
         </button>
@@ -261,7 +336,7 @@ export const App = () => {
             window.sessionStorage.removeItem(MISSION_RETURN_STORAGE_KEY);
             setShowMissionReturn(false);
           }}
-          className="fixed bottom-4 left-1/2 z-[60] inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full bg-cyan-300 px-5 text-sm font-black text-slate-950 shadow-[0_16px_50px_rgba(34,211,238,0.22)] transition hover:bg-cyan-200"
+          className="fixed bottom-20 left-1/2 z-[60] inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full bg-cyan-300 px-5 text-sm font-black text-slate-950 shadow-[0_16px_50px_rgba(34,211,238,0.22)] transition hover:bg-cyan-200 sm:bottom-4"
         >
           ミッションに戻る
         </a>

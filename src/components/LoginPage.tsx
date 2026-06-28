@@ -142,6 +142,12 @@ export const LoginPage = ({ auth, isCallbackRoute }: LoginPageProps) => {
                     ホームへ戻る
                   </a>
                   <a
+                    href="#/tools/member-dashboard"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-amber-200 px-5 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
+                  >
+                    マイページへ
+                  </a>
+                  <a
                     href="#/tools/trade-journal"
                     className="inline-flex min-h-11 items-center justify-center rounded-full bg-white/[0.06] px-5 text-sm font-bold text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"
                   >
