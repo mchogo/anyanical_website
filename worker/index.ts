@@ -76,6 +76,28 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     return json({ id: body.id, name: body.name, unit: body.unit, createdAt: body.createdAt }, 201);
   }
 
+  // ── PATCH /api/pnl/accounts/:id ─────────────────────────────────────────
+  if (apiPath.startsWith('pnl/accounts/') && method === 'PATCH' && segments.length === 3) {
+    const accountId = segments[2];
+    const body = (await request.json()) as { unit?: string; name?: string };
+    const row = await db
+      .prepare('SELECT id FROM accounts WHERE id = ? AND discord_user_id = ?')
+      .bind(accountId, userId)
+      .first<{ id: string }>();
+    if (!row) return json({ error: 'Not Found' }, 404);
+    const setParts: string[] = [];
+    const binds: string[] = [];
+    if (body.name !== undefined) { setParts.push('name = ?'); binds.push(body.name.trim()); }
+    if (body.unit !== undefined) { setParts.push('unit = ?'); binds.push(body.unit.trim()); }
+    if (setParts.length > 0) {
+      await db
+        .prepare(`UPDATE accounts SET ${setParts.join(', ')} WHERE id = ? AND discord_user_id = ?`)
+        .bind(...binds, accountId, userId)
+        .run();
+    }
+    return json({ ok: true });
+  }
+
   // ── DELETE /api/pnl/accounts/:id ────────────────────────────────────────
   if (apiPath.startsWith('pnl/accounts/') && method === 'DELETE') {
     const accountId = segments[2];

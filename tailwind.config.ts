@@ -10,6 +10,20 @@ export default {
       boxShadow: {
         glow: '0 0 40px rgba(20, 184, 166, 0.16)',
       },
+      keyframes: {
+        fadeIn: {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        slideUp: {
+          from: { opacity: '0', transform: 'translateY(12px) scale(0.97)' },
+          to: { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fadeIn 150ms ease both',
+        'slide-up': 'slideUp 200ms cubic-bezier(0.16,1,0.3,1) both',
+      },
     },
   },
   plugins: [],

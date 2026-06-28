@@ -94,6 +94,23 @@ export const usePnLCalendar = () => {
     [token],
   );
 
+  const updateAccount = useCallback(
+    (accountId: string, fields: { name?: string; unit?: string }): void => {
+      if (!token) return;
+      setAccounts((prev) =>
+        prev.map((a) => (a.id === accountId ? { ...a, ...fields } : a)),
+      );
+      apiFetch(`accounts/${accountId}`, token, {
+        method: 'PATCH',
+        body: JSON.stringify(fields),
+      }).catch(() => {
+        void fetchAll();
+        setError('口座情報の更新に失敗しました');
+      });
+    },
+    [token, fetchAll],
+  );
+
   const deleteAccount = useCallback(
     (id: string): void => {
       if (!token) return;
@@ -160,6 +177,7 @@ export const usePnLCalendar = () => {
     isLoading,
     error,
     addAccount,
+    updateAccount,
     deleteAccount,
     setRecord,
     deleteRecord,

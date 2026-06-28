@@ -105,6 +105,16 @@ export const useTradeJournal = () => {
     setTrades((prev) => prev.filter((t) => t.id !== id));
   };
 
+  const bulkAddTrades = (inputs: Omit<Trade, 'id' | 'createdAt'>[]): number => {
+    const newTrades = inputs.map((input) => ({
+      ...input,
+      id: createId(),
+      createdAt: new Date().toISOString(),
+    }));
+    setTrades((prev) => [...newTrades, ...prev]);
+    return newTrades.length;
+  };
+
   const openTrades = trades.filter((t) => t.status === 'open');
   const closedTrades = trades.filter((t) => t.status === 'closed');
 
@@ -128,5 +138,5 @@ export const useTradeJournal = () => {
       pipsClosed.length > 0 ? pipsClosed.reduce((sum, x) => sum + (x.pnl ?? 0), 0) : null,
   };
 
-  return { trades, openTrades, closedTrades, stats, addTrade, closeTrade, deleteTrade };
+  return { trades, openTrades, closedTrades, stats, addTrade, closeTrade, deleteTrade, bulkAddTrades };
 };

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import * as XLSX from 'xlsx';
 
 import { MARKETS } from '../config/markets';
 import { useDiscordAuth } from '../hooks/useDiscordAuth';
@@ -54,6 +55,76 @@ const isPnLWin = (trade: Trade): boolean | null => {
   const pnl = calculatePnL(trade);
   if (pnl === null) return null;
   return pnl > 0;
+};
+
+type ImportedTrade = Omit<Trade, 'id' | 'createdAt'>;
+
+const parseMt4Date = (s: string): string => {
+  const m = s.trim().match(/^(\d{4})\.(\d{2})\.(\d{2}) (\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (m) {
+    const [, yr, mo, dy, hr, mn, sc = '00'] = m;
+    return new Date(`${yr}-${mo}-${dy}T${hr}:${mn}:${sc}`).toISOString();
+  }
+  return new Date(s).toISOString();
+};
+
+const rowToTrade = (cells: string[]): ImportedTrade | null => {
+  if (cells.length < 14) return null;
+  const type = cells[2].toLowerCase().trim();
+  if (type !== 'buy' && type !== 'sell') return null;
+
+  const entryPrice = parseFloat(cells[5]);
+  const exitPrice = parseFloat(cells[9]);
+  const lotSize = parseFloat(cells[3]);
+  const sl = parseFloat(cells[6]);
+  const tp = parseFloat(cells[7]);
+  const symbol = cells[4].trim();
+
+  if (!Number.isFinite(entryPrice) || entryPrice <= 0 || !symbol) return null;
+
+  const hasExit = Number.isFinite(exitPrice) && exitPrice > 0 && cells[8].trim() !== '';
+  return {
+    symbol,
+    direction: type === 'buy' ? 'long' : 'short',
+    entryPrice,
+    entryAt: parseMt4Date(cells[1]),
+    pnlMode: 'pips',
+    lotSize: Number.isFinite(lotSize) && lotSize > 0 ? lotSize : undefined,
+    stopLoss: Number.isFinite(sl) && sl > 0 ? sl : undefined,
+    takeProfit: Number.isFinite(tp) && tp > 0 ? tp : undefined,
+    exitPrice: hasExit ? exitPrice : undefined,
+    exitAt: hasExit ? parseMt4Date(cells[8]) : undefined,
+    status: hasExit ? 'closed' : 'open',
+  };
+};
+
+const parseMt4Html = (html: string): ImportedTrade[] => {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const trades: ImportedTrade[] = [];
+  for (const row of Array.from(doc.querySelectorAll('tr'))) {
+    const cells = Array.from(row.querySelectorAll('td')).map(
+      (td) => td.textContent?.trim() ?? '',
+    );
+    const trade = rowToTrade(cells);
+    if (trade) trades.push(trade);
+  }
+  return trades;
+};
+
+const parseMt4Xlsx = (buffer: ArrayBuffer): ImportedTrade[] => {
+  const wb = XLSX.read(buffer, { type: 'array' });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1 }) as unknown[][];
+  const trades: ImportedTrade[] = [];
+  for (const row of rows) {
+    if (!Array.isArray(row)) continue;
+    const cells = (row as unknown[]).map((c) =>
+      c !== null && c !== undefined ? String(c).trim() : '',
+    );
+    const trade = rowToTrade(cells);
+    if (trade) trades.push(trade);
+  }
+  return trades;
 };
 
 const exportCsv = (trades: Trade[]): void => {
@@ -619,10 +690,46 @@ const TradeCard = ({
 
 export const TradeJournalTool = () => {
   const auth = useDiscordAuth();
-  const { openTrades, closedTrades, stats, addTrade, closeTrade, deleteTrade } =
+  const { openTrades, closedTrades, stats, addTrade, closeTrade, deleteTrade, bulkAddTrades } =
     useTradeJournal();
   const [showNewForm, setShowNewForm] = useState(false);
   const [closingTradeId, setClosingTradeId] = useState<string | null>(null);
+  const [importMessage, setImportMessage] = useState<{ text: string; ok: boolean } | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    const reader = new FileReader();
+
+    reader.onload = (ev) => {
+      try {
+        let trades: ImportedTrade[];
+        if (ext === 'htm' || ext === 'html') {
+          trades = parseMt4Html(ev.target?.result as string);
+        } else {
+          trades = parseMt4Xlsx(ev.target?.result as ArrayBuffer);
+        }
+        if (trades.length === 0) {
+          setImportMessage({ text: 'MT4の取引データが見つかりませんでした', ok: false });
+        } else {
+          const count = bulkAddTrades(trades);
+          setImportMessage({ text: `${count}件の取引をインポートしました`, ok: true });
+        }
+      } catch {
+        setImportMessage({ text: 'ファイルの読み込みに失敗しました', ok: false });
+      }
+      e.target.value = '';
+      setTimeout(() => setImportMessage(null), 4000);
+    };
+
+    if (ext === 'htm' || ext === 'html') {
+      reader.readAsText(file, 'utf-8');
+    } else {
+      reader.readAsArrayBuffer(file);
+    }
+  };
 
   if (!auth.isAuthenticated) {
     if (!auth.isConfigured) return null;
@@ -637,13 +744,40 @@ export const TradeJournalTool = () => {
     <div>
       <StatsBar stats={stats} />
 
-      {!showNewForm ? (
-        <button
-          onClick={() => setShowNewForm(true)}
-          className="mb-6 inline-flex min-h-10 items-center justify-center rounded-full bg-cyan-300 px-5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200"
+      {importMessage && (
+        <div
+          className={`mb-4 rounded-lg border px-4 py-2 text-sm ${
+            importMessage.ok
+              ? 'border-emerald-300/30 bg-emerald-300/10 text-emerald-200'
+              : 'border-rose-300/30 bg-rose-300/10 text-rose-200'
+          }`}
         >
-          ＋ 新規取引を記録
-        </button>
+          {importMessage.text}
+        </div>
+      )}
+
+      {!showNewForm ? (
+        <div className="mb-6 flex flex-wrap gap-2">
+          <button
+            onClick={() => setShowNewForm(true)}
+            className="inline-flex min-h-10 items-center justify-center rounded-full bg-cyan-300 px-5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200"
+          >
+            ＋ 新規取引を記録
+          </button>
+          <button
+            onClick={() => importInputRef.current?.click()}
+            className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-5 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+          >
+            MT4インポート
+          </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".htm,.html,.xlsx,.xls"
+            className="hidden"
+            onChange={handleImportFile}
+          />
+        </div>
       ) : (
         <NewTradeForm
           onAdd={(trade) => {

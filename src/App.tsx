@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { ChartSection } from './components/ChartSection';
 import { Disclaimer } from './components/Disclaimer';
@@ -83,6 +83,8 @@ export const App = () => {
   } = useAlerts(prices);
   const [now, setNow] = useState(() => Date.now());
   const [route, setRoute] = useState(getRoute);
+  const [routeHistory, setRouteHistory] = useState<string[]>(() => [getRoute()]);
+  const skipNextHistoryPush = useRef(false);
   const [showMissionReturn, setShowMissionReturn] = useState(
     () =>
       window.sessionStorage.getItem(MISSION_RETURN_STORAGE_KEY) === '1' &&
@@ -107,10 +109,25 @@ export const App = () => {
     };
   }, []);
 
+  const canGoBack = routeHistory.length > 1;
+
+  const goBack = () => {
+    if (!canGoBack) return;
+    const newHistory = routeHistory.slice(0, -1);
+    setRouteHistory(newHistory);
+    skipNextHistoryPush.current = true;
+    const prevRoute = newHistory[newHistory.length - 1];
+    window.location.hash = prevRoute ? `#/${prevRoute}` : '#/';
+  };
+
   useEffect(() => {
     const handleHashChange = () => {
       const nextRoute = getRoute();
       setRoute(nextRoute);
+      if (!skipNextHistoryPush.current) {
+        setRouteHistory((prev) => [...prev, nextRoute]);
+      }
+      skipNextHistoryPush.current = false;
       setShowMissionReturn(
         window.sessionStorage.getItem(MISSION_RETURN_STORAGE_KEY) === '1' &&
           nextRoute !== 'tools/daily-mission',
@@ -198,6 +215,14 @@ export const App = () => {
         notifications={notifications}
         dismissNotification={dismissNotification}
       />
+      {canGoBack && !isHomeRoute && !showMissionReturn && (
+        <button
+          onClick={goBack}
+          className="fixed bottom-4 left-1/2 z-[60] inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full bg-slate-700 px-5 text-sm font-black text-white shadow-[0_16px_50px_rgba(0,0,0,0.4)] transition hover:bg-slate-600"
+        >
+          ← 前のページ
+        </button>
+      )}
       {showMissionReturn && (
         <a
           href="#/tools/daily-mission"
