@@ -212,7 +212,7 @@ export const SpaceXCountdownPage = ({
             📈 参考チャートを見る
           </a>
           <a
-            href={`https://twitter.com/intent/tweet?text=${tweetText}`}
+            href={`https://twitter.com/intent/tweet?text=${tweetText}&url=${encodeURIComponent('https://anyanical.com/#/spacex')}`}
             rel="noopener noreferrer"
             target="_blank"
             className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white/[0.06] px-6 text-sm font-semibold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"

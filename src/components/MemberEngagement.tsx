@@ -1206,7 +1206,7 @@ export const GapPredictionTool = ({
               相場ボードで全体を見る
             </a>
             <a
-              href="https://twitter.com/intent/tweet"
+              href={`https://twitter.com/intent/tweet?url=${encodeURIComponent('https://anyanical.com/#/tools/gap-prediction')}`}
               rel="noopener noreferrer"
               target="_blank"
               className="rounded-lg bg-white/[0.04] p-3 text-sm font-bold text-slate-200 transition hover:bg-white/10"
