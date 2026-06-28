@@ -588,6 +588,7 @@ export const DailyMissionTool = () => {
   const { auth, ownerId } = useStorageOwner();
   const { state, history, toggle } = useDailyMissionState(ownerId);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [lockedPremiumTitle, setLockedPremiumTitle] = useState<string | null>(null);
   const completedCount = state.completedIds.length;
   const progress = Math.round((completedCount / missionItems.length) * 100);
   const historyRows = Object.entries(history)
@@ -730,16 +731,18 @@ export const DailyMissionTool = () => {
                   body: '相場変化、注意事項、EA停止判断をプレミアムで確認',
                 },
               ].map((item) => (
-                <div
+                <button
                   key={item.title}
-                  className="relative overflow-hidden rounded-lg border border-amber-200/20 bg-slate-950/40 p-4"
+                  type="button"
+                  onClick={() => setLockedPremiumTitle(item.title)}
+                  className="relative overflow-hidden rounded-lg border border-amber-200/20 bg-slate-950/40 p-4 text-left transition hover:border-amber-200/50 hover:bg-amber-200/10"
                 >
                   <PremiumLockMark className="absolute right-3 top-3 h-9 w-9" />
                   <p className="pr-10 text-sm font-bold text-white">{item.title}</p>
                   <p className="mt-2 pr-6 text-xs leading-5 text-amber-50/70">
                     {item.body}
                   </p>
-                </div>
+                </button>
               ))}
             </>
           )}
@@ -793,6 +796,54 @@ export const DailyMissionTool = () => {
           )}
         </div>
       </div>
+
+      {lockedPremiumTitle && (
+        <div
+          className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm animate-fade-in"
+          onClick={() => setLockedPremiumTitle(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-lg border border-amber-300/30 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)] animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm font-semibold text-amber-100">Premium locked</p>
+            <h3 className="mt-1 text-xl font-bold text-white">
+              {lockedPremiumTitle} はプレミアム限定です
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-slate-400">
+              先出し考察、ゴールドの節目、追加考察をDiscord限定チャンネルで確認できます。
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <a
+                href="#/tools/participation"
+                onClick={() => setLockedPremiumTitle(null)}
+                className="inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
+              >
+                プレミアム内容を見る
+              </a>
+              {!auth.isAuthenticated && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLockedPremiumTitle(null);
+                    auth.signIn('#/tools/daily-mission');
+                  }}
+                  className="inline-flex min-h-10 items-center justify-center rounded-full bg-indigo-400 px-4 text-sm font-bold text-white transition hover:bg-indigo-300"
+                >
+                  Discordログイン
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setLockedPremiumTitle(null)}
+                className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showCelebration && (
         <div className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm">
