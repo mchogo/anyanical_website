@@ -403,6 +403,14 @@ export const MemberDashboard = ({ prices }: { prices: Record<string, MarketPrice
                 プレミアムを見る
               </a>
             )}
+            {auth.roleAccess === 'admin' && (
+              <a
+                href="#/admin"
+                className="inline-flex min-h-10 items-center justify-center rounded-full bg-rose-300/10 px-4 text-sm font-bold text-rose-300 ring-1 ring-rose-300/20 transition hover:bg-rose-300/20"
+              >
+                🔑 管理ダッシュボード
+              </a>
+            )}
           </div>
         </div>
       </div>

@@ -424,6 +424,15 @@ const AuthControls = ({
             <p className="truncate text-sm font-bold text-white">{displayName}</p>
             <p className="text-xs text-slate-500">Discordログイン中</p>
           </div>
+          {auth.roleAccess === 'admin' && (
+            <a
+              href="#/admin"
+              onClick={onNavigate}
+              className="shrink-0 rounded-full bg-rose-300/10 px-3 py-2 text-xs font-bold text-rose-300 ring-1 ring-rose-300/20 transition hover:bg-rose-300/20"
+            >
+              管理
+            </a>
+          )}
           <button
             type="button"
             onClick={() => {
@@ -460,6 +469,15 @@ const AuthControls = ({
       </a>
       <div className="invisible absolute right-0 top-full z-50 w-44 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
         <div className="rounded-lg border border-white/10 bg-slate-950/95 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur">
+          {auth.roleAccess === 'admin' && (
+            <a
+              href="#/admin"
+              onClick={onNavigate}
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-rose-300 transition hover:bg-rose-300/10"
+            >
+              <span className="text-xs">🔑</span> 管理ダッシュボード
+            </a>
+          )}
           <button
             type="button"
             onClick={auth.signOut}
