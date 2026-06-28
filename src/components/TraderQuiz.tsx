@@ -567,6 +567,16 @@ export const TraderQuiz = () => {
       writeQuizHistory(ownerId, next);
       return next;
     });
+    if (auth.session?.accessToken) {
+      void fetch('/api/quiz-results', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${auth.session.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: record.id, typeCode: record.typeCode, answers: record.answers, createdAt: record.createdAt }),
+      });
+    }
   };
 
   const handleAnswer = (letter: string) => {

@@ -21,6 +21,25 @@ interface RecordRow {
   notes: string | null;
 }
 
+interface GapPredictionRow {
+  id: string;
+  discord_user_id: string;
+  week_key: string;
+  symbol: string;
+  direction: string;
+  confidence: number;
+  note: string;
+  created_at: string;
+}
+
+interface QuizResultRow {
+  id: string;
+  discord_user_id: string;
+  type_code: string;
+  answers_json: string | null;
+  created_at: string;
+}
+
 const json = (data: unknown, status = 200): Response => Response.json(data, { status });
 
 async function verifyToken(request: Request): Promise<string | null> {
@@ -204,6 +223,72 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     return json({ ok: true });
   }
 
+  // ── GET /api/gap-predictions ────────────────────────────────────────────
+  if (apiPath === 'gap-predictions' && method === 'GET') {
+    const { results } = await db
+      .prepare(
+        'SELECT id, week_key, symbol, direction, confidence, note, created_at FROM gap_predictions WHERE discord_user_id = ? ORDER BY created_at DESC',
+      )
+      .bind(userId)
+      .all<GapPredictionRow>();
+    return json(
+      results.map((r) => ({
+        id: r.id, weekKey: r.week_key, symbol: r.symbol,
+        direction: r.direction, confidence: r.confidence, note: r.note, createdAt: r.created_at,
+      })),
+    );
+  }
+
+  // ── PUT /api/gap-predictions ─────────────────────────────────────────────
+  if (apiPath === 'gap-predictions' && method === 'PUT') {
+    const body = (await request.json()) as { predictions: GapPredictionRow[] };
+    const list = Array.isArray(body.predictions) ? body.predictions.slice(0, 200) : [];
+    await db.prepare('DELETE FROM gap_predictions WHERE discord_user_id = ?').bind(userId).run();
+    if (list.length > 0) {
+      await db.batch(
+        list.map((p) =>
+          db
+            .prepare(
+              'INSERT INTO gap_predictions (id, discord_user_id, week_key, symbol, direction, confidence, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            )
+            .bind(p.id ?? crypto.randomUUID(), userId, p.weekKey ?? p.week_key, p.symbol, p.direction, p.confidence, p.note ?? '', p.createdAt ?? p.created_at),
+        ),
+      );
+    }
+    return json({ ok: true });
+  }
+
+  // ── GET /api/quiz-results ────────────────────────────────────────────────
+  if (apiPath === 'quiz-results' && method === 'GET') {
+    const { results } = await db
+      .prepare(
+        'SELECT id, type_code, answers_json, created_at FROM quiz_results WHERE discord_user_id = ? ORDER BY created_at DESC LIMIT 20',
+      )
+      .bind(userId)
+      .all<QuizResultRow>();
+    return json(
+      results.map((r) => ({
+        id: r.id, typeCode: r.type_code,
+        answers: r.answers_json ? (JSON.parse(r.answers_json) as unknown) : {},
+        createdAt: r.created_at,
+      })),
+    );
+  }
+
+  // ── POST /api/quiz-results ───────────────────────────────────────────────
+  if (apiPath === 'quiz-results' && method === 'POST') {
+    const body = (await request.json()) as {
+      id: string; typeCode: string; answers?: Record<string, string>; createdAt: string;
+    };
+    await db
+      .prepare(
+        'INSERT OR IGNORE INTO quiz_results (id, discord_user_id, type_code, answers_json, created_at) VALUES (?, ?, ?, ?, ?)',
+      )
+      .bind(body.id, userId, body.typeCode, body.answers ? JSON.stringify(body.answers) : null, body.createdAt)
+      .run();
+    return json({ ok: true }, 201);
+  }
+
   // ── GET /api/admin/overview ─────────────────────────────────────────────
   if (apiPath === 'admin/overview' && method === 'GET') {
     if (!isAdmin(userId, env)) return json({ error: 'Forbidden' }, 403);
@@ -248,6 +333,35 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
         recordCount: r.record_count,
         lastRecordDate: r.last_record_date,
       })),
+    );
+  }
+
+  // ── GET /api/admin/gap-predictions ──────────────────────────────────────
+  if (apiPath === 'admin/gap-predictions' && method === 'GET') {
+    if (!isAdmin(userId, env)) return json({ error: 'Forbidden' }, 403);
+    const { results } = await db
+      .prepare(
+        'SELECT discord_user_id, week_key, symbol, direction, confidence, note, created_at FROM gap_predictions ORDER BY created_at DESC LIMIT 1000',
+      )
+      .all<GapPredictionRow>();
+    return json(
+      results.map((r) => ({
+        discordUserId: r.discord_user_id, weekKey: r.week_key, symbol: r.symbol,
+        direction: r.direction, confidence: r.confidence, note: r.note, createdAt: r.created_at,
+      })),
+    );
+  }
+
+  // ── GET /api/admin/quiz-results ──────────────────────────────────────────
+  if (apiPath === 'admin/quiz-results' && method === 'GET') {
+    if (!isAdmin(userId, env)) return json({ error: 'Forbidden' }, 403);
+    const { results } = await db
+      .prepare(
+        'SELECT discord_user_id, type_code, created_at FROM quiz_results ORDER BY created_at DESC LIMIT 1000',
+      )
+      .all<{ discord_user_id: string; type_code: string; created_at: string }>();
+    return json(
+      results.map((r) => ({ discordUserId: r.discord_user_id, typeCode: r.type_code, createdAt: r.created_at })),
     );
   }
 

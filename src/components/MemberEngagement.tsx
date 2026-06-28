@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { MARKETS, WEEKEND_MARKETS, type MarketPrice } from '../config/markets';
-import { useDiscordAuth } from '../hooks/useDiscordAuth';
+import { useDiscordAuth, type DiscordAuthSession } from '../hooks/useDiscordAuth';
 import { useFavoritesContext } from '../hooks/useFavorites';
 import { INTERNAL_NAV_LINKS } from '../config/navigation';
 
@@ -229,7 +229,15 @@ const useDailyMissionState = (ownerId: string) => {
   return { state: { date, completedIds: history[date] ?? [] }, history, toggle };
 };
 
-const useGapPredictions = (ownerId: string) => {
+const syncPredictionsToServer = (predictions: GapPrediction[], token: string) => {
+  void fetch('/api/gap-predictions', {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ predictions }),
+  });
+};
+
+const useGapPredictions = (ownerId: string, session?: DiscordAuthSession | null) => {
   const [predictions, setPredictions] = useState<GapPrediction[]>(() =>
     readJson<GapPrediction[]>(predictionStorageKey(ownerId), []),
   );
@@ -242,22 +250,48 @@ const useGapPredictions = (ownerId: string) => {
     writeJson(predictionStorageKey(ownerId), predictions);
   }, [ownerId, predictions]);
 
+  // On session load, fetch from server and merge (server takes precedence for same week+symbol)
+  useEffect(() => {
+    if (!session?.accessToken) return;
+    void fetch('/api/gap-predictions', {
+      headers: { Authorization: `Bearer ${session.accessToken}` },
+    })
+      .then((r) => r.json() as Promise<GapPrediction[]>)
+      .then((remote) => {
+        if (!Array.isArray(remote) || remote.length === 0) return;
+        setPredictions((local) => {
+          const merged = [...remote];
+          for (const l of local) {
+            if (!merged.some((r) => r.weekKey === l.weekKey && r.symbol === l.symbol)) {
+              merged.push(l);
+            }
+          }
+          writeJson(predictionStorageKey(ownerId), merged);
+          return merged;
+        });
+      })
+      .catch(() => {});
+  }, [session?.accessToken, ownerId]);
+
   const addPrediction = (prediction: Omit<GapPrediction, 'id' | 'createdAt'>) => {
-    setPredictions((current) => [
-      {
-        ...prediction,
-        id: createId(),
-        createdAt: new Date().toISOString(),
-      },
-      ...current.filter(
-        (item) =>
-          !(item.weekKey === prediction.weekKey && item.symbol === prediction.symbol),
-      ),
-    ]);
+    setPredictions((current) => {
+      const next = [
+        { ...prediction, id: createId(), createdAt: new Date().toISOString() },
+        ...current.filter(
+          (item) => !(item.weekKey === prediction.weekKey && item.symbol === prediction.symbol),
+        ),
+      ];
+      if (session?.accessToken) syncPredictionsToServer(next, session.accessToken);
+      return next;
+    });
   };
 
   const removePrediction = (id: string) => {
-    setPredictions((current) => current.filter((item) => item.id !== id));
+    setPredictions((current) => {
+      const next = current.filter((item) => item.id !== id);
+      if (session?.accessToken) syncPredictionsToServer(next, session.accessToken);
+      return next;
+    });
   };
 
   return { predictions, addPrediction, removePrediction };
@@ -949,7 +983,7 @@ export const GapPredictionTool = ({
   prices: Record<string, MarketPrice>;
 }) => {
   const { auth, ownerId } = useStorageOwner();
-  const { predictions, addPrediction, removePrediction } = useGapPredictions(ownerId);
+  const { predictions, addPrediction, removePrediction } = useGapPredictions(ownerId, auth.session);
   const [symbol, setSymbol] = useState('GOLD');
   const [direction, setDirection] = useState<GapDirection>('up');
   const [confidence, setConfidence] = useState(60);
