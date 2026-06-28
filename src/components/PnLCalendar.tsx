@@ -761,22 +761,22 @@ const DayCellForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="absolute left-0 top-full z-20 mt-1 w-64 max-w-[calc(100vw-2rem)] rounded-lg border border-white/20 bg-slate-900 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)] animate-slide-up"
-      onClick={(e) => e.stopPropagation()}
+      className="w-full max-w-sm rounded-xl border border-white/20 bg-slate-900 p-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
     >
-      <p className="mb-2 text-xs font-bold text-white">{date}</p>
+      <p className="mb-2 text-sm font-bold text-white">{date}</p>
       {error && <p className="mb-2 text-xs text-rose-300">{error}</p>}
       <div className="space-y-2">
         <div>
           <label className="block text-xs text-slate-400">損益（{unit}）</label>
           <input
             type="number"
+            inputMode="decimal"
             step="any"
             autoFocus
             value={pnl}
             onChange={(e) => setPnl(e.target.value)}
             placeholder="例: 3500 または -1200"
-            className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.06] px-3 py-1.5 text-sm text-white placeholder:text-slate-600 focus:border-cyan-300/50 focus:outline-none"
+            className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2.5 text-base text-white placeholder:text-slate-600 focus:border-cyan-300/50 focus:outline-none"
           />
         </div>
         <div>
@@ -786,14 +786,14 @@ const DayCellForm = ({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="相場環境、気づきなど"
-            className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.06] px-3 py-1.5 text-sm text-white placeholder:text-slate-600 focus:border-cyan-300/50 focus:outline-none"
+            className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2.5 text-base text-white placeholder:text-slate-600 focus:border-cyan-300/50 focus:outline-none"
           />
         </div>
       </div>
-      <div className="mt-3 flex gap-2">
+      <div className="mt-4 flex gap-2">
         <button
           type="submit"
-          className="inline-flex min-h-7 items-center justify-center rounded-full bg-cyan-300 px-3 text-xs font-bold text-slate-950 transition hover:bg-cyan-200"
+          className="inline-flex min-h-10 flex-1 items-center justify-center rounded-full bg-cyan-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-cyan-200"
         >
           保存
         </button>
@@ -801,7 +801,7 @@ const DayCellForm = ({
           <button
             type="button"
             onClick={onDelete}
-            className="inline-flex min-h-7 items-center justify-center rounded-full bg-rose-400/20 px-3 text-xs font-bold text-rose-300 ring-1 ring-rose-400/30 transition hover:bg-rose-400/30"
+            className="inline-flex min-h-10 items-center justify-center rounded-full bg-rose-400/20 px-4 text-sm font-bold text-rose-300 ring-1 ring-rose-400/30 transition hover:bg-rose-400/30"
           >
             削除
           </button>
@@ -809,7 +809,7 @@ const DayCellForm = ({
         <button
           type="button"
           onClick={onCancel}
-          className="inline-flex min-h-7 items-center justify-center rounded-full bg-white/[0.04] px-3 text-xs font-bold text-slate-400 ring-1 ring-white/10 transition hover:bg-white/10"
+          className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-400 ring-1 ring-white/10 transition hover:bg-white/10"
         >
           閉じる
         </button>
@@ -843,6 +843,7 @@ const CalendarGrid = ({
   const pnlValues = records.map((r) => Math.abs(r.pnl));
   const maxAbs = pnlValues.length > 0 ? Math.max(...pnlValues) : 0;
   const today = toYMD(new Date());
+  const openRecord = openDate ? recordMap.get(openDate) : undefined;
 
   return (
     <div>
@@ -865,61 +866,65 @@ const CalendarGrid = ({
           const bg = record ? cellBg(record.pnl, maxAbs) : undefined;
 
           return (
-            <div key={ymd} className="relative">
-              <button
-                type="button"
-                onClick={() => setOpenDate(isOpen ? null : ymd)}
-                className={`relative w-full rounded-lg border p-1.5 text-left transition ${
-                  isToday
-                    ? 'border-cyan-300/40'
-                    : isOpen
-                      ? 'border-white/30'
-                      : 'border-white/10 hover:border-white/20'
+            <button
+              key={ymd}
+              type="button"
+              onClick={() => setOpenDate(isOpen ? null : ymd)}
+              className={`w-full rounded-lg border p-1.5 text-left transition ${
+                isToday
+                  ? 'border-cyan-300/40'
+                  : isOpen
+                    ? 'border-white/30'
+                    : 'border-white/10 hover:border-white/20'
+              }`}
+              style={bg ? { backgroundColor: bg } : undefined}
+            >
+              <span
+                className={`block text-xs font-bold ${
+                  isToday ? 'text-cyan-200' : 'text-slate-400'
                 }`}
-                style={bg ? { backgroundColor: bg } : undefined}
               >
+                {date.getDate()}
+              </span>
+              {record && (
                 <span
-                  className={`block text-xs font-bold ${
-                    isToday ? 'text-cyan-200' : 'text-slate-400'
+                  className={`mt-0.5 block truncate text-[10px] font-bold leading-tight ${
+                    record.pnl > 0 ? 'text-emerald-200' : 'text-rose-200'
                   }`}
                 >
-                  {date.getDate()}
+                  {record.pnl > 0 ? '+' : ''}
+                  {record.pnl.toLocaleString('ja-JP')}
                 </span>
-                {record && (
-                  <span
-                    className={`mt-0.5 block text-[10px] font-bold leading-tight ${
-                      record.pnl > 0 ? 'text-emerald-200' : 'text-rose-200'
-                    }`}
-                  >
-                    {record.pnl > 0 ? '+' : ''}
-                    {record.pnl.toLocaleString('ja-JP')}
-                  </span>
-                )}
-              </button>
-
-              {isOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setOpenDate(null)} />
-                  <DayCellForm
-                    date={ymd}
-                    existing={record}
-                    unit={unit}
-                    onSave={(pnl, notes) => {
-                      onSave(ymd, pnl, notes);
-                      setOpenDate(null);
-                    }}
-                    onDelete={() => {
-                      onDelete(ymd);
-                      setOpenDate(null);
-                    }}
-                    onCancel={() => setOpenDate(null)}
-                  />
-                </>
               )}
-            </div>
+            </button>
           );
         })}
       </div>
+
+      {openDate && (
+        <>
+          <div
+            className="fixed inset-0 z-[60] bg-slate-950/70 backdrop-blur-sm animate-fade-in"
+            onClick={() => setOpenDate(null)}
+          />
+          <div className="fixed inset-x-0 bottom-0 z-[61] flex justify-center p-4 pb-[max(1rem,env(safe-area-inset-bottom))] animate-slide-up sm:inset-0 sm:items-center">
+            <DayCellForm
+              date={openDate}
+              existing={openRecord}
+              unit={unit}
+              onSave={(pnl, notes) => {
+                onSave(openDate, pnl, notes);
+                setOpenDate(null);
+              }}
+              onDelete={() => {
+                onDelete(openDate);
+                setOpenDate(null);
+              }}
+              onCancel={() => setOpenDate(null)}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 };
