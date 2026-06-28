@@ -356,7 +356,7 @@ const AccountTabs = ({
 
 const PremiumUpsellModal = ({ onClose }: { onClose: () => void }) => {
   const [closing, setClosing] = useState(false);
-  const close = () => setClosing(true);
+  const close = () => { setClosing(true); window.setTimeout(onClose, 140); };
   return (
   <div
     className={`fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}
@@ -365,7 +365,6 @@ const PremiumUpsellModal = ({ onClose }: { onClose: () => void }) => {
     <div
       className={`w-full max-w-md rounded-lg border border-amber-300/30 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)] ${closing ? 'animate-slide-down' : 'animate-slide-up'}`}
       onClick={(e) => e.stopPropagation()}
-      onAnimationEnd={() => { if (closing) onClose(); }}
     >
       <p className="text-sm font-semibold text-amber-100">Premium feature</p>
       <h3 className="mt-1 text-xl font-bold text-white">複数口座はプレミアム限定です</h3>
@@ -481,7 +480,7 @@ const AccountForm = ({
 
 const ImportGuideModal = ({ onClose }: { onClose: () => void }) => {
   const [closing, setClosing] = useState(false);
-  const close = () => setClosing(true);
+  const close = () => { setClosing(true); window.setTimeout(onClose, 140); };
   return (
   <div
     className={`fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}
@@ -490,7 +489,6 @@ const ImportGuideModal = ({ onClose }: { onClose: () => void }) => {
     <div
       className={`w-full max-w-lg rounded-xl border border-white/10 bg-slate-900 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.6)] ${closing ? 'animate-slide-down' : 'animate-slide-up'}`}
       onClick={(e) => e.stopPropagation()}
-      onAnimationEnd={() => { if (closing) onClose(); }}
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <h3 className="text-base font-bold text-white">MT4 / MT5 履歴の取り込み方法</h3>
