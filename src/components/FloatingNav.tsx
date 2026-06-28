@@ -291,12 +291,32 @@ const AuthControls = ({
 
 export const FloatingNav = ({ currentRoute, auth }: FloatingNavContainerProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuClosing, setMenuClosing] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
   const [showNotifDot, setShowNotifDot] = useState(() => hasDismissedBanners());
 
+  // Animated close: keep DOM mounted during slide-down, then remove
+  useEffect(() => {
+    if (!menuClosing) return;
+    const t = window.setTimeout(() => {
+      setIsOpen(false);
+      setMenuClosing(false);
+    }, 150);
+    return () => window.clearTimeout(t);
+  }, [menuClosing]);
+
+  // Route change: instant close (user already navigated, no animation needed)
   useEffect(() => {
     setIsOpen(false);
+    setMenuClosing(false);
   }, [currentRoute]);
+
+  const closeMenu = () => setMenuClosing(true);
+  const toggleMenu = () => {
+    if (menuClosing) return;
+    if (isOpen) closeMenu();
+    else setIsOpen(true);
+  };
 
   useEffect(() => {
     const onDismissed = () => setShowNotifDot(true);
@@ -312,7 +332,7 @@ export const FloatingNav = ({ currentRoute, auth }: FloatingNavContainerProps) =
   const handleResetBanners = () => {
     BANNER_KEYS.forEach((key) => sessionStorage.removeItem(key));
     window.dispatchEvent(new Event('banner:reset'));
-    setIsOpen(false);
+    closeMenu();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -350,7 +370,7 @@ export const FloatingNav = ({ currentRoute, auth }: FloatingNavContainerProps) =
           type="button"
           aria-expanded={isOpen}
           aria-controls="mobile-primary-nav"
-          onClick={() => setIsOpen((current) => !current)}
+          onClick={toggleMenu}
           className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-semibold text-slate-100 ring-1 ring-white/10 transition hover:bg-cyan-300/10 hover:text-cyan-100 md:hidden"
         >
           {isOpen ? '閉じる' : 'メニュー'}
@@ -375,10 +395,10 @@ export const FloatingNav = ({ currentRoute, auth }: FloatingNavContainerProps) =
         </div>
       </div>
 
-      {isOpen ? (
+      {(isOpen || menuClosing) && (
         <div
           id="mobile-primary-nav"
-          className="animate-slide-down mx-auto mt-3 grid max-h-[calc(100vh-4.5rem)] max-w-7xl grid-cols-2 gap-2 overflow-y-auto border-t border-white/10 pt-3 md:hidden"
+          className={`mx-auto mt-3 grid max-h-[calc(100vh-4.5rem)] max-w-7xl grid-cols-2 gap-2 overflow-y-auto border-t border-white/10 pt-3 md:hidden ${menuClosing ? 'animate-slide-down' : 'animate-slide-up'}`}
         >
           <MobileNavLinks
             currentRoute={currentRoute}
@@ -399,7 +419,7 @@ export const FloatingNav = ({ currentRoute, auth }: FloatingNavContainerProps) =
             {showNotifDot && <span className="h-2 w-2 rounded-full bg-cyan-400" />}
           </button>
         </div>
-      ) : null}
+      )}
     </nav>
   );
 };
