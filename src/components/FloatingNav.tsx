@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 
-import { EXTERNAL_LINKS, NAV_LINK_GROUPS } from '../config/navigation';
+import { EXTERNAL_LINKS, INTERNAL_NAV_LINKS, NAV_LINK_GROUPS } from '../config/navigation';
 import type { useDiscordAuth } from '../hooks/useDiscordAuth';
+import { useFavoritesContext } from '../hooks/useFavorites';
+
+const ROUTE_LABELS: Record<string, string> = Object.fromEntries(
+  INTERNAL_NAV_LINKS.map((l) => [l.href.replace(/^#\/?/, ''), l.label]),
+);
 
 type FloatingNavProps = {
   currentRoute: string;
@@ -34,11 +39,72 @@ const isActiveGroup = (
   );
 };
 
+const FavoritesDropdown = ({ onNavigate }: { onNavigate?: () => void }) => {
+  const { favorites } = useFavoritesContext();
+  if (favorites.length === 0) return null;
+  return (
+    <div className="group relative">
+      <button
+        type="button"
+        className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-amber-300/10 px-4 text-sm font-semibold text-amber-200 ring-1 ring-amber-300/20 transition hover:bg-amber-300/20"
+      >
+        ★ お気に入り
+        <span className="grid h-5 w-5 place-items-center rounded-full bg-amber-300/10 text-xs font-black ring-1 ring-amber-300/20 transition group-hover:rotate-180 group-focus-within:rotate-180">
+          ▼
+        </span>
+      </button>
+      <div className="invisible absolute left-0 top-full z-50 w-52 pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+        <div className="rounded-lg border border-white/10 bg-slate-950/95 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur">
+          <p className="px-3 py-2 text-xs font-semibold text-slate-500">お気に入り</p>
+          <div className="space-y-1">
+            {favorites.map((route) => (
+              <a
+                key={route}
+                href={`#/${route}`}
+                onClick={onNavigate}
+                className="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-amber-300/10 hover:text-amber-100"
+              >
+                {ROUTE_LABELS[route] ?? route}
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MobileFavoritesSection = ({ onNavigate }: { onNavigate?: () => void }) => {
+  const { favorites } = useFavoritesContext();
+  if (favorites.length === 0) return null;
+  return (
+    <details className="col-span-2 rounded-lg border border-amber-300/20 bg-amber-300/5 p-3" open>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-amber-200">
+        <span>★ お気に入り</span>
+        <span className="grid h-6 w-6 place-items-center rounded-full bg-amber-300/10 text-xs text-amber-200 ring-1 ring-amber-300/20">▼</span>
+      </summary>
+      <div className="mt-3 grid grid-cols-1 min-[360px]:grid-cols-2 gap-2">
+        {favorites.map((route) => (
+          <a
+            key={route}
+            href={`#/${route}`}
+            onClick={onNavigate}
+            className="flex min-h-10 items-center justify-center rounded-full bg-amber-300/10 px-3 text-sm font-semibold text-amber-100 ring-1 ring-amber-300/20 transition hover:bg-amber-300/20"
+          >
+            {ROUTE_LABELS[route] ?? route}
+          </a>
+        ))}
+      </div>
+    </details>
+  );
+};
+
 const DesktopNavLinks = ({
   currentRoute,
   onNavigate,
 }: FloatingNavProps & { onNavigate?: () => void }) => (
   <>
+    <FavoritesDropdown onNavigate={onNavigate} />
     {NAV_LINK_GROUPS.map((group) => {
       const isGroupActive = isActiveGroup(group, currentRoute);
 
@@ -116,6 +182,7 @@ const MobileNavLinks = ({
   onNavigate,
 }: FloatingNavProps & { onNavigate?: () => void }) => (
   <>
+    <MobileFavoritesSection onNavigate={onNavigate} />
     {NAV_LINK_GROUPS.map((group) => (
       <details
         key={group.label}

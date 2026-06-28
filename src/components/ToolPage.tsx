@@ -4,6 +4,7 @@ import {
   EconomicCalendarTool,
   GapWatchTool,
 } from './RelatedTools';
+import { useFavoritesContext } from '../hooks/useFavorites';
 import { DailyMissionTool, GapPredictionTool, MemberDashboard } from './MemberEngagement';
 import {
   CommunityGuidePage,
@@ -38,6 +39,7 @@ type ToolPageProps = {
   prices: Record<string, MarketPrice>;
   priceHistory: Record<string, PriceHistoryPoint[]>;
   isWeekendMode: boolean;
+  canAccessPremium?: boolean;
 };
 
 const toolPages: Array<{
@@ -366,6 +368,7 @@ export const ToolPage = ({
   prices,
   priceHistory,
   isWeekendMode,
+  canAccessPremium = false,
 }: ToolPageProps) => {
   const page = toolPages.find((toolPage) => toolPage.id === pageId) ?? toolPages[0];
   const actions = nextActions[pageId];
@@ -373,20 +376,40 @@ export const ToolPage = ({
     pageId === 'gap-watch' && !isWeekendMode
       ? '平日は現在値と直近6時間の動きで、短期の偏りを確認します'
       : page.description;
+  const { favorites, toggleFavorite } = useFavoritesContext();
+  const pageRoute = `tools/${pageId}`;
+  const isFavorited = favorites.includes(pageRoute);
 
   return (
     <main className="animate-fade-in">
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="max-w-4xl">
-          <p className="animate-slide-left text-sm font-semibold text-cyan-200">
-            アニャニカル
-          </p>
-          <h1 className="animate-fade-up stagger-1 mt-1 text-3xl font-bold text-white">
-            {page.title}
-          </h1>
-          <p className="animate-fade-up stagger-2 mt-2 text-sm leading-6 text-slate-400">
-            {pageDescription}
-          </p>
+        <div className="flex max-w-4xl items-start gap-3">
+          <div className="flex-1">
+            <p className="animate-slide-left text-sm font-semibold text-cyan-200">
+              アニャニカル
+            </p>
+            <h1 className="animate-fade-up stagger-1 mt-1 text-3xl font-bold text-white">
+              {page.title}
+            </h1>
+            <p className="animate-fade-up stagger-2 mt-2 text-sm leading-6 text-slate-400">
+              {pageDescription}
+            </p>
+          </div>
+          {canAccessPremium && (
+            <button
+              type="button"
+              onClick={() => toggleFavorite(pageRoute)}
+              aria-label={isFavorited ? 'お気に入りから削除' : 'お気に入りに追加'}
+              title={isFavorited ? 'お気に入りから削除' : 'お気に入りに追加'}
+              className={`mt-7 shrink-0 grid h-10 w-10 place-items-center rounded-full text-xl ring-1 transition ${
+                isFavorited
+                  ? 'bg-amber-300/20 text-amber-300 ring-amber-300/40 hover:bg-amber-300/10'
+                  : 'bg-white/[0.04] text-slate-600 ring-white/10 hover:bg-amber-300/10 hover:text-amber-300'
+              }`}
+            >
+              {isFavorited ? '★' : '☆'}
+            </button>
+          )}
         </div>
       </section>
 

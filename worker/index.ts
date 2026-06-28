@@ -160,6 +160,31 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     return json({ id, accountId: body.accountId, date: body.date, pnl: body.pnl, notes: notes ?? undefined });
   }
 
+  // ── GET /api/favorites ──────────────────────────────────────────────────
+  if (apiPath === 'favorites' && method === 'GET') {
+    const row = await db
+      .prepare('SELECT favorites_json FROM user_settings WHERE discord_user_id = ?')
+      .bind(userId)
+      .first<{ favorites_json: string }>();
+    const favorites: string[] = row ? (JSON.parse(row.favorites_json) as string[]) : [];
+    return json({ favorites });
+  }
+
+  // ── PUT /api/favorites ──────────────────────────────────────────────────
+  if (apiPath === 'favorites' && method === 'PUT') {
+    const body = (await request.json()) as { favorites: unknown };
+    const list = Array.isArray(body.favorites) ? (body.favorites as string[]).slice(0, 30) : [];
+    const favJson = JSON.stringify(list);
+    await db
+      .prepare(
+        `INSERT INTO user_settings (discord_user_id, favorites_json) VALUES (?, ?)
+         ON CONFLICT(discord_user_id) DO UPDATE SET favorites_json = excluded.favorites_json`,
+      )
+      .bind(userId, favJson)
+      .run();
+    return json({ ok: true });
+  }
+
   // ── DELETE /api/pnl/records/:accountId/:date ─────────────────────────────
   if (apiPath.startsWith('pnl/records/') && method === 'DELETE' && segments.length === 4) {
     const accountId = segments[2];

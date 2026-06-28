@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { DEFAULT_META, ROUTE_META, SITE_URL } from './config/pageMeta';
+import { FavoritesContext, useFavorites } from './hooks/useFavorites';
 import { ChartSection } from './components/ChartSection';
 import { Disclaimer } from './components/Disclaimer';
 import { ExplainerSections } from './components/ExplainerSections';
@@ -91,6 +92,7 @@ export const App = () => {
       window.sessionStorage.getItem(MISSION_RETURN_STORAGE_KEY) === '1' &&
       getRoute() !== 'tools/daily-mission',
   );
+  const favoritesCtx = useFavorites(discordAuth.session, discordAuth.canAccessPremium);
   const isWeekendMode = isWeekendModeInJst(now);
   const toolPageId = parseToolPageId(route);
   const categoryPageId = parseCategoryPageId(route);
@@ -168,6 +170,7 @@ export const App = () => {
   }, []);
 
   return (
+    <FavoritesContext.Provider value={favoritesCtx}>
     <div className="min-h-screen bg-slate-950 pt-16 text-slate-100">
       <FloatingNav currentRoute={route} auth={discordAuth} />
       <SpaceXBanner />
@@ -203,6 +206,7 @@ export const App = () => {
           prices={prices}
           priceHistory={priceHistory}
           isWeekendMode={isWeekendMode}
+          canAccessPremium={discordAuth.canAccessPremium}
         />
       ) : isBoardRoute ? (
         <main>
@@ -264,5 +268,6 @@ export const App = () => {
       )}
       <AnyaAiAssistant />
     </div>
+    </FavoritesContext.Provider>
   );
 };

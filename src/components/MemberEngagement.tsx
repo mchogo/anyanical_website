@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { MARKETS, WEEKEND_MARKETS, type MarketPrice } from '../config/markets';
 import { useDiscordAuth } from '../hooks/useDiscordAuth';
+import { useFavoritesContext } from '../hooks/useFavorites';
+import { INTERNAL_NAV_LINKS } from '../config/navigation';
+
+const ROUTE_LABELS: Record<string, string> = Object.fromEntries(
+  INTERNAL_NAV_LINKS.map((l) => [l.href.replace(/^#\/?/, ''), l.label]),
+);
 
 type StoredMissionState = {
   date: string;
@@ -580,7 +586,50 @@ export const MemberDashboard = ({ prices }: { prices: Record<string, MarketPrice
           </div>
         </div>
       )}
+      {auth.canAccessPremium && <FavoritesManager />}
     </section>
+  );
+};
+
+const FavoritesManager = () => {
+  const { favorites, toggleFavorite } = useFavoritesContext();
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.035] p-5">
+      <p className="text-sm font-semibold text-amber-200">お気に入り</p>
+      <h3 className="mt-1 text-xl font-bold text-white">お気に入りページ管理</h3>
+      {favorites.length === 0 ? (
+        <p className="mt-3 text-sm leading-6 text-slate-500">
+          各ページ右上の ☆ を押してお気に入りに追加できます。
+        </p>
+      ) : (
+        <ul className="mt-3 space-y-2">
+          {favorites.map((route) => (
+            <li
+              key={route}
+              className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-slate-950/40 px-4 py-2.5"
+            >
+              <a
+                href={`#/${route}`}
+                className="flex-1 text-sm font-semibold text-white transition hover:text-amber-200"
+              >
+                {ROUTE_LABELS[route] ?? route}
+              </a>
+              <button
+                type="button"
+                onClick={() => toggleFavorite(route)}
+                aria-label="お気に入りから削除"
+                className="shrink-0 grid h-8 w-8 place-items-center rounded-full text-slate-500 ring-1 ring-white/10 transition hover:bg-white/[0.06] hover:text-white"
+              >
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-3 text-xs text-slate-600">
+        ★ をもう一度押すと削除できます。順番はページを訪れた順です。
+      </p>
+    </div>
   );
 };
 
