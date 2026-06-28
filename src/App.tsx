@@ -46,6 +46,7 @@ const toolPageIds: ToolPageId[] = [
 ];
 
 const categoryPageIds: CategoryPageId[] = ['market', 'games', 'ea-copytrade', 'premium'];
+const MISSION_RETURN_STORAGE_KEY = 'wmb.returnToMission';
 
 const getRoute = () => window.location.hash.replace(/^#\/?/, '');
 
@@ -82,6 +83,11 @@ export const App = () => {
   } = useAlerts(prices);
   const [now, setNow] = useState(() => Date.now());
   const [route, setRoute] = useState(getRoute);
+  const [showMissionReturn, setShowMissionReturn] = useState(
+    () =>
+      window.sessionStorage.getItem(MISSION_RETURN_STORAGE_KEY) === '1' &&
+      getRoute() !== 'tools/daily-mission',
+  );
   const isWeekendMode = isWeekendModeInJst(now);
   const toolPageId = parseToolPageId(route);
   const categoryPageId = parseCategoryPageId(route);
@@ -103,7 +109,12 @@ export const App = () => {
 
   useEffect(() => {
     const handleHashChange = () => {
-      setRoute(getRoute());
+      const nextRoute = getRoute();
+      setRoute(nextRoute);
+      setShowMissionReturn(
+        window.sessionStorage.getItem(MISSION_RETURN_STORAGE_KEY) === '1' &&
+          nextRoute !== 'tools/daily-mission',
+      );
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -187,6 +198,18 @@ export const App = () => {
         notifications={notifications}
         dismissNotification={dismissNotification}
       />
+      {showMissionReturn && (
+        <a
+          href="#/tools/daily-mission"
+          onClick={() => {
+            window.sessionStorage.removeItem(MISSION_RETURN_STORAGE_KEY);
+            setShowMissionReturn(false);
+          }}
+          className="fixed bottom-4 left-1/2 z-[60] inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full bg-cyan-300 px-5 text-sm font-black text-slate-950 shadow-[0_16px_50px_rgba(34,211,238,0.22)] transition hover:bg-cyan-200"
+        >
+          ミッションに戻る
+        </a>
+      )}
       <AnyaAiAssistant />
     </div>
   );

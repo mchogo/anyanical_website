@@ -164,6 +164,7 @@ const useStorageOwner = () => {
 
 const missionStorageKey = (ownerId: string) => `wmb.dailyMission.${ownerId}`;
 const predictionStorageKey = (ownerId: string) => `wmb.gapPredictions.${ownerId}`;
+const MISSION_RETURN_STORAGE_KEY = 'wmb.returnToMission';
 const missionCelebrationKey = (ownerId: string, date: string) =>
   `wmb.dailyMissionCelebrated.${ownerId}.${date}`;
 
@@ -658,6 +659,7 @@ export const DailyMissionTool = () => {
                   href={item.href}
                   onClick={() => {
                     if (!completed) toggle(item.id);
+                    window.sessionStorage.setItem(MISSION_RETURN_STORAGE_KEY, '1');
                   }}
                   className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-cyan-100 ring-1 ring-white/10 transition hover:bg-cyan-300/10"
                 >

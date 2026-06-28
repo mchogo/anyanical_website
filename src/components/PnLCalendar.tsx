@@ -68,6 +68,108 @@ const calcStats = (monthRecords: DailyRecord[]): MonthStats => {
   };
 };
 
+const parseNumber = (value: string | undefined): number | null => {
+  if (!value) return null;
+  const raw = value.trim();
+  const negativeByParens = raw.startsWith('(') && raw.endsWith(')');
+  const normalized = raw.replace(/["¥$,\s()]/g, '');
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed)) return null;
+  return negativeByParens ? -Math.abs(parsed) : parsed;
+};
+
+const parseTradeDate = (value: string | undefined): string | null => {
+  if (!value) return null;
+  const text = value.trim().replaceAll('.', '-').replace(/\//g, '-');
+  const ymdMatch = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (ymdMatch) {
+    const [, year, month, day] = ymdMatch;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+  const dmyMatch = text.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+  if (dmyMatch) {
+    const [, day, month, year] = dmyMatch;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+  return null;
+};
+
+const parseCsvLine = (line: string, delimiter: string): string[] => {
+  const cells: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const next = line[i + 1];
+    if (char === '"' && next === '"') {
+      current += '"';
+      i++;
+    } else if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === delimiter && !inQuotes) {
+      cells.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  cells.push(current.trim());
+  return cells.map((cell) => cell.replace(/^"|"$/g, ''));
+};
+
+const detectDelimiter = (line: string) => {
+  const candidates = [',', '\t', ';'];
+  return candidates.reduce((best, delimiter) =>
+    line.split(delimiter).length > line.split(best).length ? delimiter : best,
+  );
+};
+
+const normalizeHeader = (value: string) =>
+  value.toLowerCase().replace(/[\s_./()（）-]/g, '');
+
+const findColumn = (headers: string[], candidates: string[]) =>
+  headers.findIndex((header) =>
+    candidates.some((candidate) => normalizeHeader(header).includes(candidate)),
+  );
+
+const parseTradeCsv = (text: string): Map<string, number> => {
+  const lines = text
+    .replace(/^\uFEFF/, '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length < 2) return new Map();
+
+  const delimiter = detectDelimiter(lines[0]);
+  const headers = parseCsvLine(lines[0], delimiter);
+  const closeTimeIndex = findColumn(headers, [
+    'closetime',
+    'time',
+    '決済時刻',
+    '決済時間',
+    '決済日時',
+    '約定日時',
+    '日時',
+  ]);
+  const profitIndex = findColumn(headers, ['profit', '損益']);
+  const swapIndex = findColumn(headers, ['swap', 'スワップ']);
+  const commissionIndex = findColumn(headers, ['commission', '手数料']);
+
+  if (closeTimeIndex === -1 || profitIndex === -1) return new Map();
+
+  const byDate = new Map<string, number>();
+  for (const line of lines.slice(1)) {
+    const cells = parseCsvLine(line, delimiter);
+    const date = parseTradeDate(cells[closeTimeIndex]);
+    const profit = parseNumber(cells[profitIndex]);
+    if (!date || profit === null) continue;
+    const swap = parseNumber(cells[swapIndex]) ?? 0;
+    const commission = parseNumber(cells[commissionIndex]) ?? 0;
+    byDate.set(date, (byDate.get(date) ?? 0) + profit + swap + commission);
+  }
+  return byDate;
+};
+
 // ── Gate components ───────────────────────────────────────────────────────────
 
 const LoginGate = ({ onSignIn }: { onSignIn: () => void }) => (
@@ -241,6 +343,72 @@ const AddAccountForm = ({
         </button>
       </div>
     </form>
+  );
+};
+
+const CsvImportPanel = ({
+  disabled,
+  onImport,
+}: {
+  disabled: boolean;
+  onImport: (dailyPnls: Map<string, number>) => void;
+}) => {
+  const [message, setMessage] = useState<string | null>(null);
+
+  const handleFile = (file: File | undefined) => {
+    if (!file || disabled) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result ?? '');
+      const dailyPnls = parseTradeCsv(text);
+      if (dailyPnls.size === 0) {
+        setMessage(
+          '取り込み対象が見つかりませんでした。Close Time/Time と Profit を含むMT4/MT5 CSVを選択してください。',
+        );
+        return;
+      }
+      onImport(dailyPnls);
+      const rowCount = Array.from(dailyPnls.values()).length;
+      setMessage(`${dailyPnls.size}日分の損益を取り込みました。`);
+      if (rowCount > 0) {
+        window.setTimeout(() => setMessage(null), 4000);
+      }
+    };
+    reader.onerror = () => setMessage('CSVファイルを読み込めませんでした。');
+    reader.readAsText(file);
+  };
+
+  return (
+    <div className="mb-4 rounded-lg border border-white/10 bg-white/[0.035] p-4">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <div>
+          <p className="text-sm font-bold text-white">MT4 / MT5 CSV取り込み</p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            取引履歴CSVの日時と損益を日別に合算し、選択中の口座カレンダーへ反映します。
+          </p>
+        </div>
+        <label
+          className={`inline-flex min-h-10 cursor-pointer items-center justify-center rounded-full px-4 text-sm font-bold ring-1 transition ${
+            disabled
+              ? 'cursor-not-allowed bg-white/[0.02] text-slate-600 ring-white/[0.06]'
+              : 'bg-white/[0.04] text-cyan-100 ring-white/10 hover:bg-cyan-300/10'
+          }`}
+        >
+          CSVを選択
+          <input
+            type="file"
+            accept=".csv,.txt,text/csv,text/plain"
+            disabled={disabled}
+            className="hidden"
+            onChange={(event) => {
+              handleFile(event.target.files?.[0]);
+              event.currentTarget.value = '';
+            }}
+          />
+        </label>
+      </div>
+      {message && <p className="mt-3 text-xs leading-5 text-slate-400">{message}</p>}
+    </div>
   );
 };
 
@@ -657,6 +825,23 @@ export const PnLCalendarTool = () => {
           </button>
         </div>
       )}
+
+      <CsvImportPanel
+        disabled={isAllAccounts || !effectiveAccountId}
+        onImport={(dailyPnls) => {
+          const firstDate = Array.from(dailyPnls.keys()).sort()[0];
+          dailyPnls.forEach((pnl, date) => {
+            setRecord(effectiveAccountId, date, pnl, 'MT4/MT5 CSV取り込み');
+          });
+          if (firstDate) {
+            const [nextYear, nextMonth] = firstDate.split('-').map(Number);
+            if (Number.isFinite(nextYear) && Number.isFinite(nextMonth)) {
+              setYear(nextYear);
+              setMonth(nextMonth - 1);
+            }
+          }
+        }}
+      />
 
       <StatsBar stats={stats} unit={unit} />
 

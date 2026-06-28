@@ -28,7 +28,10 @@ const isActiveGroup = (
   currentRoute: string,
 ) => {
   const groupRoute = group.href.replace(/^#\/?/, '');
-  return groupRoute === currentRoute || group.links.some((link) => isActiveRoute(link.href, currentRoute));
+  return (
+    groupRoute === currentRoute ||
+    group.links.some((link) => isActiveRoute(link.href, currentRoute))
+  );
 };
 
 const DesktopNavLinks = ({
@@ -292,6 +295,10 @@ export const FloatingNav = ({ currentRoute, auth }: FloatingNavContainerProps) =
   const [showNotifDot, setShowNotifDot] = useState(() => hasDismissedBanners());
 
   useEffect(() => {
+    setIsOpen(false);
+  }, [currentRoute]);
+
+  useEffect(() => {
     const onDismissed = () => setShowNotifDot(true);
     const onReset = () => setShowNotifDot(false);
     window.addEventListener('banner:dismissed', onDismissed);
@@ -377,7 +384,12 @@ export const FloatingNav = ({ currentRoute, auth }: FloatingNavContainerProps) =
             currentRoute={currentRoute}
             onNavigate={() => setIsOpen(false)}
           />
-          <AuthControls auth={auth} mobile isOnLoginPage={currentRoute === 'login'} onNavigate={() => setIsOpen(false)} />
+          <AuthControls
+            auth={auth}
+            mobile
+            isOnLoginPage={currentRoute === 'login'}
+            onNavigate={() => setIsOpen(false)}
+          />
           <button
             type="button"
             onClick={handleResetBanners}
