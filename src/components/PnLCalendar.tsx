@@ -1693,19 +1693,6 @@ export const PnLCalendarTool = () => {
       });
       const safeName = (selectedAccount?.name ?? 'account').replace(/[^\w぀-ヿ一-鿿]/g, '_');
       const filename = `pnl_${safeName}_${periodLabel.replace(/[年月 \/〜]/g, '')}.png`;
-      const file = new File([blob], filename, { type: 'image/png' });
-      // Web Share API with files: only on touch-primary devices (iOS/Android)
-      // Desktop browsers (Mac Safari etc.) show AirDrop/Share Sheet which is confusing
-      const isTouchPrimary = navigator.maxTouchPoints > 1;
-      if (isTouchPrimary && navigator.canShare?.({ files: [file] })) {
-        try {
-          await navigator.share({ text: tweetText, files: [file] });
-          setShareModal(null);
-          return;
-        } catch (e) {
-          if ((e as Error)?.name === 'AbortError') { setShareModal(null); return; }
-        }
-      }
       const imageUrl = URL.createObjectURL(blob);
       setShareModal({ phase: 'preview', imageUrl, filename });
     } catch (e) {
