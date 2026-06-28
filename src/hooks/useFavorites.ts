@@ -15,11 +15,13 @@ const readLocal = (): string[] => {
 
 export type FavoritesContextValue = {
   favorites: string[];
+  canAccessPremium: boolean;
   toggleFavorite: (route: string) => void;
 };
 
 export const FavoritesContext = createContext<FavoritesContextValue>({
   favorites: [],
+  canAccessPremium: false,
   toggleFavorite: () => {},
 });
 
@@ -74,5 +76,5 @@ export const useFavorites = (
     [canAccessPremium, session?.accessToken],
   );
 
-  return { favorites, toggleFavorite };
+  return { favorites, canAccessPremium, toggleFavorite };
 };

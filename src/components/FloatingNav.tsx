@@ -40,8 +40,22 @@ const isActiveGroup = (
 };
 
 const FavoritesDropdown = ({ onNavigate }: { onNavigate?: () => void }) => {
-  const { favorites } = useFavoritesContext();
-  if (favorites.length === 0) return null;
+  const { favorites, canAccessPremium } = useFavoritesContext();
+  if (!canAccessPremium) return null;
+
+  // Empty state: direct link to guide (マイページ)
+  if (favorites.length === 0) {
+    return (
+      <a
+        href="#/tools/member-dashboard"
+        onClick={onNavigate}
+        className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-amber-300/10 px-4 text-sm font-semibold text-amber-200/60 ring-1 ring-amber-300/20 transition hover:bg-amber-300/20 hover:text-amber-200"
+      >
+        ☆ お気に入り
+      </a>
+    );
+  }
+
   return (
     <div className="group relative">
       <button
@@ -68,6 +82,15 @@ const FavoritesDropdown = ({ onNavigate }: { onNavigate?: () => void }) => {
               </a>
             ))}
           </div>
+          <div className="mt-1 border-t border-white/10 pt-1">
+            <a
+              href="#/tools/member-dashboard"
+              onClick={onNavigate}
+              className="block rounded-lg px-3 py-2 text-xs text-slate-500 transition hover:text-slate-300"
+            >
+              管理・編集 →
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -75,8 +98,22 @@ const FavoritesDropdown = ({ onNavigate }: { onNavigate?: () => void }) => {
 };
 
 const MobileFavoritesSection = ({ onNavigate }: { onNavigate?: () => void }) => {
-  const { favorites } = useFavoritesContext();
-  if (favorites.length === 0) return null;
+  const { favorites, canAccessPremium } = useFavoritesContext();
+  if (!canAccessPremium) return null;
+
+  // Empty state: guide link
+  if (favorites.length === 0) {
+    return (
+      <a
+        href="#/tools/member-dashboard"
+        onClick={onNavigate}
+        className="col-span-2 flex min-h-10 items-center justify-center rounded-full bg-amber-300/5 px-4 text-sm font-semibold text-amber-200/60 ring-1 ring-amber-300/20 transition hover:bg-amber-300/10 hover:text-amber-200"
+      >
+        ☆ お気に入りを設定する
+      </a>
+    );
+  }
+
   return (
     <details className="col-span-2 rounded-lg border border-amber-300/20 bg-amber-300/5 p-3" open>
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-amber-200">
@@ -94,6 +131,15 @@ const MobileFavoritesSection = ({ onNavigate }: { onNavigate?: () => void }) => 
             {ROUTE_LABELS[route] ?? route}
           </a>
         ))}
+      </div>
+      <div className="mt-2 border-t border-white/10 pt-2">
+        <a
+          href="#/tools/member-dashboard"
+          onClick={onNavigate}
+          className="flex min-h-9 items-center justify-center rounded-full px-3 text-xs font-semibold text-slate-400 ring-1 ring-white/[0.06] transition hover:text-slate-200"
+        >
+          管理・編集 →
+        </a>
       </div>
     </details>
   );
