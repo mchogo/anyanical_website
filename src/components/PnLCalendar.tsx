@@ -1470,9 +1470,24 @@ const ShareModal = ({
             <p className="mb-3 text-sm font-bold text-white">シェア用画像</p>
             <img src={sharePhase.imageUrl} alt="PnL Card" className="w-full rounded-lg" />
             <p className="mt-2 text-xs text-slate-500">
-              ① 画像を保存　② Xを開いて投稿に添付してください
+              画像を保存してXに添付してシェアできます
             </p>
-            <div className="mt-3 flex gap-2">
+            <div className="mt-3 flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  const a = document.createElement('a');
+                  a.href = sharePhase.imageUrl;
+                  a.download = sharePhase.filename;
+                  a.click();
+                  window.open(
+                    `https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`,
+                    '_blank',
+                  );
+                }}
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-slate-700 px-4 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-slate-600"
+              >
+                📸 保存して 𝕏 でシェア
+              </button>
               <button
                 onClick={() => {
                   const a = document.createElement('a');
@@ -1480,20 +1495,9 @@ const ShareModal = ({
                   a.download = sharePhase.filename;
                   a.click();
                 }}
-                className="inline-flex min-h-10 flex-1 items-center justify-center rounded-full bg-white/[0.06] px-4 text-sm font-bold text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"
+                className="inline-flex min-h-9 w-full items-center justify-center rounded-full bg-white/[0.04] px-4 text-xs text-slate-400 ring-1 ring-white/10 transition hover:bg-white/[0.08]"
               >
-                ① 画像を保存
-              </button>
-              <button
-                onClick={() => {
-                  window.open(
-                    `https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`,
-                    '_blank',
-                  );
-                }}
-                className="inline-flex min-h-10 flex-1 items-center justify-center rounded-full bg-slate-800 px-4 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-slate-700"
-              >
-                ② 𝕏 を開く
+                ↓ 保存のみ
               </button>
             </div>
             <button
@@ -1535,6 +1539,7 @@ export const PnLCalendarTool = () => {
   const [shareModal, setShareModal] = useState<SharePhase | null>(null);
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
   const [weekLayout, setWeekLayout] = useState<'list' | 'grid'>('list');
+  const [navDir, setNavDir] = useState<'left' | 'right' | null>(null);
   const [weekStart, setWeekStart] = useState<Date>(() => {
     const d = new Date();
     d.setDate(d.getDate() - d.getDay());
@@ -1622,26 +1627,31 @@ export const PnLCalendarTool = () => {
       : `${weekStart.getFullYear()}年${weekStart.getMonth() + 1}/${weekStart.getDate()}〜${weekEnd.getMonth() + 1}/${weekEnd.getDate()}`;
 
   const prevMonth = () => {
+    setNavDir('right');
     if (month === 0) { setYear((y) => y - 1); setMonth(11); }
     else setMonth((m) => m - 1);
   };
   const nextMonth = () => {
+    setNavDir('left');
     if (month === 11) { setYear((y) => y + 1); setMonth(0); }
     else setMonth((m) => m + 1);
   };
-  const prevWeek = () =>
+  const prevWeek = () => {
+    setNavDir('right');
     setWeekStart((d) => { const n = new Date(d); n.setDate(n.getDate() - 7); return n; });
-  const nextWeek = () =>
+  };
+  const nextWeek = () => {
+    setNavDir('left');
     setWeekStart((d) => { const n = new Date(d); n.setDate(n.getDate() + 7); return n; });
+  };
 
   const switchToWeek = () => {
-    // Keep weekStart if it already overlaps with the currently displayed month
+    setNavDir(null);
     const wEnd = new Date(weekStart);
     wEnd.setDate(wEnd.getDate() + 6);
     const mStart = new Date(year, month, 1);
     const mEnd = new Date(year, month + 1, 0);
     if (weekStart > mEnd || wEnd < mStart) {
-      // weekStart is outside the current month — snap to first week of the month
       const snap = new Date(year, month, 1);
       snap.setDate(snap.getDate() - snap.getDay());
       snap.setHours(0, 0, 0, 0);
@@ -1650,6 +1660,7 @@ export const PnLCalendarTool = () => {
     setViewMode('week');
   };
   const switchToMonth = () => {
+    setNavDir(null);
     setYear(weekStart.getFullYear());
     setMonth(weekStart.getMonth());
     setViewMode('month');
@@ -1923,38 +1934,53 @@ export const PnLCalendarTool = () => {
           </div>
         </div>
 
-        {viewMode === 'week' ? (
-          isAllAccounts ? (
-            <WeekGrid weekStart={weekStart} records={weekRecords} unit="" layout={weekLayout} onSave={() => {}} onDelete={() => {}} />
+        <div
+          key={
+            viewMode === 'week'
+              ? `week-${weekLayout}-${weekStart.getTime()}`
+              : `month-${year}-${month}`
+          }
+          className={
+            navDir === 'left'
+              ? 'animate-slide-in-right'
+              : navDir === 'right'
+                ? 'animate-slide-in-left'
+                : 'animate-fade-in'
+          }
+        >
+          {viewMode === 'week' ? (
+            isAllAccounts ? (
+              <WeekGrid weekStart={weekStart} records={weekRecords} unit="" layout={weekLayout} onSave={() => {}} onDelete={() => {}} />
+            ) : (
+              <WeekGrid
+                weekStart={weekStart}
+                records={weekRecords}
+                unit={unit}
+                layout={weekLayout}
+                onSave={(date, pnl, notes) => setRecord(effectiveAccountId, date, pnl, notes)}
+                onDelete={(date) => deleteRecord(effectiveAccountId, date)}
+              />
+            )
+          ) : isAllAccounts ? (
+            <CalendarGrid
+              year={year}
+              month={month}
+              records={monthRecords}
+              unit=""
+              onSave={() => {}}
+              onDelete={() => {}}
+            />
           ) : (
-            <WeekGrid
-              weekStart={weekStart}
-              records={weekRecords}
+            <CalendarGrid
+              year={year}
+              month={month}
+              records={monthRecords}
               unit={unit}
-              layout={weekLayout}
               onSave={(date, pnl, notes) => setRecord(effectiveAccountId, date, pnl, notes)}
               onDelete={(date) => deleteRecord(effectiveAccountId, date)}
             />
-          )
-        ) : isAllAccounts ? (
-          <CalendarGrid
-            year={year}
-            month={month}
-            records={monthRecords}
-            unit=""
-            onSave={() => {}}
-            onDelete={() => {}}
-          />
-        ) : (
-          <CalendarGrid
-            year={year}
-            month={month}
-            records={monthRecords}
-            unit={unit}
-            onSave={(date, pnl, notes) => setRecord(effectiveAccountId, date, pnl, notes)}
-            onDelete={(date) => deleteRecord(effectiveAccountId, date)}
-          />
-        )}
+          )}
+        </div>
 
         {isAllAccounts && (
           <p className="mt-3 text-center text-xs text-slate-600">

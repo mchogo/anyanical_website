@@ -172,6 +172,7 @@ export const App = () => {
       <FloatingNav currentRoute={route} auth={discordAuth} />
       <SpaceXBanner />
       <NewFeaturesTicker />
+      <div key={route} className="animate-fade-in">
       {isLoginRoute || isDiscordCallbackRoute ? (
         <LoginPage auth={discordAuth} isCallbackRoute={isDiscordCallbackRoute} />
       ) : isSpaceXRoute ? (
@@ -236,6 +237,7 @@ export const App = () => {
           isWeekendMode={isWeekendMode}
         />
       )}
+      </div>
       <AlertToasts
         notifications={notifications}
         dismissNotification={dismissNotification}
