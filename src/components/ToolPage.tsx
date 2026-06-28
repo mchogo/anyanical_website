@@ -4,6 +4,7 @@ import {
   EconomicCalendarTool,
   GapWatchTool,
 } from './RelatedTools';
+import { DailyMissionTool, GapPredictionTool, MemberDashboard } from './MemberEngagement';
 import {
   CommunityGuidePage,
   CopyTradeGuidePage,
@@ -27,7 +28,10 @@ export type ToolPageId =
   | 'participation'
   | 'semi-auto-sign'
   | 'trade-journal'
-  | 'trader-quiz';
+  | 'trader-quiz'
+  | 'member-dashboard'
+  | 'daily-mission'
+  | 'gap-prediction';
 
 type ToolPageProps = {
   pageId: ToolPageId;
@@ -101,7 +105,7 @@ const toolPages: Array<{
     id: 'trade-journal',
     title: 'トレード日誌',
     description:
-      '口座ごとの日次損益をカレンダーで管理するプレミアム限定ツール。複数口座に対応。データはブラウザに保存されます。',
+      'Discordログインで1口座まで使える日次損益カレンダー。複数口座管理はプレミアムで解放されます。',
     href: '#/tools/trade-journal',
   },
   {
@@ -110,6 +114,27 @@ const toolPages: Array<{
     description:
       '12問に答えて4つの軸であなたのトレードスタイルを分析。16タイプから診断結果を表示します。',
     href: '#/tools/trader-quiz',
+  },
+  {
+    id: 'member-dashboard',
+    title: 'メンバーダッシュボード',
+    description:
+      'Discordログイン状態、今日の相場ミッション、週末ギャップ予想、プレミアム導線をまとめて確認します。',
+    href: '#/tools/member-dashboard',
+  },
+  {
+    id: 'daily-mission',
+    title: '今日の相場ミッション',
+    description:
+      '相場ボード、通貨強弱、経済指標、窓開け監視、振り返りを毎日の確認ルーティンとして管理します。',
+    href: '#/tools/daily-mission',
+  },
+  {
+    id: 'gap-prediction',
+    title: '週末ギャップ予想',
+    description:
+      'GOLD、USDJPY、BTCなどの週末方向感を予想して、週明けに答え合わせするゲームです。',
+    href: '#/tools/gap-prediction',
   },
 ];
 
@@ -148,6 +173,12 @@ const renderTool = (
       return <PnLCalendarTool />;
     case 'trader-quiz':
       return <TraderQuiz />;
+    case 'member-dashboard':
+      return <MemberDashboard prices={prices} />;
+    case 'daily-mission':
+      return <DailyMissionTool />;
+    case 'gap-prediction':
+      return <GapPredictionTool prices={prices} />;
   }
 };
 
@@ -290,6 +321,42 @@ const nextActions: Record<
       title: 'プレミアムを見る',
       body: 'あなたのスタイルに合った考察・インジ・サインを確認します。',
       href: '#/tools/participation',
+    },
+  ],
+  'member-dashboard': [
+    {
+      title: '今日の相場ミッション',
+      body: '毎日見るべきページをチェックリストで確認します。',
+      href: '#/tools/daily-mission',
+    },
+    {
+      title: 'プレミアムを見る',
+      body: '朝の考察、注意事項、限定チャンネルの内容を確認します。',
+      href: '#/tools/participation',
+    },
+  ],
+  'daily-mission': [
+    {
+      title: 'メンバーダッシュボード',
+      body: 'ログイン状態、ミッション進捗、予想件数をまとめて確認します。',
+      href: '#/tools/member-dashboard',
+    },
+    {
+      title: '週末ギャップ予想',
+      body: 'ミッション後に週末の方向感を記録します。',
+      href: '#/tools/gap-prediction',
+    },
+  ],
+  'gap-prediction': [
+    {
+      title: '窓開け監視',
+      body: '予想した銘柄の現在変化率を確認します。',
+      href: '#/tools/gap-watch',
+    },
+    {
+      title: 'メンバーダッシュボード',
+      body: '予想件数と今日の確認状況をまとめて見ます。',
+      href: '#/tools/member-dashboard',
     },
   ],
 };

@@ -1,4 +1,4 @@
-export type CategoryPageId = 'market' | 'ea-copytrade' | 'premium';
+export type CategoryPageId = 'market' | 'games' | 'ea-copytrade' | 'premium';
 
 type ToolCard = {
   title: string;
@@ -24,7 +24,8 @@ const categoryPages: Record<CategoryPageId, CategoryData> = {
     tools: [
       {
         title: '相場ボード',
-        description: '金、原油、指数、為替、暗号資産の24時間参考価格と金曜基準の変化を確認します。',
+        description:
+          '金、原油、指数、為替、暗号資産の24時間参考価格と金曜基準の変化を確認します。',
         href: '#/board',
       },
       {
@@ -39,8 +40,29 @@ const categoryPages: Record<CategoryPageId, CategoryData> = {
       },
       {
         title: '窓開け監視',
-        description: '週末価格と金曜クローズの差を確認します。平日は直近の偏りを確認します。',
+        description:
+          '週末価格と金曜クローズの差を確認します。平日は直近の偏りを確認します。',
         href: '#/tools/gap-watch',
+      },
+    ],
+  },
+  games: {
+    subtitle: 'Games & sharing',
+    label: 'ゲーム',
+    description:
+      '週末ギャップ予想、タイプ診断、SNSシェアをまとめた参加型コンテンツです。記録を残して、週明けの振り返りにつなげます。',
+    accent: 'amber',
+    tools: [
+      {
+        title: '週末ギャップ予想',
+        description:
+          'GOLD、USDJPY、BTCなどの週末方向感を予想して、週明けに答え合わせします。Xシェアにも対応。',
+        href: '#/tools/gap-prediction',
+      },
+      {
+        title: 'トレーダータイプ16診断',
+        description: '12問に答えて、あなたのトレードスタイルを16タイプで確認します。',
+        href: '#/tools/trader-quiz',
       },
     ],
   },
@@ -53,12 +75,14 @@ const categoryPages: Record<CategoryPageId, CategoryData> = {
     tools: [
       {
         title: 'EAチェック',
-        description: '半裁量EA・全自動EAの稼働前確認リスト。口座認証、ロット、停止条件を整理します。',
+        description:
+          '半裁量EA・全自動EAの稼働前確認リスト。口座認証、ロット、停止条件を整理します。',
         href: '#/tools/ea-checklist',
       },
       {
         title: '戦略',
-        description: 'プレミアム、Discord、半裁量EAの活用案内。使い分けのイメージを確認します。',
+        description:
+          'プレミアム、Discord、半裁量EAの活用案内。使い分けのイメージを確認します。',
         href: '#/tools/strategy',
       },
       {
@@ -68,7 +92,8 @@ const categoryPages: Record<CategoryPageId, CategoryData> = {
       },
       {
         title: '半裁量サイン',
-        description: 'XAUUSD専用のDiscord通知サイン。サイン種別・通知チャンネル・利用開始手順を確認します。',
+        description:
+          'XAUUSD専用のDiscord通知サイン。サイン種別・通知チャンネル・利用開始手順を確認します。',
         href: '#/tools/semi-auto-sign',
       },
     ],
@@ -77,22 +102,37 @@ const categoryPages: Record<CategoryPageId, CategoryData> = {
     subtitle: 'Premium members',
     label: 'プレミアム',
     description:
-      'コミュニティ、参加案内、トレード日誌をまとめたプレミアム向けカテゴリ。note加入からDiscord権限付与、ツール利用まで確認できます。',
+      '会員向けダッシュボード、毎日の確認ミッション、朝の考察、注意事項、参加案内、トレード日誌をまとめたカテゴリです。',
     accent: 'amber',
     tools: [
       {
+        title: 'マイページ',
+        description:
+          'Discordログイン状態、今日のミッション進捗、週末ギャップ予想、プレミアム導線をまとめて確認します。',
+        href: '#/tools/member-dashboard',
+      },
+      {
+        title: '今日の相場ミッション',
+        description:
+          '相場ボード、通貨強弱、経済指標、窓開け監視、振り返りを毎日の確認ルーティンとして管理します。',
+        href: '#/tools/daily-mission',
+      },
+      {
         title: '参加案内',
-        description: 'noteメンバーシップ、加入手続き、Discord権限付与の流れを確認します。',
+        description:
+          'noteメンバーシップ、加入手続き、Discord権限付与の流れを確認します。',
         href: '#/tools/participation',
       },
       {
         title: 'コミュニティ',
-        description: 'ツール、メモ、各種案内のまとめ。Discordチャンネル構成を確認します。',
+        description:
+          'ツール、メモ、各種案内のまとめ。Discordチャンネル構成を確認します。',
         href: '#/tools/community',
       },
       {
         title: 'トレード日誌',
-        description: '口座ごとの日次損益をカレンダーで管理するプレミアム限定ツール。複数口座に対応。',
+        description:
+          '口座ごとの日次損益をカレンダーで管理するプレミアム限定ツール。複数口座に対応。',
         href: '#/tools/trade-journal',
       },
     ],
@@ -133,8 +173,12 @@ export const CategoryPage = ({ pageId }: { pageId: CategoryPageId }) => {
               style={{ animationDelay: `${index * 60}ms` }}
             >
               <h2 className="text-xl font-bold text-white">{tool.title}</h2>
-              <p className="mt-3 min-h-12 text-sm leading-6 text-slate-400">{tool.description}</p>
-              <span className={`mt-4 inline-flex text-sm font-bold ${accentText}`}>開く →</span>
+              <p className="mt-3 min-h-12 text-sm leading-6 text-slate-400">
+                {tool.description}
+              </p>
+              <span className={`mt-4 inline-flex text-sm font-bold ${accentText}`}>
+                開く →
+              </span>
             </a>
           ))}
         </div>

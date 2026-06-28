@@ -85,21 +85,6 @@ const LoginGate = ({ onSignIn }: { onSignIn: () => void }) => (
   </div>
 );
 
-const UpgradeGate = () => (
-  <div className="rounded-lg border border-amber-300/30 bg-amber-300/10 p-8 text-center">
-    <p className="text-base font-bold text-amber-100">プレミアム限定機能</p>
-    <p className="mt-2 text-sm leading-6 text-amber-100/80">
-      損益カレンダーはプレミアム会員専用のツールです。noteメンバーシップに加入してロール付与を受けることでご利用いただけます。
-    </p>
-    <a
-      href="#/tools/participation"
-      className="mt-6 inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-5 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
-    >
-      プレミアムを確認する
-    </a>
-  </div>
-);
-
 // ── Account tab bar ───────────────────────────────────────────────────────────
 
 const AccountTabs = ({
@@ -107,11 +92,13 @@ const AccountTabs = ({
   selectedId,
   onSelect,
   onAddClick,
+  canUseMultiAccount,
 }: {
   accounts: Account[];
   selectedId: string;
   onSelect: (id: string) => void;
   onAddClick: () => void;
+  canUseMultiAccount: boolean;
 }) => (
   <div className="mb-4 flex flex-wrap gap-2">
     {accounts.map((a) => (
@@ -127,7 +114,7 @@ const AccountTabs = ({
         {a.name}
       </button>
     ))}
-    {accounts.length > 1 && (
+    {canUseMultiAccount && accounts.length > 1 && (
       <button
         onClick={() => onSelect('__all__')}
         className={`min-h-9 rounded-full px-4 text-sm font-bold ring-1 transition ${
@@ -143,8 +130,36 @@ const AccountTabs = ({
       onClick={onAddClick}
       className="min-h-9 rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-400 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-white"
     >
-      ＋ 口座追加
+      ＋ 口座追加{canUseMultiAccount ? '' : '（Premium）'}
     </button>
+  </div>
+);
+
+const PremiumUpsellModal = ({ onClose }: { onClose: () => void }) => (
+  <div className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm">
+    <div className="w-full max-w-md rounded-lg border border-amber-300/30 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
+      <p className="text-sm font-semibold text-amber-100">Premium feature</p>
+      <h3 className="mt-1 text-xl font-bold text-white">複数口座はプレミアム限定です</h3>
+      <p className="mt-3 text-sm leading-6 text-slate-400">
+        Discordログインのみでも1口座の損益カレンダーは使えます。複数口座、全口座合計、より細かい運用管理はプレミアムで解放されます。
+      </p>
+      <div className="mt-5 flex flex-wrap gap-2">
+        <a
+          href="#/tools/participation"
+          onClick={onClose}
+          className="inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
+        >
+          プレミアム内容を見る
+        </a>
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+        >
+          閉じる
+        </button>
+      </div>
+    </div>
   </div>
 );
 
@@ -491,24 +506,31 @@ export const PnLCalendarTool = () => {
   const [month, setMonth] = useState(now.getMonth());
   const [selectedAccountId, setSelectedAccountId] = useState<string>('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showPremiumUpsell, setShowPremiumUpsell] = useState(false);
+  const canUseMultiAccount = auth.canAccessPremium;
 
   if (!auth.isAuthenticated) {
     if (!auth.isConfigured) return null;
     return <LoginGate onSignIn={() => auth.signIn('#/tools/trade-journal')} />;
   }
-  if (!auth.canAccessPremium) return <UpgradeGate />;
   if (isLoading)
     return <div className="py-12 text-center text-sm text-slate-400">読み込み中...</div>;
   if (error) return <div className="py-8 text-center text-sm text-rose-400">{error}</div>;
 
+  const visibleAccounts = canUseMultiAccount ? accounts : accounts.slice(0, 1);
+  const canAddAccount = canUseMultiAccount || accounts.length === 0;
+
   const effectiveAccountId =
     selectedAccountId &&
-    (selectedAccountId === '__all__' || accounts.some((a) => a.id === selectedAccountId))
+    (canUseMultiAccount
+      ? selectedAccountId === '__all__' ||
+        visibleAccounts.some((a) => a.id === selectedAccountId)
+      : visibleAccounts.some((a) => a.id === selectedAccountId))
       ? selectedAccountId
-      : (accounts[0]?.id ?? '');
+      : (visibleAccounts[0]?.id ?? '');
 
-  const selectedAccount = accounts.find((a) => a.id === effectiveAccountId);
-  const isAllAccounts = effectiveAccountId === '__all__';
+  const selectedAccount = visibleAccounts.find((a) => a.id === effectiveAccountId);
+  const isAllAccounts = canUseMultiAccount && effectiveAccountId === '__all__';
 
   const monthPrefix = `${String(year)}-${String(month + 1).padStart(2, '0')}-`;
 
@@ -550,6 +572,11 @@ export const PnLCalendarTool = () => {
   if (accounts.length === 0) {
     return (
       <div>
+        {!auth.canAccessPremium && (
+          <div className="mb-4 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-4 text-sm leading-6 text-cyan-50/80">
+            Discordログインのみで1口座まで利用できます。複数口座管理はプレミアムで解放されます。
+          </div>
+        )}
         {showAddForm ? (
           <AddAccountForm
             onAdd={(name, u) => {
@@ -575,14 +602,27 @@ export const PnLCalendarTool = () => {
 
   return (
     <div>
+      {!canUseMultiAccount && (
+        <div className="mb-4 rounded-lg border border-amber-300/20 bg-amber-300/10 p-4 text-sm leading-6 text-amber-50/80">
+          Discordログインのみの場合は1口座まで利用できます。複数口座・全口座合計はプレミアム限定です。
+        </div>
+      )}
+
       <AccountTabs
-        accounts={accounts}
+        accounts={visibleAccounts}
         selectedId={effectiveAccountId}
         onSelect={(id) => {
           setSelectedAccountId(id);
           setShowAddForm(false);
         }}
-        onAddClick={() => setShowAddForm((v) => !v)}
+        onAddClick={() => {
+          if (!canAddAccount) {
+            setShowPremiumUpsell(true);
+            return;
+          }
+          setShowAddForm((v) => !v);
+        }}
+        canUseMultiAccount={canUseMultiAccount}
       />
 
       {showAddForm && (
@@ -665,6 +705,10 @@ export const PnLCalendarTool = () => {
           </p>
         )}
       </div>
+
+      {showPremiumUpsell && (
+        <PremiumUpsellModal onClose={() => setShowPremiumUpsell(false)} />
+      )}
     </div>
   );
 };

@@ -1,7 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+import { useDiscordAuth } from '../hooks/useDiscordAuth';
 
 type AxisKey = 'ai' | 'sl' | 'rc' | 'yd';
 type TypeCode = string; // e.g. "ASRY"
+
+type QuizResultRecord = {
+  id: string;
+  typeCode: string;
+  answers: Partial<Record<AxisKey, string>>;
+  createdAt: string;
+};
 
 type Question = {
   axis: AxisKey;
@@ -105,9 +114,18 @@ const traderTypes: TraderTypeData[] = [
     tagline: 'データで素早く、ルール通りに刻む',
     description:
       'テクニカル分析を武器に、短期足で素早くエントリーし積極的に利を伸ばすタイプ。ルールに忠実で再現性が高く、高頻度トレードを得意とします。',
-    strengths: ['再現性が高く負けパターンを潰しやすい', '素早い判断力とエントリー精度', '積極的なリスクテイクで大きな利を狙える'],
-    weaknesses: ['オーバートレードしやすい', '相場が荒れると連敗しやすい', 'ルールに縛られて相場変化への対応が遅れる'],
-    recommendedStyle: '明確なエントリー条件を設定し、デイトレ〜スキャルに集中。毎日のトレード記録でルールを磨く。',
+    strengths: [
+      '再現性が高く負けパターンを潰しやすい',
+      '素早い判断力とエントリー精度',
+      '積極的なリスクテイクで大きな利を狙える',
+    ],
+    weaknesses: [
+      'オーバートレードしやすい',
+      '相場が荒れると連敗しやすい',
+      'ルールに縛られて相場変化への対応が遅れる',
+    ],
+    recommendedStyle:
+      '明確なエントリー条件を設定し、デイトレ〜スキャルに集中。毎日のトレード記録でルールを磨く。',
     compatible: ['ALCY', 'ISRD'],
   },
   {
@@ -117,9 +135,18 @@ const traderTypes: TraderTypeData[] = [
     tagline: '分析を基盤に、感覚で決め打ちする',
     description:
       '分析で状況を把握しながらも、最終的な判断は相場感で動くタイプ。積極的な短期トレードで、高い瞬発力を持っています。',
-    strengths: ['分析と感覚の両方を活用できる', '臨機応変なエントリーができる', '素早い利確で資金回転が速い'],
-    weaknesses: ['ルールが曖昧になりやすい', '感情に流されるリスクがある', '記録・検証がしにくい'],
-    recommendedStyle: '基本ルールを設けつつ、最終判断に裁量を残す形がベスト。裁量の範囲をあらかじめ決めておく。',
+    strengths: [
+      '分析と感覚の両方を活用できる',
+      '臨機応変なエントリーができる',
+      '素早い利確で資金回転が速い',
+    ],
+    weaknesses: [
+      'ルールが曖昧になりやすい',
+      '感情に流されるリスクがある',
+      '記録・検証がしにくい',
+    ],
+    recommendedStyle:
+      '基本ルールを設けつつ、最終判断に裁量を残す形がベスト。裁量の範囲をあらかじめ決めておく。',
     compatible: ['ALCY', 'ISCY'],
   },
   {
@@ -129,9 +156,18 @@ const traderTypes: TraderTypeData[] = [
     tagline: '条件を絞ってコツコツ積み上げる',
     description:
       'テクニカルで条件を絞り込み、ルールに従って慎重に短期トレードするタイプ。安定感が高く、着実に利を積み上げます。',
-    strengths: ['高い安定性と一貫したリスク管理', 'ドローダウンが小さい', 'ルールが明確で検証・改善がしやすい'],
-    weaknesses: ['利が伸びにくい場面がある', '機会損失が多くなりがち', 'チャンス時にロットを上げられない'],
-    recommendedStyle: 'エントリー回数を絞り、勝率を高める方向に特化。EAや半自動ツールとの相性が良い。',
+    strengths: [
+      '高い安定性と一貫したリスク管理',
+      'ドローダウンが小さい',
+      'ルールが明確で検証・改善がしやすい',
+    ],
+    weaknesses: [
+      '利が伸びにくい場面がある',
+      '機会損失が多くなりがち',
+      'チャンス時にロットを上げられない',
+    ],
+    recommendedStyle:
+      'エントリー回数を絞り、勝率を高める方向に特化。EAや半自動ツールとの相性が良い。',
     compatible: ['ILRD', 'ASRY'],
   },
   {
@@ -141,9 +177,18 @@ const traderTypes: TraderTypeData[] = [
     tagline: '分析で慎重に、感覚で微調整する',
     description:
       '分析を基盤に、裁量で状況を見ながら保守的に動くタイプ。リスクを取らずに短期で着実に利を積みます。',
-    strengths: ['リスク管理が徹底されている', '慎重なため損失が小さい', '相場環境に合わせて柔軟に動ける'],
-    weaknesses: ['利が小さくなりやすい', '優位性のある局面でも攻めきれない', '判断基準がぶれやすい'],
-    recommendedStyle: '明確な損切りラインを設定した上で裁量を使う。手法のルール化に少しずつ取り組む。',
+    strengths: [
+      'リスク管理が徹底されている',
+      '慎重なため損失が小さい',
+      '相場環境に合わせて柔軟に動ける',
+    ],
+    weaknesses: [
+      '利が小さくなりやすい',
+      '優位性のある局面でも攻めきれない',
+      '判断基準がぶれやすい',
+    ],
+    recommendedStyle:
+      '明確な損切りラインを設定した上で裁量を使う。手法のルール化に少しずつ取り組む。',
     compatible: ['ILRY', 'ASCY'],
   },
   {
@@ -153,9 +198,18 @@ const traderTypes: TraderTypeData[] = [
     tagline: 'データと戦略で大きな波に乗る',
     description:
       'テクニカル分析でトレンドを見極め、積極的にポジションを持ち続けるタイプ。大きな利益を狙う戦略的スイングトレーダーです。',
-    strengths: ['大きなトレンドで高いリターンを得られる', '再現性のある戦略を磨ける', '長期的な視点で相場を見られる'],
-    weaknesses: ['引きつけが甘いと含み損が大きくなる', '短期の振れに振り回されやすい', '含み益のある局面でも我慢が必要'],
-    recommendedStyle: '週足・日足でのトレンド把握を徹底し、エントリーは4時間足以下で絞る。明確な利確目標を持つ。',
+    strengths: [
+      '大きなトレンドで高いリターンを得られる',
+      '再現性のある戦略を磨ける',
+      '長期的な視点で相場を見られる',
+    ],
+    weaknesses: [
+      '引きつけが甘いと含み損が大きくなる',
+      '短期の振れに振り回されやすい',
+      '含み益のある局面でも我慢が必要',
+    ],
+    recommendedStyle:
+      '週足・日足でのトレンド把握を徹底し、エントリーは4時間足以下で絞る。明確な利確目標を持つ。',
     compatible: ['ISCY', 'ASCD'],
   },
   {
@@ -165,9 +219,18 @@ const traderTypes: TraderTypeData[] = [
     tagline: '分析と裁量で大きく狙う',
     description:
       'テクニカル分析を理解しつつ、裁量で大きな流れに乗るタイプ。相場の波を読む力があり、積極的に大きな利を取りに行きます。',
-    strengths: ['大局観が優れている', '状況変化への対応が速い', '一度の利益が大きくなりやすい'],
-    weaknesses: ['感情的な判断で損切りが遅れる', '裁量が広すぎると一貫性が保てない', '連敗すると追い銭リスクがある'],
-    recommendedStyle: '裁量の範囲を事前にルール化。大きな方向感があるときだけポジションを持つよう意識する。',
+    strengths: [
+      '大局観が優れている',
+      '状況変化への対応が速い',
+      '一度の利益が大きくなりやすい',
+    ],
+    weaknesses: [
+      '感情的な判断で損切りが遅れる',
+      '裁量が広すぎると一貫性が保てない',
+      '連敗すると追い銭リスクがある',
+    ],
+    recommendedStyle:
+      '裁量の範囲を事前にルール化。大きな方向感があるときだけポジションを持つよう意識する。',
     compatible: ['ASCY', 'ILCY'],
   },
   {
@@ -177,9 +240,18 @@ const traderTypes: TraderTypeData[] = [
     tagline: 'ルールと分析で安定した成長を目指す',
     description:
       'テクニカル分析に基づくルールを守りながら、慎重に中長期のポジションを積み上げるタイプ。安定感が非常に高いです。',
-    strengths: ['一貫性のある戦略で長期的に安定する', 'ドローダウンが小さい', '精神的なブレが少ない'],
-    weaknesses: ['機会を逃しやすい', '大きなリターンを得にくい', '相場が荒れると利益が出にくい'],
-    recommendedStyle: '明確なトレードルールをドキュメント化し、記録・検証を習慣化。EAとの相性が良い。',
+    strengths: [
+      '一貫性のある戦略で長期的に安定する',
+      'ドローダウンが小さい',
+      '精神的なブレが少ない',
+    ],
+    weaknesses: [
+      '機会を逃しやすい',
+      '大きなリターンを得にくい',
+      '相場が荒れると利益が出にくい',
+    ],
+    recommendedStyle:
+      '明確なトレードルールをドキュメント化し、記録・検証を習慣化。EAとの相性が良い。',
     compatible: ['ASRY', 'ISRD'],
   },
   {
@@ -190,8 +262,13 @@ const traderTypes: TraderTypeData[] = [
     description:
       '分析結果を信頼し、慎重に中長期保有するタイプ。焦らず相場を見続け、納得のいくチャンスにだけ乗ります。',
     strengths: ['精神的な安定感が高い', '損失を最小化できる', 'チャンスを精査できる'],
-    weaknesses: ['チャンスを見逃しやすい', '利が伸びにくい', 'ルールが固まっていないと動けない'],
-    recommendedStyle: '週次でトレード計画を立て、条件が揃った場合だけエントリー。記録して少しずつ改善する。',
+    weaknesses: [
+      'チャンスを見逃しやすい',
+      '利が伸びにくい',
+      'ルールが固まっていないと動けない',
+    ],
+    recommendedStyle:
+      '週次でトレード計画を立て、条件が揃った場合だけエントリー。記録して少しずつ改善する。',
     compatible: ['ISRY', 'ASRD'],
   },
   {
@@ -201,9 +278,18 @@ const traderTypes: TraderTypeData[] = [
     tagline: '感覚と仕掛けで瞬発力を発揮する',
     description:
       '相場感でタイミングを掴み、短期で積極的にトレードするタイプ。高い瞬発力と直感力を持ち、素早い判断で利を積み上げます。',
-    strengths: ['瞬発力とタイミング感が優れている', 'ルールに縛られず機会を逃さない', '流れが良い時に大きく取れる'],
-    weaknesses: ['根拠が薄くなりやすい', '感情に流されるリスクが高い', 'ドローダウン期に収拾がつきにくい'],
-    recommendedStyle: '感覚を磨きながらも、最低限の損切りルールは厳守。トレード記録で自分のパターンを把握する。',
+    strengths: [
+      '瞬発力とタイミング感が優れている',
+      'ルールに縛られず機会を逃さない',
+      '流れが良い時に大きく取れる',
+    ],
+    weaknesses: [
+      '根拠が薄くなりやすい',
+      '感情に流されるリスクが高い',
+      'ドローダウン期に収拾がつきにくい',
+    ],
+    recommendedStyle:
+      '感覚を磨きながらも、最低限の損切りルールは厳守。トレード記録で自分のパターンを把握する。',
     compatible: ['ALCD', 'ASCY'],
   },
   {
@@ -213,9 +299,18 @@ const traderTypes: TraderTypeData[] = [
     tagline: '流れを読んで自在にスキャルする',
     description:
       '相場感と裁量を活かして短期で自由にトレードするタイプ。直感と柔軟性が武器で、流れが良い相場で実力を発揮します。',
-    strengths: ['相場の流れへの適応力が高い', '柔軟で機動的なトレードができる', '良い流れをつかんだときの瞬発力がある'],
-    weaknesses: ['基準がなくオーバートレードしやすい', '損切りが甘くなりやすい', '記録・改善のサイクルが回しにくい'],
-    recommendedStyle: '感覚トレードに最低限のルール（最大損失額・損切りライン）を設ける。デイでの損失上限を決める。',
+    strengths: [
+      '相場の流れへの適応力が高い',
+      '柔軟で機動的なトレードができる',
+      '良い流れをつかんだときの瞬発力がある',
+    ],
+    weaknesses: [
+      '基準がなくオーバートレードしやすい',
+      '損切りが甘くなりやすい',
+      '記録・改善のサイクルが回しにくい',
+    ],
+    recommendedStyle:
+      '感覚トレードに最低限のルール（最大損失額・損切りライン）を設ける。デイでの損失上限を決める。',
     compatible: ['ALCY', 'ASCD'],
   },
   {
@@ -225,9 +320,18 @@ const traderTypes: TraderTypeData[] = [
     tagline: '感じ取った流れをリスク管理で固める',
     description:
       '相場感に頼りながらも、リスク管理は慎重に行うタイプ。直感と安全策を組み合わせた、バランスの良いスタイルです。',
-    strengths: ['安心感のある取引ができる', '相場の雰囲気を読む力がある', 'ルールが守られていれば安定する'],
-    weaknesses: ['判断根拠が曖昧になりやすい', '相場感が外れると立て直しが難しい', '条件が整わず機会を逃すことも'],
-    recommendedStyle: '感覚に頼りながらもチェックリスト形式でエントリー条件を確認する習慣をつける。',
+    strengths: [
+      '安心感のある取引ができる',
+      '相場の雰囲気を読む力がある',
+      'ルールが守られていれば安定する',
+    ],
+    weaknesses: [
+      '判断根拠が曖昧になりやすい',
+      '相場感が外れると立て直しが難しい',
+      '条件が整わず機会を逃すことも',
+    ],
+    recommendedStyle:
+      '感覚に頼りながらもチェックリスト形式でエントリー条件を確認する習慣をつける。',
     compatible: ['ALRY', 'ASRD'],
   },
   {
@@ -237,9 +341,14 @@ const traderTypes: TraderTypeData[] = [
     tagline: '感覚を信じて慎重に、着実に動く',
     description:
       '相場感で方向感を掴み、裁量で動きながらもリスクは最小限に抑えるタイプ。資金を守ることを最優先にしています。',
-    strengths: ['資金保全能力が高い', '感覚が当たれば着実に積み上げる', 'メンタルが安定している'],
+    strengths: [
+      '資金保全能力が高い',
+      '感覚が当たれば着実に積み上げる',
+      'メンタルが安定している',
+    ],
     weaknesses: ['利が伸びにくい', 'チャンスを見逃しやすい', '相場感頼りで根拠が薄い'],
-    recommendedStyle: '少ないトレード数でも確実に利を積む方向で。感覚を磨くために日足・週足でのメモを習慣化。',
+    recommendedStyle:
+      '少ないトレード数でも確実に利を積む方向で。感覚を磨くために日足・週足でのメモを習慣化。',
     compatible: ['ALRY', 'ALRD'],
   },
   {
@@ -249,9 +358,18 @@ const traderTypes: TraderTypeData[] = [
     tagline: '大きな流れを感じ取り、ルールで攻める',
     description:
       '相場全体の大きな動きを感覚で捉え、ルールに基づいて積極的にスイングトレードするタイプ。大局観と戦略性を兼ね備えています。',
-    strengths: ['大きなトレンドを掴む嗅覚がある', 'ルールで管理しながら積極的に動ける', '長期的に高いリターンを狙える'],
-    weaknesses: ['短期の逆行に対してメンタルが揺れやすい', '大きなポジションを持ちすぎるリスク', 'エントリーが早すぎることがある'],
-    recommendedStyle: '週足・日足の方向性を感覚で把握し、エントリー条件だけルール化する。大きなトレンド専門に絞る。',
+    strengths: [
+      '大きなトレンドを掴む嗅覚がある',
+      'ルールで管理しながら積極的に動ける',
+      '長期的に高いリターンを狙える',
+    ],
+    weaknesses: [
+      '短期の逆行に対してメンタルが揺れやすい',
+      '大きなポジションを持ちすぎるリスク',
+      'エントリーが早すぎることがある',
+    ],
+    recommendedStyle:
+      '週足・日足の方向性を感覚で把握し、エントリー条件だけルール化する。大きなトレンド専門に絞る。',
     compatible: ['ASCD', 'ISCD'],
   },
   {
@@ -261,9 +379,18 @@ const traderTypes: TraderTypeData[] = [
     tagline: '大きな流れに乗って自然に動く',
     description:
       '相場の大きな流れを感じ取り、裁量で自然にポジションを持つタイプ。相場感に優れ、無理をせず流れに乗ります。',
-    strengths: ['相場への自然な適応力が高い', '無理のない判断で長続きしやすい', '大局観が優れている'],
-    weaknesses: ['ルールがないと損切りが遅れる', '感覚が外れた時の対処が難しい', '裁量の一貫性を保ちにくい'],
-    recommendedStyle: '大きな流れだけに絞ってポジションを持ち、感覚エントリーでも損切りラインだけはあらかじめ決める。',
+    strengths: [
+      '相場への自然な適応力が高い',
+      '無理のない判断で長続きしやすい',
+      '大局観が優れている',
+    ],
+    weaknesses: [
+      'ルールがないと損切りが遅れる',
+      '感覚が外れた時の対処が難しい',
+      '裁量の一貫性を保ちにくい',
+    ],
+    recommendedStyle:
+      '大きな流れだけに絞ってポジションを持ち、感覚エントリーでも損切りラインだけはあらかじめ決める。',
     compatible: ['ASCY', 'ALCY'],
   },
   {
@@ -273,9 +400,18 @@ const traderTypes: TraderTypeData[] = [
     tagline: '感覚と慎重さで長期の安定を目指す',
     description:
       '相場感でチャンスを見極め、慎重に中長期のポジションを管理するタイプ。安定感が高く、焦らず着実に資産を育てます。',
-    strengths: ['精神的に安定してトレードできる', '大きな損失を避けられる', '自分のペースで長く続けられる'],
-    weaknesses: ['利が伸びにくい傾向がある', '感覚で判断するため根拠が説明しにくい', '機会損失が多い'],
-    recommendedStyle: 'スイングトレードに特化し、感覚で方向感を掴んだ後は損切り・利確だけ事前に設定する。',
+    strengths: [
+      '精神的に安定してトレードできる',
+      '大きな損失を避けられる',
+      '自分のペースで長く続けられる',
+    ],
+    weaknesses: [
+      '利が伸びにくい傾向がある',
+      '感覚で判断するため根拠が説明しにくい',
+      '機会損失が多い',
+    ],
+    recommendedStyle:
+      'スイングトレードに特化し、感覚で方向感を掴んだ後は損切り・利確だけ事前に設定する。',
     compatible: ['ALRD', 'ASRY'],
   },
   {
@@ -286,13 +422,46 @@ const traderTypes: TraderTypeData[] = [
     description:
       '相場全体を広い視野で見渡し、感覚と慎重さで淡々とスイングトレードするタイプ。欲に振り回されず、相場と向き合います。',
     strengths: ['感情的にブレにくい', '資金を長期的に守れる', '相場の大局を見誤りにくい'],
-    weaknesses: ['チャンスを見送りすぎる', '利を積み上げるペースが遅い', '根拠の言語化が苦手'],
-    recommendedStyle: '長期投資に近い感覚でスイングに取り組み、月次・週次でパフォーマンスを振り返る習慣を持つ。',
+    weaknesses: [
+      'チャンスを見送りすぎる',
+      '利を積み上げるペースが遅い',
+      '根拠の言語化が苦手',
+    ],
+    recommendedStyle:
+      '長期投資に近い感覚でスイングに取り組み、月次・週次でパフォーマンスを振り返る習慣を持つ。',
     compatible: ['ASRY', 'ISRY'],
   },
 ];
 
 const typeMap = new Map(traderTypes.map((t) => [t.code, t]));
+const quizStorageKey = (ownerId: string) => `wmb.traderQuiz.${ownerId}`;
+
+const createId = () => {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
+
+const readQuizHistory = (ownerId: string): QuizResultRecord[] => {
+  try {
+    const item = window.localStorage.getItem(quizStorageKey(ownerId));
+    return item ? (JSON.parse(item) as QuizResultRecord[]) : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeQuizHistory = (ownerId: string, history: QuizResultRecord[]) => {
+  window.localStorage.setItem(quizStorageKey(ownerId), JSON.stringify(history));
+};
+
+const formatSavedAt = (value: string) =>
+  new Intl.DateTimeFormat('ja-JP', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Tokyo',
+  }).format(new Date(value));
 
 const computeType = (answers: Record<AxisKey, string>): TypeCode => {
   const ai = answers.ai || 'A';
@@ -312,29 +481,93 @@ const axisLabels: Record<AxisKey, { a: string; b: string }> = {
 const ShareButton = ({ typeData }: { typeData: TraderTypeData }) => {
   const [copied, setCopied] = useState(false);
 
+  const shareText = `私のトレーダータイプは「${typeData.name}」(${typeData.code}) ！\n${typeData.tagline}\n#あにゃFX #トレーダータイプ診断`;
+  const shareUrl =
+    typeof window === 'undefined'
+      ? ''
+      : `https://twitter.com/intent/tweet?${new URLSearchParams({
+          text: shareText,
+          url: `${window.location.origin}${window.location.pathname}#/tools/trader-quiz`,
+        }).toString()}`;
+
   const handleCopy = () => {
-    const text = `私のトレーダータイプは「${typeData.name}」(${typeData.code}) ！\n${typeData.tagline}\n#あにゃFX #トレーダータイプ診断`;
-    void navigator.clipboard.writeText(text).then(() => {
+    void navigator.clipboard.writeText(shareText).then(() => {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     });
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white/[0.06] px-5 text-sm font-bold text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"
-    >
-      {copied ? '✓ コピーしました' : 'SNSでシェアする'}
-    </button>
+    <div className="flex flex-wrap gap-2">
+      <a
+        href={shareUrl}
+        rel="noopener noreferrer"
+        target="_blank"
+        className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white/[0.06] px-5 text-sm font-bold text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"
+      >
+        Xでシェア
+      </a>
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white/[0.04] px-5 text-sm font-bold text-slate-400 ring-1 ring-white/10 transition hover:bg-white/[0.06] hover:text-slate-200"
+      >
+        {copied ? '✓ コピーしました' : '文面コピー'}
+      </button>
+    </div>
   );
 };
 
 export const TraderQuiz = () => {
+  const auth = useDiscordAuth();
+  const ownerId = auth.session?.user.id ?? 'guest';
   const [phase, setPhase] = useState<'intro' | 'quiz' | 'result'>('intro');
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Partial<Record<AxisKey, string>>>({});
+  const [history, setHistory] = useState<QuizResultRecord[]>(() =>
+    readQuizHistory(ownerId),
+  );
+
+  useEffect(() => {
+    const ownHistory = readQuizHistory(ownerId);
+    if (auth.isAuthenticated && ownerId !== 'guest') {
+      const guestHistory = readQuizHistory('guest');
+      if (guestHistory.length > 0) {
+        const merged = [...ownHistory, ...guestHistory]
+          .filter(
+            (record, index, records) =>
+              records.findIndex(
+                (candidate) =>
+                  candidate.typeCode === record.typeCode &&
+                  candidate.createdAt === record.createdAt,
+              ) === index,
+          )
+          .sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          )
+          .slice(0, 20);
+        writeQuizHistory(ownerId, merged);
+        setHistory(merged);
+        return;
+      }
+    }
+    setHistory(ownHistory);
+  }, [auth.isAuthenticated, ownerId]);
+
+  const saveResult = (nextAnswers: Partial<Record<AxisKey, string>>) => {
+    const typeCode = computeType(nextAnswers as Record<AxisKey, string>);
+    const record: QuizResultRecord = {
+      id: createId(),
+      typeCode,
+      answers: nextAnswers,
+      createdAt: new Date().toISOString(),
+    };
+    setHistory((current) => {
+      const next = [record, ...current].slice(0, 20);
+      writeQuizHistory(ownerId, next);
+      return next;
+    });
+  };
 
   const handleAnswer = (letter: string) => {
     const q = questions[currentQ];
@@ -344,6 +577,7 @@ export const TraderQuiz = () => {
     if (currentQ < questions.length - 1) {
       setCurrentQ((n) => n + 1);
     } else {
+      saveResult(next);
       setPhase('result');
     }
   };
@@ -361,9 +595,7 @@ export const TraderQuiz = () => {
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
             Trader Type Quiz
           </p>
-          <h1 className="mt-3 text-3xl font-black text-white">
-            トレーダータイプ16診断
-          </h1>
+          <h1 className="mt-3 text-3xl font-black text-white">トレーダータイプ16診断</h1>
           <p className="mt-4 text-sm leading-7 text-slate-400">
             12問の質問に答えて、あなたのトレードスタイルを4つの軸で分析。
             16タイプのトレーダー像の中からあなたに近いタイプを診断します。
@@ -386,6 +618,57 @@ export const TraderQuiz = () => {
             ))}
           </div>
 
+          <div className="mt-6 rounded-lg border border-white/10 bg-slate-950/50 p-4 text-left">
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <div>
+                <p className="text-sm font-bold text-white">診断結果の保存</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  {auth.isAuthenticated
+                    ? 'Discordユーザー別に診断結果を保存します。'
+                    : 'ゲスト保存中です。Discordログインすると自分の記録として保存できます。'}
+                </p>
+              </div>
+              {!auth.isAuthenticated && (
+                <button
+                  type="button"
+                  onClick={() => auth.signIn('#/tools/trader-quiz')}
+                  className="inline-flex min-h-10 items-center justify-center rounded-full bg-indigo-400 px-4 text-sm font-bold text-white transition hover:bg-indigo-300"
+                >
+                  Discordログイン
+                </button>
+              )}
+            </div>
+          </div>
+
+          {history.length > 0 && (
+            <div className="mt-4 rounded-lg border border-cyan-300/20 bg-cyan-300/[0.06] p-4 text-left">
+              <p className="text-sm font-bold text-cyan-100">保存済みの診断</p>
+              <div className="mt-3 space-y-2">
+                {history.slice(0, 3).map((record) => {
+                  const savedType = typeMap.get(record.typeCode);
+                  return (
+                    <div
+                      key={record.id}
+                      className="flex items-center justify-between gap-3 rounded-lg bg-slate-950/50 p-3"
+                    >
+                      <div>
+                        <p className="text-sm font-bold text-white">
+                          {savedType?.name ?? record.typeCode}
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          {formatSavedAt(record.createdAt)}
+                        </p>
+                      </div>
+                      <span className="text-xs font-bold text-cyan-100">
+                        {record.typeCode}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <button
             type="button"
             onClick={() => setPhase('quiz')}
@@ -393,7 +676,9 @@ export const TraderQuiz = () => {
           >
             診断スタート →
           </button>
-          <p className="mt-4 text-xs text-slate-600">全12問 · 回答は保存されません</p>
+          <p className="mt-4 text-xs text-slate-600">
+            全12問 · 結果はこの端末に保存されます
+          </p>
         </div>
       </div>
     );
@@ -401,13 +686,15 @@ export const TraderQuiz = () => {
 
   if (phase === 'quiz') {
     const q = questions[currentQ];
-    const progress = ((currentQ) / questions.length) * 100;
+    const progress = (currentQ / questions.length) * 100;
 
     return (
       <div className="animate-fade-in mx-auto max-w-2xl px-4 py-12 sm:px-6">
         <div className="mb-6">
           <div className="flex items-center justify-between text-xs text-slate-500">
-            <span>{currentQ + 1} / {questions.length}</span>
+            <span>
+              {currentQ + 1} / {questions.length}
+            </span>
             <button
               type="button"
               onClick={handleRestart}
@@ -459,7 +746,9 @@ export const TraderQuiz = () => {
 
   const typeCode = computeType(answers as Record<AxisKey, string>);
   const typeData = typeMap.get(typeCode) ?? traderTypes[0];
-  const compatibles = typeData.compatible.map((c) => typeMap.get(c)).filter(Boolean) as TraderTypeData[];
+  const compatibles = typeData.compatible
+    .map((c) => typeMap.get(c))
+    .filter(Boolean) as TraderTypeData[];
 
   const axisOrder: AxisKey[] = ['ai', 'sl', 'rc', 'yd'];
   const axisAnswers = axisOrder.map((axis) => ({
@@ -490,6 +779,28 @@ export const TraderQuiz = () => {
             </div>
           </div>
           <p className="mt-4 text-sm leading-7 text-slate-400">{typeData.description}</p>
+
+          <div className="mt-5 rounded-lg border border-white/10 bg-slate-950/50 p-4">
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <div>
+                <p className="text-sm font-bold text-white">この結果を保存しました</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  {auth.isAuthenticated
+                    ? 'Discordユーザー別の診断履歴に保存されています。'
+                    : 'ゲスト履歴に保存されています。Discordログインすると次回以降も自分の記録として管理できます。'}
+                </p>
+              </div>
+              {!auth.isAuthenticated && (
+                <button
+                  type="button"
+                  onClick={() => auth.signIn('#/tools/trader-quiz')}
+                  className="inline-flex min-h-10 items-center justify-center rounded-full bg-indigo-400 px-4 text-sm font-bold text-white transition hover:bg-indigo-300"
+                >
+                  Discordログイン
+                </button>
+              )}
+            </div>
+          </div>
 
           <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
             {axisAnswers.map(({ axis, label }) => (
@@ -537,7 +848,9 @@ export const TraderQuiz = () => {
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200">
             Recommended Style
           </p>
-          <p className="mt-3 text-sm leading-6 text-slate-300">{typeData.recommendedStyle}</p>
+          <p className="mt-3 text-sm leading-6 text-slate-300">
+            {typeData.recommendedStyle}
+          </p>
         </div>
 
         {compatibles.length > 0 && (
@@ -556,6 +869,37 @@ export const TraderQuiz = () => {
                   <span className="text-xs text-slate-500">{c.code}</span>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {history.length > 0 && (
+          <div className="rounded-xl border border-white/10 bg-white/[0.035] p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+              Saved Results
+            </p>
+            <div className="mt-3 grid gap-2">
+              {history.slice(0, 5).map((record) => {
+                const savedType = typeMap.get(record.typeCode);
+                return (
+                  <div
+                    key={record.id}
+                    className="flex items-center justify-between gap-3 rounded-lg bg-slate-950/50 p-3"
+                  >
+                    <div>
+                      <p className="text-sm font-bold text-white">
+                        {savedType?.name ?? record.typeCode}
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {formatSavedAt(record.createdAt)}
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold text-cyan-100">
+                      {record.typeCode}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

@@ -44,6 +44,18 @@ export const INTERNAL_NAV_LINKS = [
     href: '#/tools/trade-journal',
   },
   {
+    label: 'マイページ',
+    href: '#/tools/member-dashboard',
+  },
+  {
+    label: '今日のミッション',
+    href: '#/tools/daily-mission',
+  },
+  {
+    label: 'ギャップ予想',
+    href: '#/tools/gap-prediction',
+  },
+  {
     label: 'タイプ診断',
     href: '#/tools/trader-quiz',
   },
@@ -70,6 +82,17 @@ export const NAV_LINK_GROUPS = [
       {
         label: '窓開け監視',
         href: '#/tools/gap-watch',
+      },
+    ],
+  },
+  {
+    label: 'ゲーム',
+    href: '#/games',
+    description: '予想、診断、記録シェア',
+    links: [
+      {
+        label: 'ギャップ予想',
+        href: '#/tools/gap-prediction',
       },
       {
         label: 'タイプ診断',
@@ -103,8 +126,16 @@ export const NAV_LINK_GROUPS = [
   {
     label: 'プレミアム',
     href: '#/premium',
-    description: 'コミュニティ、参加案内、日誌',
+    description: '会員機能、参加案内、日誌',
     links: [
+      {
+        label: 'マイページ',
+        href: '#/tools/member-dashboard',
+      },
+      {
+        label: '今日のミッション',
+        href: '#/tools/daily-mission',
+      },
       {
         label: 'コミュニティ',
         href: '#/tools/community',

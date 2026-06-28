@@ -40,9 +40,12 @@ const toolPageIds: ToolPageId[] = [
   'semi-auto-sign',
   'trade-journal',
   'trader-quiz',
+  'member-dashboard',
+  'daily-mission',
+  'gap-prediction',
 ];
 
-const categoryPageIds: CategoryPageId[] = ['market', 'ea-copytrade', 'premium'];
+const categoryPageIds: CategoryPageId[] = ['market', 'games', 'ea-copytrade', 'premium'];
 
 const getRoute = () => window.location.hash.replace(/^#\/?/, '');
 
