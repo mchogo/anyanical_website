@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { DEFAULT_META, ROUTE_META, SITE_URL } from './config/pageMeta';
 import { ChartSection } from './components/ChartSection';
 import { Disclaimer } from './components/Disclaimer';
 import { ExplainerSections } from './components/ExplainerSections';
@@ -98,6 +99,30 @@ export const App = () => {
   const isSpaceXRoute = route === 'spacex';
   const isLoginRoute = route === 'login';
   const isDiscordCallbackRoute = isDiscordOAuthRedirect(route);
+
+  useEffect(() => {
+    const meta = ROUTE_META[route] ?? DEFAULT_META;
+    document.title = meta.title;
+
+    const setMeta = (selector: string, attr: string, value: string) => {
+      let el = document.head.querySelector<HTMLMetaElement>(selector);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr.split('=')[0], attr.split('=')[1] ?? '');
+        document.head.appendChild(el);
+      }
+      el.content = value;
+    };
+
+    const pageUrl = `${SITE_URL}/#/${route}`;
+    setMeta('meta[name="description"]', 'name=description', meta.description);
+    setMeta('meta[property="og:title"]', 'property=og:title', meta.title);
+    setMeta('meta[property="og:description"]', 'property=og:description', meta.description);
+    setMeta('meta[property="og:url"]', 'property=og:url', pageUrl);
+    setMeta('meta[name="twitter:title"]', 'name=twitter:title', meta.title);
+    setMeta('meta[name="twitter:description"]', 'name=twitter:description', meta.description);
+    setMeta('meta[name="twitter:url"]', 'name=twitter:url', pageUrl);
+  }, [route]);
 
   useEffect(() => {
     const timerId = window.setInterval(() => {

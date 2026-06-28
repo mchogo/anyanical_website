@@ -1,0 +1,100 @@
+export const SITE_NAME = 'アニャニカル覗き部屋';
+export const SITE_URL = 'https://anyanical.com';
+
+type PageMeta = { title: string; description: string };
+
+const s = (title: string, description: string): PageMeta => ({ title, description });
+const t = (name: string) => `${name} | ${SITE_NAME}`;
+
+export const ROUTE_META: Record<string, PageMeta> = {
+  '': s(
+    SITE_NAME,
+    '相場ボード、通貨強弱、経済指標、EAチェック、損益カレンダーなどFXトレードを支援するツール集です。',
+  ),
+  home: s(
+    SITE_NAME,
+    '相場ボード、通貨強弱、経済指標、EAチェック、損益カレンダーなどFXトレードを支援するツール集です。',
+  ),
+  login: s(
+    t('ログイン'),
+    `Discordアカウントでログインして${SITE_NAME}のプレミアム機能を利用できます。`,
+  ),
+  board: s(
+    t('相場ボード'),
+    '週末参考価格・価格チャート・注意事項をまとめた相場ボード。土日の窓開けチェックにも使えます。',
+  ),
+  market: s(
+    t('相場ツール'),
+    '通貨強弱チャート、経済指標カレンダー、窓開け監視など相場分析ツールの一覧です。',
+  ),
+  games: s(
+    t('ゲーム'),
+    'ギャップ予想やトレーダータイプ16診断など、コミュニティで楽しめるゲーム一覧です。',
+  ),
+  'ea-copytrade': s(
+    t('EA・コピトレ'),
+    'EAチェックリスト、戦略ページ、コピトレ案内、半裁量サインのガイド一覧です。',
+  ),
+  premium: s(
+    t('プレミアム'),
+    'マイページ、今日のミッション、損益カレンダーなどプレミアム会員向け機能の一覧です。',
+  ),
+  'tools/currency-strength': s(
+    t('通貨強弱チャート'),
+    '主要8通貨の相対的な強弱をリアルタイムで可視化。どの通貨ペアが動きやすいかを一目で把握できます。',
+  ),
+  'tools/economic-calendar': s(
+    t('経済指標カレンダー'),
+    '今週の重要経済指標スケジュールと注目ポイントをまとめています。EA停止タイミングの確認にも。',
+  ),
+  'tools/gap-watch': s(
+    t('窓開け監視'),
+    '日曜の市場オープン時の窓開きをリアルタイムで監視。主要通貨ペアのギャップをまとめて確認できます。',
+  ),
+  'tools/ea-checklist': s(
+    t('EAチェックリスト'),
+    'EA稼働前の確認事項・ロット設定・停止条件をまとめたチェックリスト。安全な運用をサポートします。',
+  ),
+  'tools/strategy': s(
+    t('戦略ページ'),
+    'プレミアム、Discord、半裁量EAの活用方針とトレード戦略の考え方を確認できます。',
+  ),
+  'tools/copytrade': s(
+    t('コピートレード案内'),
+    'コピートレードの仕組みと参加手順を解説。初心者でも取り組みやすい仕組みを紹介します。',
+  ),
+  'tools/community': s(
+    t('コミュニティ'),
+    'Discordコミュニティの活用方法とチャンネル案内。日々の目線や相場解説をリアルタイムで確認できます。',
+  ),
+  'tools/participation': s(
+    t('プレミアム参加案内'),
+    'note加入、Discord申請、権限付与の流れをステップで確認。参加後にできることも紹介します。',
+  ),
+  'tools/semi-auto-sign': s(
+    t('半裁量サイン'),
+    'XAUUSD専用のDiscord通知サイン。サイン種別・通知チャンネル・利用開始手順を確認します。',
+  ),
+  'tools/trade-journal': s(
+    t('損益カレンダー'),
+    'Discordログインで使える日次損益カレンダー。月別・週別の損益を記録・管理し、統計やCSVエクスポートも可能です。',
+  ),
+  'tools/trader-quiz': s(
+    t('トレーダータイプ16診断'),
+    '12問に答えて4軸であなたのトレードスタイルを分析。16タイプから診断結果を表示します。',
+  ),
+  'tools/member-dashboard': s(
+    t('マイページ'),
+    'Discordログイン状態・今日のミッション・プレミアム機能をまとめて確認できるダッシュボードです。',
+  ),
+  'tools/daily-mission': s(
+    t('今日の相場ミッション'),
+    '相場ボード・通貨強弱・経済指標・窓開け監視・振り返りを毎日の確認ルーティンとして管理します。',
+  ),
+  'tools/gap-prediction': s(
+    t('ギャップ予想'),
+    '日曜のギャップ方向を予想してコミュニティで競うイベント。過去の的中率も確認できます。',
+  ),
+};
+
+export const DEFAULT_META: PageMeta = ROUTE_META[''];

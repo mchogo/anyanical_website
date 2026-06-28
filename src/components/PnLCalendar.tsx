@@ -1470,7 +1470,7 @@ const ShareModal = ({
             <p className="mb-3 text-sm font-bold text-white">シェア用画像</p>
             <img src={sharePhase.imageUrl} alt="PnL Card" className="w-full rounded-lg" />
             <p className="mt-2 text-xs text-slate-500">
-              画像をダウンロードして、Xの投稿に添付してください
+              ① 画像を保存　② Xを開いて投稿に添付してください
             </p>
             <div className="mt-3 flex gap-2">
               <button
@@ -1482,18 +1482,18 @@ const ShareModal = ({
                 }}
                 className="inline-flex min-h-10 flex-1 items-center justify-center rounded-full bg-white/[0.06] px-4 text-sm font-bold text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"
               >
-                ↓ 保存
+                ① 画像を保存
               </button>
               <button
-                onClick={() =>
+                onClick={() => {
                   window.open(
                     `https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`,
                     '_blank',
-                  )
-                }
+                  );
+                }}
                 className="inline-flex min-h-10 flex-1 items-center justify-center rounded-full bg-slate-800 px-4 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-slate-700"
               >
-                𝕏 シェア
+                ② 𝕏 を開く
               </button>
             </div>
             <button
@@ -1678,7 +1678,10 @@ export const PnLCalendarTool = () => {
       const safeName = (selectedAccount?.name ?? 'account').replace(/[^\w぀-ヿ一-鿿]/g, '_');
       const filename = `pnl_${safeName}_${periodLabel.replace(/[年月 \/〜]/g, '')}.png`;
       const file = new File([blob], filename, { type: 'image/png' });
-      if (navigator.canShare?.({ files: [file] })) {
+      // Web Share API with files: only on touch-primary devices (iOS/Android)
+      // Desktop browsers (Mac Safari etc.) show AirDrop/Share Sheet which is confusing
+      const isTouchPrimary = navigator.maxTouchPoints > 1;
+      if (isTouchPrimary && navigator.canShare?.({ files: [file] })) {
         try {
           await navigator.share({ text: tweetText, files: [file] });
           setShareModal(null);
