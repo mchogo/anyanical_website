@@ -229,7 +229,7 @@ const scoreEntry = (query: string, entry: AnswerEntry) => {
     `${entry.title} ${entry.answer} ${entry.keywords.join(' ')}`,
   );
   const terms = normalize(query)
-    .split(/[\s\u3000]+/)
+    .split(/[\s　]+/)
     .filter(Boolean);
 
   return terms.reduce((score, term) => score + (haystack.includes(term) ? 1 : 0), 0);
@@ -268,6 +268,13 @@ export const AnyaAiAssistant = () => {
     };
   }, [isThinking]);
 
+  const close = () => {
+    setIsOpen(false);
+    setSelectedEntry(null);
+    setQuery('');
+    setIsThinking(false);
+  };
+
   const askEntry = (entry: AnswerEntry) => {
     setSelectedEntry(entry);
     setIsThinking(true);
@@ -279,134 +286,147 @@ export const AnyaAiAssistant = () => {
   };
 
   return (
-    <aside className="fixed bottom-4 right-4 z-40 w-[min(calc(100vw-2rem),26rem)]">
-      {isOpen ? (
-        <div className="overflow-hidden rounded-lg border border-amber-300/20 bg-slate-950/95 shadow-[0_20px_70px_rgba(0,0,0,0.45)] backdrop-blur">
-          <div className="flex items-start justify-between gap-3 border-b border-white/10 bg-amber-300/10 p-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200">
-                Anya AI
-              </p>
-              <h2 className="mt-1 text-lg font-black text-white">あにゃAIに聞く</h2>
-              <p className="mt-1 text-xs leading-5 text-slate-400">
-                回答は参考情報です。最新状況や個別の判断はDiscordで確認してください。
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/[0.06] text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-white"
-              aria-label="あにゃAIを閉じる"
-            >
-              ×
-            </button>
-          </div>
-
-          <div className="p-4">
-            {selectedEntry ? (
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={resetAnswer}
-                  className="text-xs font-bold text-slate-400 transition hover:text-white"
-                >
-                  ← 質問を選び直す
-                </button>
-
-                {isThinking ? (
-                  <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
-                    <div className="flex items-center gap-3">
-                      <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-amber-300" />
-                      <p className="text-sm font-bold text-white">回答を整理中...</p>
-                    </div>
-                    <div className="mt-4 space-y-2">
-                      <div className="h-3 w-11/12 animate-pulse rounded-full bg-white/10" />
-                      <div className="h-3 w-9/12 animate-pulse rounded-full bg-white/10" />
-                      <div className="h-3 w-7/12 animate-pulse rounded-full bg-white/10" />
-                    </div>
-                  </div>
-                ) : (
-                  <article className="rounded-lg border border-amber-300/20 bg-white/[0.035] p-4">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200">
-                      Answer
-                    </p>
-                    <h3 className="mt-2 font-bold text-white">{selectedEntry.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-400">
-                      {selectedEntry.answer}
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <a
-                        href={selectedEntry.href}
-                        onClick={() => setIsOpen(false)}
-                        className="inline-flex min-h-9 items-center justify-center rounded-lg bg-amber-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-200"
-                      >
-                        {selectedEntry.cta}
-                      </a>
-                      <a
-                        href={DISCORD_INVITE_URL}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                        className="inline-flex min-h-9 items-center justify-center rounded-lg bg-white px-4 text-sm font-bold text-slate-950 transition hover:bg-slate-200"
-                      >
-                        Discordで聞く
-                      </a>
-                    </div>
-                  </article>
-                )}
+    <>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-[39]"
+          onClick={close}
+          aria-hidden="true"
+        />
+      )}
+      <aside className="fixed bottom-4 right-4 z-40 w-[min(calc(100vw-2rem),22rem)]">
+        {isOpen ? (
+          <div className="flex max-h-[min(560px,calc(100dvh-5rem))] flex-col overflow-hidden rounded-xl border border-amber-300/20 bg-slate-950/95 shadow-[0_20px_70px_rgba(0,0,0,0.55)] backdrop-blur animate-slide-up">
+            {/* Header */}
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-amber-300/10 px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200">
+                  Anya AI
+                </p>
+                <h2 className="text-sm font-black text-white">あにゃAIに聞く</h2>
               </div>
-            ) : (
-              <>
-                <input
-                  type="search"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="項目を絞り込み"
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-100 placeholder-slate-600 outline-none ring-1 ring-white/10 transition focus:border-amber-300/30 focus:ring-amber-300/20"
-                />
+              <button
+                type="button"
+                onClick={close}
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/[0.06] text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10 hover:text-white"
+                aria-label="あにゃAIを閉じる"
+              >
+                ×
+              </button>
+            </div>
 
-                <div className="mt-4 max-h-[55vh] space-y-2 overflow-y-auto pr-1">
-                  {shownEntries.length > 0 ? (
-                    shownEntries.map((entry) => (
-                      <button
-                        key={entry.title}
-                        type="button"
-                        onClick={() => askEntry(entry)}
-                        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.035] px-4 py-3 text-left text-sm font-bold text-white transition hover:border-amber-300/30 hover:bg-amber-300/10"
-                      >
-                        <span>{entry.shortLabel}</span>
-                        <span className="text-amber-200">→</span>
-                      </button>
-                    ))
-                  ) : (
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {selectedEntry ? (
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={resetAnswer}
+                    className="text-xs font-bold text-slate-400 transition hover:text-white"
+                  >
+                    ← 質問を選び直す
+                  </button>
+
+                  {isThinking ? (
                     <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
-                      <h3 className="font-bold text-white">見つかりませんでした</h3>
-                      <p className="mt-2 text-sm leading-6 text-slate-400">
-                        サイト内の想定質問にはまだありません。DiscordでDMまたは質問スペースから聞いてください。
-                      </p>
-                      <a
-                        href={DISCORD_INVITE_URL}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                        className="mt-3 inline-flex min-h-9 items-center justify-center rounded-lg bg-white px-4 text-sm font-bold text-slate-950 transition hover:bg-slate-200"
-                      >
-                        Discordで聞く
-                      </a>
+                      <div className="flex items-center gap-3">
+                        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-amber-300" />
+                        <p className="text-sm font-bold text-white">回答を整理中...</p>
+                      </div>
+                      <div className="mt-4 space-y-2">
+                        <div className="h-3 w-11/12 animate-pulse rounded-full bg-white/10" />
+                        <div className="h-3 w-9/12 animate-pulse rounded-full bg-white/10" />
+                        <div className="h-3 w-7/12 animate-pulse rounded-full bg-white/10" />
+                      </div>
                     </div>
+                  ) : (
+                    <article className="rounded-lg border border-amber-300/20 bg-white/[0.035] p-4">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200">
+                        Answer
+                      </p>
+                      <h3 className="mt-2 text-sm font-bold text-white">{selectedEntry.title}</h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-400">
+                        {selectedEntry.answer}
+                      </p>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <a
+                          href={selectedEntry.href}
+                          onClick={close}
+                          className="inline-flex min-h-9 items-center justify-center rounded-lg bg-amber-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-200"
+                        >
+                          {selectedEntry.cta}
+                        </a>
+                        <a
+                          href={DISCORD_INVITE_URL}
+                          rel="noopener noreferrer"
+                          target="_blank"
+                          className="inline-flex min-h-9 items-center justify-center rounded-lg bg-white px-4 text-sm font-bold text-slate-950 transition hover:bg-slate-200"
+                        >
+                          Discordで聞く
+                        </a>
+                      </div>
+                    </article>
                   )}
                 </div>
-              </>
-            )}
+              ) : (
+                <>
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="項目を絞り込み"
+                    className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 outline-none ring-1 ring-white/10 transition focus:border-amber-300/30 focus:ring-amber-300/20"
+                  />
+
+                  <div className="mt-3 space-y-1.5">
+                    {shownEntries.length > 0 ? (
+                      shownEntries.map((entry) => (
+                        <button
+                          key={entry.title}
+                          type="button"
+                          onClick={() => askEntry(entry)}
+                          className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.035] px-4 py-2.5 text-left text-sm font-bold text-white transition hover:border-amber-300/30 hover:bg-amber-300/10"
+                        >
+                          <span>{entry.shortLabel}</span>
+                          <span className="shrink-0 text-amber-200">→</span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
+                        <h3 className="text-sm font-bold text-white">見つかりませんでした</h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-400">
+                          DiscordでDMまたは質問スペースから聞いてください。
+                        </p>
+                        <a
+                          href={DISCORD_INVITE_URL}
+                          rel="noopener noreferrer"
+                          target="_blank"
+                          className="mt-3 inline-flex min-h-9 items-center justify-center rounded-lg bg-white px-4 text-sm font-bold text-slate-950 transition hover:bg-slate-200"
+                        >
+                          Discordで聞く
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Footer */}
+            <p className="shrink-0 border-t border-white/10 px-4 py-2 text-[10px] leading-tight text-slate-600">
+              回答は参考情報です。最新状況はDiscordで確認を。
+            </p>
           </div>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          className="ml-auto flex min-h-12 items-center justify-center rounded-full bg-amber-300 px-5 text-sm font-black text-slate-950 shadow-[0_12px_40px_rgba(251,191,36,0.22)] transition hover:bg-amber-200"
-        >
-          あにゃAIに聞く
-        </button>
-      )}
-    </aside>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className="ml-auto flex min-h-11 items-center justify-center rounded-full bg-amber-300 px-5 text-sm font-black text-slate-950 shadow-[0_12px_40px_rgba(251,191,36,0.22)] transition hover:bg-amber-200"
+          >
+            あにゃAIに聞く
+          </button>
+        )}
+      </aside>
+    </>
   );
 };
