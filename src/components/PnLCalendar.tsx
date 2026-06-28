@@ -183,7 +183,7 @@ const detectCurrency = (text: string): string | undefined => {
   return code && KNOWN_CURRENCIES.includes(code) ? code : undefined;
 };
 
-type ParseResult = { dailyPnls: Map<string, number>; currency?: string };
+type ParseResult = { dailyPnls: Map<string, number>; currency?: string; dailyNotes?: Map<string, string> };
 
 const aggregateRows = (allRows: string[][]): Map<string, number> => {
   const byDate = new Map<string, number>();
@@ -252,13 +252,13 @@ const parseMt4Html = (html: string): ParseResult => {
 };
 
 
-const parseTradeCsv = (text: string): Map<string, number> => {
+const parseTradeCsv = (text: string): ParseResult => {
   const lines = text
     .replace(/^\uFEFF/, '')
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
-  if (lines.length < 2) return new Map();
+  if (lines.length < 2) return { dailyPnls: new Map() };
 
   const delimiter = detectDelimiter(lines[0]);
   const headers = parseCsvLine(lines[0], delimiter);
@@ -270,14 +270,17 @@ const parseTradeCsv = (text: string): Map<string, number> => {
     '決済日時',
     '約定日時',
     '日時',
+    '日付',
   ]);
   const profitIndex = findColumn(headers, ['profit', '損益']);
   const swapIndex = findColumn(headers, ['swap', 'スワップ']);
   const commissionIndex = findColumn(headers, ['commission', '手数料']);
+  const notesIndex = findColumn(headers, ['memo', 'notes', 'note', 'メモ', '備考', 'コメント']);
 
-  if (closeTimeIndex === -1 || profitIndex === -1) return new Map();
+  if (closeTimeIndex === -1 || profitIndex === -1) return { dailyPnls: new Map() };
 
   const byDate = new Map<string, number>();
+  const byDateNotes = new Map<string, string>();
   for (const line of lines.slice(1)) {
     const cells = parseCsvLine(line, delimiter);
     const date = parseTradeDate(cells[closeTimeIndex]);
@@ -286,8 +289,12 @@ const parseTradeCsv = (text: string): Map<string, number> => {
     const swap = parseNumber(cells[swapIndex]) ?? 0;
     const commission = parseNumber(cells[commissionIndex]) ?? 0;
     byDate.set(date, (byDate.get(date) ?? 0) + profit + swap + commission);
+    if (notesIndex !== -1) {
+      const note = cells[notesIndex]?.trim();
+      if (note) byDateNotes.set(date, note);
+    }
   }
-  return byDate;
+  return { dailyPnls: byDate, dailyNotes: notesIndex !== -1 ? byDateNotes : undefined };
 };
 
 // ── Gate components ───────────────────────────────────────────────────────────
@@ -595,7 +602,7 @@ const CsvImportPanel = ({
 }: {
   disabled: boolean;
   existingDates: Set<string>;
-  onImport: (dailyPnls: Map<string, number>) => void;
+  onImport: (dailyPnls: Map<string, number>, dailyNotes?: Map<string, string>) => void;
   onUpdateUnit?: (currency: string) => void;
 }) => {
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
@@ -606,7 +613,7 @@ const CsvImportPanel = ({
     const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
     const isHtml = ext === 'htm' || ext === 'html';
 
-    const finish = ({ dailyPnls, currency }: ParseResult) => {
+    const finish = ({ dailyPnls, currency, dailyNotes }: ParseResult) => {
       if (dailyPnls.size === 0) {
         setMessage({ text: '取り込み対象が見つかりませんでした。', ok: false });
         return;
@@ -618,7 +625,7 @@ const CsvImportPanel = ({
         );
         if (!proceed) return;
       }
-      onImport(dailyPnls);
+      onImport(dailyPnls, dailyNotes);
       if (currency) onUpdateUnit?.(currency);
       const suffix = currency ? `（${currency}口座として認識）` : '';
       setMessage({ text: `${dailyPnls.size}日分の損益を取り込みました${suffix}。`, ok: true });
@@ -632,7 +639,7 @@ const CsvImportPanel = ({
       reader.onload = () => finish(parseMt4Html(decodeHtmlBuffer(reader.result as ArrayBuffer)));
       reader.readAsArrayBuffer(file);
     } else {
-      reader.onload = () => finish({ dailyPnls: parseTradeCsv(String(reader.result ?? '')) });
+      reader.onload = () => finish(parseTradeCsv(String(reader.result ?? '')));
       reader.readAsText(file);
     }
   };
@@ -1826,10 +1833,11 @@ export const PnLCalendarTool = () => {
         disabled={isAllAccounts || !effectiveAccountId}
         existingDates={existingDates}
         onUpdateUnit={(currency) => updateAccount(effectiveAccountId, { unit: currency })}
-        onImport={(dailyPnls) => {
+        onImport={(dailyPnls, dailyNotes) => {
           const firstDate = Array.from(dailyPnls.keys()).sort()[0];
           dailyPnls.forEach((pnl, date) => {
-            setRecord(effectiveAccountId, date, pnl, 'MT4/MT5 取り込み');
+            const note = dailyNotes ? (dailyNotes.get(date) || undefined) : 'MT4/MT5 取り込み';
+            setRecord(effectiveAccountId, date, pnl, note);
           });
           if (firstDate) {
             const [nextYear, nextMonth] = firstDate.split('-').map(Number);
