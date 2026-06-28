@@ -974,12 +974,14 @@ const WeekGrid = ({
   weekStart,
   records,
   unit,
+  layout,
   onSave,
   onDelete,
 }: {
   weekStart: Date;
   records: DailyRecord[];
   unit: string;
+  layout: 'list' | 'grid';
   onSave: (date: string, pnl: number, notes?: string) => void;
   onDelete: (date: string) => void;
 }) => {
@@ -996,73 +998,117 @@ const WeekGrid = ({
   const openRecord = openDate ? recordMap.get(openDate) : undefined;
   const startMonth = weekStart.getMonth();
 
+  const cellBase = (ymd: string, isOtherMonth: boolean, isOpen: boolean, isToday: boolean) =>
+    `w-full rounded-lg border text-left transition ${
+      isToday
+        ? 'border-cyan-300/40'
+        : isOpen
+          ? 'border-white/30'
+          : isOtherMonth
+            ? 'border-white/[0.05] opacity-40'
+            : 'border-white/10 hover:border-white/20'
+    }`;
+
   return (
     <div>
-      <div className="mb-2 grid grid-cols-7 gap-1">
-        {WEEKDAYS.map((d) => (
-          <div key={d} className="text-center text-xs font-semibold text-slate-500">
-            {d}
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7 gap-1.5">
-        {days.map((date) => {
-          const ymd = toYMD(date);
-          const record = recordMap.get(ymd);
-          const isToday = ymd === today;
-          const isOpen = openDate === ymd;
-          const isOtherMonth = date.getMonth() !== startMonth;
-          const bg = record ? cellBg(record.pnl, maxAbs) : undefined;
+      {layout === 'grid' && (
+        <div className="mb-2 grid grid-cols-7 gap-1">
+          {WEEKDAYS.map((d) => (
+            <div key={d} className="text-center text-xs font-semibold text-slate-500">
+              {d}
+            </div>
+          ))}
+        </div>
+      )}
 
-          return (
-            <button
-              key={ymd}
-              type="button"
-              onClick={() => setOpenDate(isOpen ? null : ymd)}
-              className={`min-h-20 w-full rounded-lg border p-2 text-left transition ${
-                isToday
-                  ? 'border-cyan-300/40'
-                  : isOpen
-                    ? 'border-white/30'
-                    : isOtherMonth
-                      ? 'border-white/[0.05] opacity-40'
-                      : 'border-white/10 hover:border-white/20'
-              }`}
-              style={bg ? { backgroundColor: bg } : undefined}
-            >
-              {isOtherMonth && (
-                <span className="block text-[10px] text-slate-600">{date.getMonth() + 1}月</span>
-              )}
-              <span
-                className={`block text-sm font-bold ${
-                  isToday ? 'text-cyan-200' : isOtherMonth ? 'text-slate-600' : 'text-slate-300'
-                }`}
+      {layout === 'grid' ? (
+        <div className="grid grid-cols-7 gap-1.5">
+          {days.map((date) => {
+            const ymd = toYMD(date);
+            const record = recordMap.get(ymd);
+            const isToday = ymd === today;
+            const isOpen = openDate === ymd;
+            const isOtherMonth = date.getMonth() !== startMonth;
+            const bg = record ? cellBg(record.pnl, maxAbs) : undefined;
+
+            return (
+              <button
+                key={ymd}
+                type="button"
+                onClick={() => setOpenDate(isOpen ? null : ymd)}
+                className={`min-h-20 p-2 ${cellBase(ymd, isOtherMonth, isOpen, isToday)}`}
+                style={bg ? { backgroundColor: bg } : undefined}
               >
-                {date.getDate()}
-              </span>
-              {record ? (
-                <>
-                  <span
-                    className={`mt-1 block text-xs font-bold leading-tight ${
-                      record.pnl > 0 ? 'text-emerald-200' : 'text-rose-200'
-                    }`}
-                  >
-                    {record.pnl > 0 ? '+' : ''}
-                    {record.pnl.toLocaleString('ja-JP')}
-                  </span>
-                  {record.notes && (
-                    <span className="mt-0.5 block truncate text-[10px] leading-tight text-slate-500">
-                      {record.notes}
+                {isOtherMonth && (
+                  <span className="block text-[10px] text-slate-600">{date.getMonth() + 1}月</span>
+                )}
+                <span className={`block text-sm font-bold ${isToday ? 'text-cyan-200' : isOtherMonth ? 'text-slate-600' : 'text-slate-300'}`}>
+                  {date.getDate()}
+                </span>
+                {record ? (
+                  <>
+                    <span className={`mt-1 block text-xs font-bold leading-tight ${record.pnl > 0 ? 'text-emerald-200' : 'text-rose-200'}`}>
+                      {record.pnl > 0 ? '+' : ''}{record.pnl.toLocaleString('ja-JP')}
                     </span>
+                    {record.notes && (
+                      <span className="mt-0.5 block truncate text-[10px] leading-tight text-slate-500">
+                        {record.notes}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span className="mt-1 block text-[10px] text-slate-700">―</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {days.map((date) => {
+            const ymd = toYMD(date);
+            const record = recordMap.get(ymd);
+            const isToday = ymd === today;
+            const isOpen = openDate === ymd;
+            const isOtherMonth = date.getMonth() !== startMonth;
+            const bg = record ? cellBg(record.pnl, maxAbs) : undefined;
+
+            return (
+              <button
+                key={ymd}
+                type="button"
+                onClick={() => setOpenDate(isOpen ? null : ymd)}
+                className={`flex items-center gap-3 px-3 py-2.5 ${cellBase(ymd, isOtherMonth, isOpen, isToday)}`}
+                style={bg ? { backgroundColor: bg } : undefined}
+              >
+                <div className="w-9 shrink-0 text-center">
+                  <span className={`block text-[11px] font-semibold ${isToday ? 'text-cyan-300' : 'text-slate-500'}`}>
+                    {WEEKDAYS[date.getDay()]}
+                  </span>
+                  <span className={`block text-xl font-bold leading-tight ${isToday ? 'text-cyan-200' : isOtherMonth ? 'text-slate-600' : 'text-slate-200'}`}>
+                    {date.getDate()}
+                  </span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  {record ? (
+                    <>
+                      <p className={`text-sm font-bold ${record.pnl > 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                        {record.pnl > 0 ? '+' : ''}{record.pnl.toLocaleString('ja-JP')}{unit}
+                      </p>
+                      {record.notes && (
+                        <p className="mt-0.5 truncate text-xs text-slate-500">{record.notes}</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-700">―</p>
                   )}
-                </>
-              ) : (
-                <span className="mt-1 block text-[10px] text-slate-700">―</span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
 
       {openDate && (
         <DayCellModal onClose={() => setOpenDate(null)}>
@@ -1148,6 +1194,7 @@ export const PnLCalendarTool = () => {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showPremiumUpsell, setShowPremiumUpsell] = useState(false);
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
+  const [weekLayout, setWeekLayout] = useState<'list' | 'grid'>('list');
   const [weekStart, setWeekStart] = useState<Date>(() => {
     const d = new Date();
     d.setDate(d.getDate() - d.getDay());
@@ -1402,27 +1449,53 @@ export const PnLCalendarTool = () => {
             <p className="text-sm font-bold text-white">
               {viewMode === 'week' ? weekLabel : `${year}年${month + 1}月`}
             </p>
-            <div className="flex rounded-full bg-white/[0.04] p-0.5 ring-1 ring-white/10">
-              <button
-                onClick={switchToMonth}
-                className={`rounded-full px-3 py-0.5 text-xs font-bold transition ${
-                  viewMode === 'month'
-                    ? 'bg-cyan-300 text-slate-950'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                月
-              </button>
-              <button
-                onClick={switchToWeek}
-                className={`rounded-full px-3 py-0.5 text-xs font-bold transition ${
-                  viewMode === 'week'
-                    ? 'bg-cyan-300 text-slate-950'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                週
-              </button>
+            <div className="flex items-center gap-1.5">
+              <div className="flex rounded-full bg-white/[0.04] p-0.5 ring-1 ring-white/10">
+                <button
+                  onClick={switchToMonth}
+                  className={`rounded-full px-3 py-0.5 text-xs font-bold transition ${
+                    viewMode === 'month'
+                      ? 'bg-cyan-300 text-slate-950'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  月
+                </button>
+                <button
+                  onClick={switchToWeek}
+                  className={`rounded-full px-3 py-0.5 text-xs font-bold transition ${
+                    viewMode === 'week'
+                      ? 'bg-cyan-300 text-slate-950'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  週
+                </button>
+              </div>
+              {viewMode === 'week' && (
+                <div className="flex rounded-full bg-white/[0.04] p-0.5 ring-1 ring-white/10">
+                  <button
+                    onClick={() => setWeekLayout('list')}
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-bold transition ${
+                      weekLayout === 'list'
+                        ? 'bg-cyan-300 text-slate-950'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    縦
+                  </button>
+                  <button
+                    onClick={() => setWeekLayout('grid')}
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-bold transition ${
+                      weekLayout === 'grid'
+                        ? 'bg-cyan-300 text-slate-950'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    横
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
@@ -1471,12 +1544,13 @@ export const PnLCalendarTool = () => {
 
         {viewMode === 'week' ? (
           isAllAccounts ? (
-            <WeekGrid weekStart={weekStart} records={weekRecords} unit="" onSave={() => {}} onDelete={() => {}} />
+            <WeekGrid weekStart={weekStart} records={weekRecords} unit="" layout={weekLayout} onSave={() => {}} onDelete={() => {}} />
           ) : (
             <WeekGrid
               weekStart={weekStart}
               records={weekRecords}
               unit={unit}
+              layout={weekLayout}
               onSave={(date, pnl, notes) => setRecord(effectiveAccountId, date, pnl, notes)}
               onDelete={(date) => deleteRecord(effectiveAccountId, date)}
             />
