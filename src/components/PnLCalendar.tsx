@@ -1472,41 +1472,38 @@ const ShareModal = ({
           <>
             <p className="mb-3 text-sm font-bold text-white">シェア用画像</p>
             <img src={sharePhase.imageUrl} alt="PnL Card" className="w-full rounded-lg" />
-            <p className="mt-2 text-xs text-slate-500">
-              画像を保存してXに添付してシェアできます
-            </p>
-            <div className="mt-3 flex flex-col gap-2">
-              <a
-                href={xHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => {
-                  const link = document.createElement('a');
-                  link.href = sharePhase.imageUrl;
-                  link.download = sharePhase.filename;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
-                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-slate-700 px-4 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-slate-600"
-              >
-                📸 保存して 𝕏 でシェア
-              </a>
-              <button
-                onClick={() => {
-                  const a = document.createElement('a');
-                  a.href = sharePhase.imageUrl;
-                  a.download = sharePhase.filename;
-                  a.click();
-                }}
-                className="inline-flex min-h-9 w-full items-center justify-center rounded-full bg-white/[0.04] px-4 text-xs text-slate-400 ring-1 ring-white/10 transition hover:bg-white/[0.08]"
-              >
-                ↓ 保存のみ
-              </button>
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center gap-3">
+                <span className="w-5 shrink-0 text-center text-xs font-bold text-slate-500">①</span>
+                <button
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = sharePhase.imageUrl;
+                    link.download = sharePhase.filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                  className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full bg-slate-700 px-4 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-slate-600"
+                >
+                  ↓ 画像を保存
+                </button>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="w-5 shrink-0 text-center text-xs font-bold text-slate-500">②</span>
+                <a
+                  href={xHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full bg-slate-700 px-4 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-slate-600"
+                >
+                  𝕏 でシェア
+                </a>
+              </div>
             </div>
             <button
               onClick={onClose}
-              className="mt-2 w-full rounded-full py-2 text-xs text-slate-600 transition hover:text-slate-400"
+              className="mt-3 w-full rounded-full py-2 text-xs text-slate-600 transition hover:text-slate-400"
             >
               閉じる
             </button>
