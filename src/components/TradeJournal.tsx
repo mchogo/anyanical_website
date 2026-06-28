@@ -129,26 +129,14 @@ const parseMt4Xlsx = (buffer: ArrayBuffer): ImportedTrade[] => {
 
 const exportCsv = (trades: Trade[]): void => {
   const headers = [
-    '銘柄',
-    '方向',
-    '損益方式',
-    'エントリー価格',
-    'エントリー日時',
-    'ロット',
-    'SL',
-    'TP',
-    '決済価格',
-    '決済日時',
-    '損益',
-    'メモ',
+    '銘柄', '方向', '損益方式', 'エントリー価格', 'エントリー日時',
+    'ロット', 'SL', 'TP', '決済価格', '決済日時', '損益', 'メモ',
   ];
   const rows = trades.map((t) => {
     const pnl = calculatePnL(t);
     const pnlStr =
       pnl !== null
-        ? t.pnlMode === 'percent'
-          ? `${pnl.toFixed(4)}%`
-          : `${pnl.toFixed(4)}pips`
+        ? t.pnlMode === 'percent' ? `${pnl.toFixed(4)}%` : `${pnl.toFixed(4)}pips`
         : '';
     return [
       t.symbol,
@@ -179,7 +167,7 @@ const exportCsv = (trades: Trade[]): void => {
 };
 
 const LoginGate = ({ onSignIn }: { onSignIn: () => void }) => (
-  <div className="rounded-lg border border-white/10 bg-white/[0.035] p-8 text-center">
+  <div className="rounded-lg border border-white/10 bg-white/[0.035] p-8 text-center animate-slide-up">
     <p className="text-base font-bold text-white">Discordログインが必要です</p>
     <p className="mt-2 text-sm leading-6 text-slate-400">
       トレード日誌はDiscordログイン後にご利用いただけます。
@@ -194,7 +182,7 @@ const LoginGate = ({ onSignIn }: { onSignIn: () => void }) => (
 );
 
 const UpgradeGate = () => (
-  <div className="rounded-lg border border-amber-300/30 bg-amber-300/10 p-8 text-center">
+  <div className="rounded-lg border border-amber-300/30 bg-amber-300/10 p-8 text-center animate-slide-up">
     <p className="text-base font-bold text-amber-100">プレミアム限定機能</p>
     <p className="mt-2 text-sm leading-6 text-amber-100/80">
       トレード日誌はプレミアム会員専用のツールです。noteメンバーシップに加入してロール付与を受けることでご利用いただけます。
@@ -205,13 +193,6 @@ const UpgradeGate = () => (
     >
       プレミアムを確認する
     </a>
-  </div>
-);
-
-const StatCard = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
-    <p className="text-xs text-slate-500">{label}</p>
-    <p className="mt-1 text-2xl font-bold text-white">{value}</p>
   </div>
 );
 
@@ -229,24 +210,36 @@ const StatsBar = ({ stats }: { stats: TradeStats }) => {
   const hasPnL = stats.totalPnLPercent !== null || stats.totalPnLPips !== null;
   const pnlIsPositive =
     hasPnL && (stats.totalPnLPercent ?? 0) + (stats.totalPnLPips ?? 0) >= 0;
+  const winRateColor =
+    stats.winRate === null
+      ? 'text-slate-500'
+      : stats.winRate >= 50
+        ? 'text-emerald-300'
+        : 'text-rose-300';
 
   return (
     <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <StatCard label="総取引数" value={String(stats.total)} />
-      <StatCard label="オープン中" value={String(stats.open)} />
-      <StatCard
-        label="勝率"
-        value={stats.winRate !== null ? `${stats.winRate.toFixed(0)}%` : '-'}
-      />
+      <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
+        <p className="text-xs text-slate-500">総取引数</p>
+        <p className="mt-1 text-2xl font-bold text-white">{stats.total}</p>
+      </div>
+      <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
+        <p className="text-xs text-slate-500">オープン中</p>
+        <p className={`mt-1 text-2xl font-bold ${stats.open > 0 ? 'text-amber-300' : 'text-white'}`}>
+          {stats.open}
+        </p>
+      </div>
+      <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
+        <p className="text-xs text-slate-500">勝率</p>
+        <p className={`mt-1 text-2xl font-bold ${winRateColor}`}>
+          {stats.winRate !== null ? `${stats.winRate.toFixed(0)}%` : '-'}
+        </p>
+      </div>
       <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
         <p className="text-xs text-slate-500">合計損益</p>
         <p
-          className={`mt-1 text-lg font-bold ${
-            !hasPnL
-              ? 'text-slate-500'
-              : pnlIsPositive
-                ? 'text-emerald-300'
-                : 'text-rose-300'
+          className={`mt-1 text-lg font-bold leading-tight ${
+            !hasPnL ? 'text-slate-500' : pnlIsPositive ? 'text-emerald-300' : 'text-rose-300'
           }`}
         >
           {pnlDisplay}
@@ -295,24 +288,15 @@ const NewTradeForm = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.symbol.trim()) {
-      setError('銘柄を入力してください');
-      return;
-    }
+    if (!form.symbol.trim()) { setError('銘柄を入力してください'); return; }
     const entryPrice = parseFloat(form.entryPrice);
     if (!Number.isFinite(entryPrice) || entryPrice <= 0) {
       setError('正しいエントリー価格を入力してください');
       return;
     }
-    if (!form.entryAt) {
-      setError('エントリー日時を入力してください');
-      return;
-    }
+    if (!form.entryAt) { setError('エントリー日時を入力してください'); return; }
     const lotSize = form.lotSize ? parseFloat(form.lotSize) : undefined;
-    if (
-      form.pnlMode === 'pips' &&
-      (!lotSize || !Number.isFinite(lotSize) || lotSize <= 0)
-    ) {
+    if (form.pnlMode === 'pips' && (!lotSize || !Number.isFinite(lotSize) || lotSize <= 0)) {
       setError('pipsモードではロット数が必要です');
       return;
     }
@@ -333,7 +317,7 @@ const NewTradeForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="mb-6 rounded-lg border border-cyan-300/20 bg-cyan-300/5 p-5"
+      className="mb-6 rounded-lg border border-cyan-300/20 bg-cyan-300/5 p-4 animate-slide-up sm:p-5"
     >
       <h3 className="mb-4 text-sm font-bold text-white">新規取引を記録</h3>
 
@@ -367,7 +351,7 @@ const NewTradeForm = ({
               <button
                 type="button"
                 onClick={() => set('direction', 'long')}
-                className={`flex-1 py-2 text-sm font-bold transition ${
+                className={`flex-1 py-2.5 text-sm font-bold transition ${
                   form.direction === 'long'
                     ? 'bg-cyan-300 text-slate-950'
                     : 'bg-white/[0.04] text-slate-400 hover:text-white'
@@ -378,7 +362,7 @@ const NewTradeForm = ({
               <button
                 type="button"
                 onClick={() => set('direction', 'short')}
-                className={`flex-1 py-2 text-sm font-bold transition ${
+                className={`flex-1 py-2.5 text-sm font-bold transition ${
                   form.direction === 'short'
                     ? 'bg-rose-400 text-white'
                     : 'bg-white/[0.04] text-slate-400 hover:text-white'
@@ -394,7 +378,7 @@ const NewTradeForm = ({
               <button
                 type="button"
                 onClick={() => set('pnlMode', 'percent')}
-                className={`flex-1 py-2 text-sm font-bold transition ${
+                className={`flex-1 py-2.5 text-sm font-bold transition ${
                   form.pnlMode === 'percent'
                     ? 'bg-white/20 text-white'
                     : 'bg-white/[0.04] text-slate-400 hover:text-white'
@@ -405,7 +389,7 @@ const NewTradeForm = ({
               <button
                 type="button"
                 onClick={() => set('pnlMode', 'pips')}
-                className={`flex-1 py-2 text-sm font-bold transition ${
+                className={`flex-1 py-2.5 text-sm font-bold transition ${
                   form.pnlMode === 'pips'
                     ? 'bg-white/20 text-white'
                     : 'bg-white/[0.04] text-slate-400 hover:text-white'
@@ -423,6 +407,7 @@ const NewTradeForm = ({
             type="number"
             step="any"
             min="0"
+            inputMode="decimal"
             value={form.entryPrice}
             onChange={(e) => set('entryPrice', e.target.value)}
             placeholder="例: 2650.00"
@@ -447,6 +432,7 @@ const NewTradeForm = ({
               type="number"
               step="any"
               min="0"
+              inputMode="decimal"
               value={form.lotSize}
               onChange={(e) => set('lotSize', e.target.value)}
               placeholder="例: 0.1"
@@ -460,6 +446,7 @@ const NewTradeForm = ({
           <input
             type="number"
             step="any"
+            inputMode="decimal"
             value={form.stopLoss}
             onChange={(e) => set('stopLoss', e.target.value)}
             placeholder="損切り価格"
@@ -472,6 +459,7 @@ const NewTradeForm = ({
           <input
             type="number"
             step="any"
+            inputMode="decimal"
             value={form.takeProfit}
             onChange={(e) => set('takeProfit', e.target.value)}
             placeholder="利確価格"
@@ -494,14 +482,14 @@ const NewTradeForm = ({
       <div className="mt-4 flex gap-2">
         <button
           type="submit"
-          className="inline-flex min-h-9 items-center justify-center rounded-full bg-cyan-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-cyan-200"
+          className="flex-1 inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-cyan-200 sm:flex-none"
         >
           記録する
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="inline-flex min-h-9 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"
+          className="flex-1 inline-flex min-h-11 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10 sm:flex-none"
         >
           キャンセル
         </button>
@@ -534,39 +522,43 @@ const CloseTradeForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-3 rounded-lg border border-white/10 bg-white/[0.04] p-3"
+      className="mt-3 rounded-lg border border-white/10 bg-white/[0.04] p-3 animate-slide-up"
     >
       <p className="mb-2 text-xs font-semibold text-slate-400">決済情報を入力</p>
       {error && <p className="mb-2 text-xs text-rose-300">{error}</p>}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-2">
         <input
           type="number"
           step="any"
           min="0"
+          inputMode="decimal"
+          autoFocus
           value={exitPrice}
           onChange={(e) => setExitPrice(e.target.value)}
           placeholder="決済価格"
-          className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm text-white placeholder:text-slate-600 focus:border-cyan-300/50 focus:outline-none"
+          className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-cyan-300/50 focus:outline-none"
         />
         <input
           type="datetime-local"
           value={exitAt}
           onChange={(e) => setExitAt(e.target.value)}
-          className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm text-white focus:border-cyan-300/50 focus:outline-none"
+          className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white focus:border-cyan-300/50 focus:outline-none"
         />
-        <button
-          type="submit"
-          className="inline-flex min-h-8 items-center justify-center rounded-full bg-cyan-300 px-4 text-xs font-bold text-slate-950 transition hover:bg-cyan-200"
-        >
-          確定
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="inline-flex min-h-8 items-center justify-center rounded-full bg-white/[0.04] px-4 text-xs font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
-        >
-          キャンセル
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            className="flex-1 inline-flex min-h-10 items-center justify-center rounded-full bg-cyan-300 text-sm font-bold text-slate-950 transition hover:bg-cyan-200"
+          >
+            確定
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+          >
+            キャンセル
+          </button>
+        </div>
       </div>
     </form>
   );
@@ -598,8 +590,9 @@ const TradeCard = ({
 
   return (
     <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+      {/* Header row: symbol + badges + delete */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-sm font-bold text-white">{trade.symbol}</span>
           <span
             className={`rounded-full px-2 py-0.5 text-xs font-bold ring-1 ${
@@ -622,8 +615,46 @@ const TradeCard = ({
             </span>
           )}
         </div>
+        <button
+          onClick={handleDelete}
+          aria-label="削除"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-600 transition hover:bg-white/10 hover:text-slate-300"
+        >
+          ×
+        </button>
+      </div>
 
-        <div className="flex items-center gap-2">
+      {/* PnL + action row */}
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+          <span>
+            IN <span className="text-slate-300">{trade.entryPrice}</span>
+          </span>
+          <span>{formatDate(trade.entryAt)}</span>
+          {trade.stopLoss !== undefined && (
+            <span>
+              SL <span className="text-rose-300/80">{trade.stopLoss}</span>
+            </span>
+          )}
+          {trade.takeProfit !== undefined && (
+            <span>
+              TP <span className="text-emerald-300/80">{trade.takeProfit}</span>
+            </span>
+          )}
+          {trade.pnlMode === 'pips' && trade.lotSize !== undefined && (
+            <span>{trade.lotSize} lot</span>
+          )}
+          {trade.status === 'closed' && trade.exitPrice !== undefined && (
+            <>
+              <span>
+                OUT <span className="text-slate-300">{trade.exitPrice}</span>
+              </span>
+              {trade.exitAt && <span>{formatDate(trade.exitAt)}</span>}
+            </>
+          )}
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2">
           {pnl !== null && (
             <span
               className={`text-sm font-bold ${pnlWin ? 'text-emerald-300' : 'text-rose-300'}`}
@@ -634,47 +665,12 @@ const TradeCard = ({
           {trade.status === 'open' && onStartClose && !isClosing && (
             <button
               onClick={onStartClose}
-              className="inline-flex min-h-7 items-center justify-center rounded-full bg-white/[0.06] px-3 text-xs font-bold text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"
+              className="inline-flex min-h-8 items-center justify-center rounded-full bg-white/[0.06] px-3 text-xs font-bold text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"
             >
               決済
             </button>
           )}
-          <button
-            onClick={handleDelete}
-            aria-label="削除"
-            className="grid h-6 w-6 place-items-center rounded-full text-slate-600 transition hover:bg-white/10 hover:text-slate-300"
-          >
-            ×
-          </button>
         </div>
-      </div>
-
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-        <span>
-          エントリー <span className="text-slate-300">{trade.entryPrice}</span>
-        </span>
-        <span>{formatDate(trade.entryAt)}</span>
-        {trade.stopLoss !== undefined && (
-          <span>
-            SL <span className="text-rose-300/70">{trade.stopLoss}</span>
-          </span>
-        )}
-        {trade.takeProfit !== undefined && (
-          <span>
-            TP <span className="text-emerald-300/70">{trade.takeProfit}</span>
-          </span>
-        )}
-        {trade.pnlMode === 'pips' && trade.lotSize !== undefined && (
-          <span>{trade.lotSize} lot</span>
-        )}
-        {trade.status === 'closed' && trade.exitPrice !== undefined && (
-          <>
-            <span>
-              決済 <span className="text-slate-300">{trade.exitPrice}</span>
-            </span>
-            {trade.exitAt && <span>{formatDate(trade.exitAt)}</span>}
-          </>
-        )}
       </div>
 
       {trade.notes && (
@@ -757,16 +753,16 @@ export const TradeJournalTool = () => {
       )}
 
       {!showNewForm ? (
-        <div className="mb-6 flex flex-wrap gap-2">
+        <div className="mb-6 flex gap-2">
           <button
             onClick={() => setShowNewForm(true)}
-            className="inline-flex min-h-10 items-center justify-center rounded-full bg-cyan-300 px-5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200"
+            className="flex-1 inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200 sm:flex-none"
           >
             ＋ 新規取引を記録
           </button>
           <button
             onClick={() => importInputRef.current?.click()}
-            className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-5 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+            className="flex-1 inline-flex min-h-11 items-center justify-center rounded-full bg-white/[0.04] px-5 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10 sm:flex-none"
           >
             MT4インポート
           </button>
@@ -831,7 +827,7 @@ export const TradeJournalTool = () => {
             </h2>
             <button
               onClick={() => exportCsv(closedTrades)}
-              className="inline-flex min-h-7 items-center justify-center rounded-full bg-white/[0.04] px-3 text-xs font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+              className="inline-flex min-h-8 items-center justify-center rounded-full bg-white/[0.04] px-3 text-xs font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
             >
               CSVエクスポート
             </button>
