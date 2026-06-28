@@ -1473,21 +1473,22 @@ const ShareModal = ({
               画像を保存してXに添付してシェアできます
             </p>
             <div className="mt-3 flex flex-col gap-2">
-              <button
+              <a
+                href={`https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => {
-                  const a = document.createElement('a');
-                  a.href = sharePhase.imageUrl;
-                  a.download = sharePhase.filename;
-                  a.click();
-                  window.open(
-                    `https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`,
-                    '_blank',
-                  );
+                  const link = document.createElement('a');
+                  link.href = sharePhase.imageUrl;
+                  link.download = sharePhase.filename;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
                 }}
                 className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-slate-700 px-4 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-slate-600"
               >
                 📸 保存して 𝕏 でシェア
-              </button>
+              </a>
               <button
                 onClick={() => {
                   const a = document.createElement('a');
