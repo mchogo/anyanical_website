@@ -41,7 +41,7 @@ const BoardFavButton = () => {
         type="button"
         onClick={handleClick}
         aria-label={isFav ? 'お気に入りから削除' : 'お気に入りに追加'}
-        className={`fixed right-4 top-20 z-[55] grid h-10 w-10 place-items-center rounded-full text-xl ring-1 transition ${
+        className={`shrink-0 grid h-10 w-10 place-items-center rounded-full text-xl ring-1 transition ${
           isFav
             ? 'bg-amber-300/20 text-amber-300 ring-amber-300/40 hover:bg-amber-300/10'
             : 'bg-white/[0.04] text-slate-600 ring-white/10 hover:bg-amber-300/10 hover:text-amber-300'
@@ -284,13 +284,13 @@ export const App = () => {
         />
       ) : isBoardRoute ? (
         <main>
-          <BoardFavButton />
           <Header
             connectionStatus={connectionStatus}
             tickCount={tickCount}
             lastUpdatedAt={lastUpdatedAt}
             currentTime={new Date(now)}
             isWeekendMode={isWeekendMode}
+            favButton={<BoardFavButton />}
           />
           <MarketBoard
             prices={prices}

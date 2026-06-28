@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { ConnectionStatus } from './ConnectionStatus';
 import type { ConnectionStatus as ConnectionStatusType } from '../hooks/useHyperliquidMids';
 
@@ -30,6 +31,7 @@ type HeaderProps = {
   lastUpdatedAt: number | null;
   currentTime: Date;
   isWeekendMode: boolean;
+  favButton?: React.ReactNode;
 };
 
 const formatDateTime = (date: Date | number | null) => {
@@ -51,6 +53,7 @@ export const Header = ({
   lastUpdatedAt,
   currentTime,
   isWeekendMode,
+  favButton,
 }: HeaderProps) => (
   <header className="border-b border-white/10 bg-slate-950/80 backdrop-blur">
     <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
@@ -59,9 +62,12 @@ export const Header = ({
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-200">
             Anyanical Market Board
           </p>
-          <h1 className="mt-2 text-3xl font-bold text-white sm:text-4xl">
-            {isWeekendMode ? '土日も動く相場ボード' : '24時間相場ボード'}
-          </h1>
+          <div className="mt-2 flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-white sm:text-4xl">
+              {isWeekendMode ? '土日も動く相場ボード' : '24時間相場ボード'}
+            </h1>
+            {favButton}
+          </div>
           <p className="mt-2 text-sm text-slate-300">
             {isWeekendMode ? '週末・祝日も動く参考価格' : '通常銘柄の24時間参考価格'}
           </p>
