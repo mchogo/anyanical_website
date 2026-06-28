@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useDiscordAuth } from '../hooks/useDiscordAuth';
 import { usePnLCalendar, type Account, type DailyRecord } from '../hooks/usePnLCalendar';
@@ -356,7 +356,12 @@ const AccountTabs = ({
 
 const PremiumUpsellModal = ({ onClose }: { onClose: () => void }) => {
   const [closing, setClosing] = useState(false);
-  const close = () => { setClosing(true); window.setTimeout(onClose, 140); };
+  useEffect(() => {
+    if (!closing) return;
+    const t = window.setTimeout(onClose, 160);
+    return () => window.clearTimeout(t);
+  }, [closing, onClose]);
+  const close = () => setClosing(true);
   return (
   <div
     className={`fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}
@@ -480,7 +485,12 @@ const AccountForm = ({
 
 const ImportGuideModal = ({ onClose }: { onClose: () => void }) => {
   const [closing, setClosing] = useState(false);
-  const close = () => { setClosing(true); window.setTimeout(onClose, 140); };
+  useEffect(() => {
+    if (!closing) return;
+    const t = window.setTimeout(onClose, 160);
+    return () => window.clearTimeout(t);
+  }, [closing, onClose]);
+  const close = () => setClosing(true);
   return (
   <div
     className={`fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}

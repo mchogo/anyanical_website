@@ -30,7 +30,7 @@ export default {
       },
       animation: {
         'fade-in': 'fadeIn 150ms ease both',
-        'fade-out': 'fadeOut 120ms ease both',
+        'fade-out': 'fadeOut 150ms ease both',
         'slide-up': 'slideUp 200ms cubic-bezier(0.16,1,0.3,1) both',
         'slide-down': 'slideDown 150ms ease-in both',
       },
