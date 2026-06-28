@@ -1154,21 +1154,360 @@ const exportMonthCsv = (
   URL.revokeObjectURL(url);
 };
 
-const shareOnX = (stats: MonthStats, year: number, month: number, unit: string, accountName: string): void => {
-  const totalStr = stats.tradeDays === 0 ? '-' : formatUnit(stats.total, unit);
-  const winRateStr = stats.winRate !== null ? `勝率${stats.winRate.toFixed(0)}%` : '';
-  const text = [
-    `📊 ${year}年${month + 1}月 損益まとめ【${accountName}】`,
-    `合計: ${totalStr}`,
-    winRateStr,
+const buildTweetText = (
+  stats: MonthStats,
+  periodLabel: string,
+  unit: string,
+  accountName: string,
+): string =>
+  [
+    `📊 ${periodLabel} 損益まとめ【${accountName}】`,
+    `合計: ${stats.tradeDays === 0 ? '-' : formatUnit(stats.total, unit)}`,
+    stats.winRate !== null ? `勝率${stats.winRate.toFixed(0)}%` : '',
     `(${stats.tradeDays}日間)`,
     '',
     '#FX #損益カレンダー #WMB',
   ]
     .filter(Boolean)
     .join('\n');
-  window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+
+// ── Share card canvas generation ──────────────────────────────────────────────
+
+const fillRR = (
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number, r: number,
+) => {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
 };
+
+const truncate = (ctx: CanvasRenderingContext2D, text: string, maxW: number): string => {
+  if (ctx.measureText(text).width <= maxW) return text;
+  let t = text;
+  while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+  return t + '…';
+};
+
+const drawMonthGrid = (
+  ctx: CanvasRenderingContext2D,
+  year: number,
+  month: number,
+  records: DailyRecord[],
+  font: string,
+) => {
+  const cells = buildCalendarDays(year, month);
+  const rMap = new Map(records.map((r) => [r.date, r]));
+  const maxAbs = Math.max(0, ...records.map((r) => Math.abs(r.pnl)));
+  const WD = ['日', '月', '火', '水', '木', '金', '土'];
+  const RX = 608, RY = 78, CW = 72, CH = 70, GAP = 4;
+
+  ctx.fillStyle = '#475569';
+  ctx.font = `bold 12px ${font}`;
+  ctx.textAlign = 'center';
+  WD.forEach((d, i) => ctx.fillText(d, RX + i * (CW + GAP) + CW / 2, RY + 18));
+
+  cells.forEach((date, idx) => {
+    const col = idx % 7, row = Math.floor(idx / 7);
+    const x = RX + col * (CW + GAP), y = RY + 28 + row * (CH + GAP);
+    if (!date) {
+      ctx.fillStyle = 'rgba(255,255,255,0.02)'; fillRR(ctx, x, y, CW, CH, 6); ctx.fill();
+      return;
+    }
+    const ymd = toYMD(date);
+    const rec = rMap.get(ymd);
+    if (rec) {
+      const op = Math.min(Math.abs(rec.pnl) / (maxAbs || 1), 1) * 0.65 + 0.15;
+      const h = Math.round(op * 255).toString(16).padStart(2, '0');
+      ctx.fillStyle = rec.pnl > 0 ? `#6ee7b7${h}` : `#fca5a5${h}`;
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    }
+    fillRR(ctx, x, y, CW, CH, 6); ctx.fill();
+    ctx.fillStyle = rec ? '#f1f5f9' : '#475569';
+    ctx.font = `bold 15px ${font}`;
+    ctx.textAlign = 'center';
+    ctx.fillText(String(date.getDate()), x + CW / 2, y + 20);
+    if (rec) {
+      ctx.fillStyle = rec.pnl > 0 ? '#a7f3d0' : '#fecaca';
+      ctx.font = `10px ${font}`;
+      const abs = Math.abs(rec.pnl);
+      const abbr = (rec.pnl > 0 ? '+' : '') + (abs >= 10000 ? `${(rec.pnl / 10000).toFixed(0)}万` : rec.pnl.toLocaleString('ja-JP'));
+      ctx.fillText(abbr, x + CW / 2, y + 40);
+    }
+  });
+  ctx.textAlign = 'left';
+};
+
+const drawWeekBars = (
+  ctx: CanvasRenderingContext2D,
+  weekStart: Date,
+  records: DailyRecord[],
+  unit: string,
+  font: string,
+) => {
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart); d.setDate(d.getDate() + i); return d;
+  });
+  const rMap = new Map(records.map((r) => [r.date, r]));
+  const maxAbs = Math.max(1, ...records.map((r) => Math.abs(r.pnl)));
+  const WD = ['日', '月', '火', '水', '木', '金', '土'];
+  const RX = 600, RY = 72, ROW_H = 70, BAR_X = RX + 60, BAR_MAX = 460;
+  const today = toYMD(new Date());
+
+  days.forEach((date, i) => {
+    const y = RY + i * ROW_H;
+    const ymd = toYMD(date);
+    const rec = rMap.get(ymd);
+    const isToday = ymd === today;
+
+    ctx.fillStyle = isToday ? 'rgba(103,232,249,0.07)' : (i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent');
+    fillRR(ctx, RX - 4, y + 2, 548, ROW_H - 4, 8); ctx.fill();
+
+    ctx.fillStyle = isToday ? '#67e8f9' : '#64748b';
+    ctx.font = `bold 12px ${font}`;
+    ctx.textAlign = 'center';
+    ctx.fillText(WD[date.getDay()], RX + 22, y + 22);
+    ctx.fillStyle = isToday ? '#a5f3fc' : '#cbd5e1';
+    ctx.font = `bold 22px ${font}`;
+    ctx.fillText(String(date.getDate()), RX + 22, y + 52);
+
+    if (rec) {
+      const bw = Math.max(4, (Math.abs(rec.pnl) / maxAbs) * BAR_MAX);
+      ctx.fillStyle = rec.pnl > 0 ? 'rgba(110,231,183,0.25)' : 'rgba(252,165,165,0.25)';
+      fillRR(ctx, BAR_X, y + 20, bw, 26, 4); ctx.fill();
+      ctx.fillStyle = rec.pnl > 0 ? '#6ee7b7' : '#fca5a5';
+      ctx.font = `bold 15px ${font}`;
+      ctx.textAlign = 'left';
+      ctx.fillText(`${rec.pnl > 0 ? '+' : ''}${rec.pnl.toLocaleString('ja-JP')}${unit}`, BAR_X + 8, y + 38);
+      if (rec.notes) {
+        ctx.fillStyle = '#475569';
+        ctx.font = `12px ${font}`;
+        ctx.fillText(truncate(ctx, rec.notes, BAR_MAX - 8), BAR_X + 8, y + 58);
+      }
+    } else {
+      ctx.fillStyle = '#334155';
+      ctx.font = `15px ${font}`;
+      ctx.textAlign = 'left';
+      ctx.fillText('―', BAR_X + 8, y + 38);
+    }
+  });
+  ctx.textAlign = 'left';
+};
+
+type CardOpts = {
+  stats: MonthStats;
+  records: DailyRecord[];
+  periodLabel: string;
+  unit: string;
+  accountName: string;
+  viewMode: 'month' | 'week';
+  year: number;
+  month: number;
+  weekStart?: Date;
+};
+
+const generatePnLCard = async (opts: CardOpts): Promise<Blob> => {
+  const W = 1200, H = 630;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d')!;
+  await document.fonts.ready;
+
+  const FONT = '"Noto Sans JP","Hiragino Sans",system-ui,sans-serif';
+
+  // Background + gradient
+  ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, W, H);
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, 'rgba(6,182,212,0.06)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+
+  // Left panel
+  ctx.fillStyle = 'rgba(255,255,255,0.03)'; fillRR(ctx, 48, 48, 508, 534, 16); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1; fillRR(ctx, 48, 48, 508, 534, 16); ctx.stroke();
+
+  // Right panel
+  ctx.fillStyle = 'rgba(255,255,255,0.03)'; fillRR(ctx, 584, 48, 568, 534, 16); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1; fillRR(ctx, 584, 48, 568, 534, 16); ctx.stroke();
+
+  // === LEFT side ===
+  const LX = 80;
+  ctx.fillStyle = '#67e8f9'; ctx.font = `bold 13px ${FONT}`;
+  ctx.fillText('アニャニカル覗き部屋 — 損益カレンダー', LX, 92);
+
+  ctx.fillStyle = '#f1f5f9'; ctx.font = `bold 26px ${FONT}`;
+  ctx.fillText(truncate(ctx, opts.accountName, 440), LX, 138);
+
+  ctx.fillStyle = '#64748b'; ctx.font = `18px ${FONT}`;
+  ctx.fillText(opts.periodLabel, LX, 172);
+
+  // Total PnL (auto-size)
+  const { stats } = opts;
+  const totalStr = stats.tradeDays === 0
+    ? '記録なし'
+    : `${stats.total > 0 ? '＋' : ''}${stats.total.toLocaleString('ja-JP')}${opts.unit}`;
+  ctx.fillStyle = stats.total > 0 ? '#6ee7b7' : stats.total < 0 ? '#fca5a5' : '#94a3b8';
+  let fs = 56;
+  ctx.font = `bold ${fs}px ${FONT}`;
+  while (ctx.measureText(totalStr).width > 440 && fs > 28) { fs -= 2; ctx.font = `bold ${fs}px ${FONT}`; }
+  ctx.fillText(totalStr, LX, 252);
+
+  ctx.fillStyle = '#475569'; ctx.font = `13px ${FONT}`;
+  ctx.fillText('損益合計', LX, 272);
+
+  // Divider
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(LX, 290); ctx.lineTo(528, 290); ctx.stroke();
+
+  // Stats
+  const stat = (label: string, val: string, col: string, x: number, y: number) => {
+    ctx.fillStyle = '#64748b'; ctx.font = `13px ${FONT}`; ctx.fillText(label, x, y);
+    ctx.fillStyle = col; ctx.font = `bold 22px ${FONT}`; ctx.fillText(val, x, y + 28);
+  };
+  if (stats.tradeDays > 0) {
+    stat('勝率', stats.winRate !== null ? `${stats.winRate.toFixed(0)}%` : '―', '#f1f5f9', LX, 325);
+    stat('取引日数', `${stats.tradeDays}日`, '#f1f5f9', LX + 170, 325);
+    stat('勝', `${stats.winDays}日`, '#6ee7b7', LX, 395);
+    stat('負', `${stats.lossDays}日`, '#fca5a5', LX + 110, 395);
+    if (stats.best !== null && stats.best > 0)
+      stat('最高', `+${stats.best.toLocaleString('ja-JP')}`, '#6ee7b7', LX, 465);
+    if (stats.worst !== null && stats.worst < 0)
+      stat('最大損失', stats.worst.toLocaleString('ja-JP'), '#fca5a5', LX + 200, 465);
+  }
+
+  ctx.fillStyle = '#334155'; ctx.font = `13px ${FONT}`;
+  ctx.fillText('#FX  #損益カレンダー  #WMB', LX, 558);
+
+  // === RIGHT side ===
+  if (opts.viewMode === 'month') {
+    drawMonthGrid(ctx, opts.year, opts.month, opts.records, FONT);
+  } else if (opts.weekStart) {
+    drawWeekBars(ctx, opts.weekStart, opts.records, opts.unit, FONT);
+  }
+
+  return new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png'),
+  );
+};
+
+// ── Share modal ───────────────────────────────────────────────────────────────
+
+type SharePhase =
+  | { phase: 'options' }
+  | { phase: 'generating' }
+  | { phase: 'preview'; imageUrl: string; filename: string };
+
+const ShareModal = ({
+  sharePhase,
+  tweetText,
+  onScreenshot,
+  onTextOnly,
+  onClose,
+}: {
+  sharePhase: SharePhase;
+  tweetText: string;
+  onScreenshot: () => void;
+  onTextOnly: () => void;
+  onClose: () => void;
+}) => (
+  <>
+    <div
+      className="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-sm animate-fade-in"
+      onClick={onClose}
+    />
+    <div className="fixed inset-0 z-[61] flex items-center justify-center p-4 animate-slide-up">
+      <div
+        className="w-full max-w-sm rounded-xl border border-white/10 bg-slate-900 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {sharePhase.phase === 'options' && (
+          <>
+            <p className="mb-4 text-sm font-bold text-white">シェア方法を選択</p>
+            <div className="space-y-2">
+              <button
+                onClick={onScreenshot}
+                className="flex w-full items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-left transition hover:border-cyan-300/30 hover:bg-cyan-300/5"
+              >
+                <span className="text-xl">🖼</span>
+                <div>
+                  <p className="text-sm font-bold text-white">スクショ付きでシェア</p>
+                  <p className="mt-0.5 text-xs text-slate-500">カレンダー画像を生成してXに投稿</p>
+                </div>
+              </button>
+              <button
+                onClick={onTextOnly}
+                className="flex w-full items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-left transition hover:border-white/20 hover:bg-white/[0.06]"
+              >
+                <span className="text-xl">📝</span>
+                <div>
+                  <p className="text-sm font-bold text-white">テキストのみシェア</p>
+                  <p className="mt-0.5 text-xs text-slate-500">テキストだけでXを開く</p>
+                </div>
+              </button>
+            </div>
+            <button
+              onClick={onClose}
+              className="mt-3 w-full rounded-full py-2 text-xs text-slate-600 transition hover:text-slate-400"
+            >
+              キャンセル
+            </button>
+          </>
+        )}
+
+        {sharePhase.phase === 'generating' && (
+          <div className="flex flex-col items-center py-10">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-300 border-t-transparent" />
+            <p className="mt-4 text-sm text-slate-400">画像を生成中...</p>
+          </div>
+        )}
+
+        {sharePhase.phase === 'preview' && (
+          <>
+            <p className="mb-3 text-sm font-bold text-white">シェア用画像</p>
+            <img src={sharePhase.imageUrl} alt="PnL Card" className="w-full rounded-lg" />
+            <p className="mt-2 text-xs text-slate-500">
+              画像をダウンロードして、Xの投稿に添付してください
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => {
+                  const a = document.createElement('a');
+                  a.href = sharePhase.imageUrl;
+                  a.download = sharePhase.filename;
+                  a.click();
+                }}
+                className="inline-flex min-h-10 flex-1 items-center justify-center rounded-full bg-white/[0.06] px-4 text-sm font-bold text-slate-200 ring-1 ring-white/10 transition hover:bg-white/10"
+              >
+                ↓ 保存
+              </button>
+              <button
+                onClick={() =>
+                  window.open(
+                    `https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`,
+                    '_blank',
+                  )
+                }
+                className="inline-flex min-h-10 flex-1 items-center justify-center rounded-full bg-slate-800 px-4 text-sm font-bold text-white ring-1 ring-white/10 transition hover:bg-slate-700"
+              >
+                𝕏 シェア
+              </button>
+            </div>
+            <button
+              onClick={onClose}
+              className="mt-2 w-full rounded-full py-2 text-xs text-slate-600 transition hover:text-slate-400"
+            >
+              閉じる
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  </>
+);
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -1193,6 +1532,7 @@ export const PnLCalendarTool = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showPremiumUpsell, setShowPremiumUpsell] = useState(false);
+  const [shareModal, setShareModal] = useState<SharePhase | null>(null);
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
   const [weekLayout, setWeekLayout] = useState<'list' | 'grid'>('list');
   const [weekStart, setWeekStart] = useState<Date>(() => {
@@ -1295,10 +1635,18 @@ export const PnLCalendarTool = () => {
     setWeekStart((d) => { const n = new Date(d); n.setDate(n.getDate() + 7); return n; });
 
   const switchToWeek = () => {
-    const first = new Date(year, month, 1);
-    first.setDate(first.getDate() - first.getDay());
-    first.setHours(0, 0, 0, 0);
-    setWeekStart(first);
+    // Keep weekStart if it already overlaps with the currently displayed month
+    const wEnd = new Date(weekStart);
+    wEnd.setDate(wEnd.getDate() + 6);
+    const mStart = new Date(year, month, 1);
+    const mEnd = new Date(year, month + 1, 0);
+    if (weekStart > mEnd || wEnd < mStart) {
+      // weekStart is outside the current month — snap to first week of the month
+      const snap = new Date(year, month, 1);
+      snap.setDate(snap.getDate() - snap.getDay());
+      snap.setHours(0, 0, 0, 0);
+      setWeekStart(snap);
+    }
     setViewMode('week');
   };
   const switchToMonth = () => {
@@ -1308,6 +1656,44 @@ export const PnLCalendarTool = () => {
   };
 
   const displayStats = viewMode === 'week' ? weekStats : stats;
+
+  const periodLabel =
+    viewMode === 'week' ? weekLabel : `${year}年${month + 1}月`;
+  const tweetText = buildTweetText(displayStats, periodLabel, unit, selectedAccount?.name ?? '');
+
+  const handleShareScreenshot = async () => {
+    setShareModal({ phase: 'generating' });
+    try {
+      const blob = await generatePnLCard({
+        stats: displayStats,
+        records: viewMode === 'week' ? weekRecords : monthRecords,
+        periodLabel,
+        unit,
+        accountName: selectedAccount?.name ?? '',
+        viewMode,
+        year: viewMode === 'week' ? weekStart.getFullYear() : year,
+        month: viewMode === 'week' ? weekStart.getMonth() : month,
+        weekStart: viewMode === 'week' ? weekStart : undefined,
+      });
+      const safeName = (selectedAccount?.name ?? 'account').replace(/[^\w぀-ヿ一-鿿]/g, '_');
+      const filename = `pnl_${safeName}_${periodLabel.replace(/[年月 \/〜]/g, '')}.png`;
+      const file = new File([blob], filename, { type: 'image/png' });
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ text: tweetText, files: [file] });
+          setShareModal(null);
+          return;
+        } catch (e) {
+          if ((e as Error)?.name === 'AbortError') { setShareModal(null); return; }
+        }
+      }
+      const imageUrl = URL.createObjectURL(blob);
+      setShareModal({ phase: 'preview', imageUrl, filename });
+    } catch (e) {
+      console.error(e);
+      setShareModal(null);
+    }
+  };
 
   if (accounts.length === 0) {
     return (
@@ -1502,15 +1888,7 @@ export const PnLCalendarTool = () => {
             {!isAllAccounts && (viewMode === 'week' ? weekRecords : monthRecords).length > 0 && (
               <>
                 <button
-                  onClick={() =>
-                    shareOnX(
-                      displayStats,
-                      viewMode === 'week' ? weekStart.getFullYear() : year,
-                      viewMode === 'week' ? weekStart.getMonth() : month,
-                      unit,
-                      selectedAccount?.name ?? '',
-                    )
-                  }
+                  onClick={() => setShareModal({ phase: 'options' })}
                   title="X (Twitter) でシェア"
                   className="grid h-8 w-8 place-items-center rounded-full bg-white/[0.04] text-xs text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
                 >
@@ -1584,6 +1962,22 @@ export const PnLCalendarTool = () => {
 
       {showPremiumUpsell && (
         <PremiumUpsellModal onClose={() => setShowPremiumUpsell(false)} />
+      )}
+
+      {shareModal && (
+        <ShareModal
+          sharePhase={shareModal}
+          tweetText={tweetText}
+          onScreenshot={handleShareScreenshot}
+          onTextOnly={() => {
+            window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`, '_blank');
+            setShareModal(null);
+          }}
+          onClose={() => {
+            if (shareModal.phase === 'preview') URL.revokeObjectURL(shareModal.imageUrl);
+            setShareModal(null);
+          }}
+        />
       )}
     </div>
   );

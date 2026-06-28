@@ -40,7 +40,7 @@ export const INTERNAL_NAV_LINKS = [
     href: '#/tools/semi-auto-sign',
   },
   {
-    label: 'トレード日誌',
+    label: '損益カレンダー',
     href: '#/tools/trade-journal',
   },
   {

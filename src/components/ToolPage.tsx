@@ -103,7 +103,7 @@ const toolPages: Array<{
   },
   {
     id: 'trade-journal',
-    title: 'トレード日誌',
+    title: '損益カレンダー',
     description:
       'Discordログインで1口座まで使える日次損益カレンダー。複数口座管理はプレミアムで解放されます。',
     href: '#/tools/trade-journal',
