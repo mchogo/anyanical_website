@@ -1561,6 +1561,7 @@ export const PnLCalendarTool = () => {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showPremiumUpsell, setShowPremiumUpsell] = useState(false);
   const [shareModal, setShareModal] = useState<SharePhase | null>(null);
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
   const [weekLayout, setWeekLayout] = useState<'list' | 'grid'>('list');
   const [navDir, setNavDir] = useState<'left' | 'right' | null>(null);
@@ -1918,25 +1919,56 @@ export const PnLCalendarTool = () => {
                 <button
                   onClick={() => setShareModal({ phase: 'options' })}
                   title="X (Twitter) でシェア"
-                  className="grid h-8 w-8 place-items-center rounded-full bg-white/[0.04] text-xs text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full bg-white/[0.04] px-3 text-xs font-semibold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
                 >
-                  𝕏
+                  <span>𝕏</span> シェア
                 </button>
-                <button
-                  onClick={() =>
-                    exportMonthCsv(
-                      viewMode === 'week' ? weekRecords : monthRecords,
-                      viewMode === 'week' ? weekStart.getFullYear() : year,
-                      viewMode === 'week' ? weekStart.getMonth() : month,
-                      selectedAccount?.name ?? 'account',
-                      unit,
-                    )
-                  }
-                  title="CSVエクスポート"
-                  className="grid h-8 w-8 place-items-center rounded-full bg-white/[0.04] text-xs text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
-                >
-                  ↓
-                </button>
+                {/* Download dropdown */}
+                <div className="relative">
+                  {showDownloadMenu && (
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowDownloadMenu(false)}
+                    />
+                  )}
+                  <button
+                    onClick={() => setShowDownloadMenu((v) => !v)}
+                    title="ダウンロード"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-white/[0.04] px-3 text-xs font-semibold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+                  >
+                    <span>↓</span> ダウンロード
+                  </button>
+                  {showDownloadMenu && (
+                    <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-lg border border-white/10 bg-slate-950/95 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.5)] backdrop-blur">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowDownloadMenu(false);
+                          void handleShareScreenshot();
+                        }}
+                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-200 transition hover:bg-white/[0.06]"
+                      >
+                        <span>📷</span> 画像
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowDownloadMenu(false);
+                          exportMonthCsv(
+                            viewMode === 'week' ? weekRecords : monthRecords,
+                            viewMode === 'week' ? weekStart.getFullYear() : year,
+                            viewMode === 'week' ? weekStart.getMonth() : month,
+                            selectedAccount?.name ?? 'account',
+                            unit,
+                          );
+                        }}
+                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-200 transition hover:bg-white/[0.06]"
+                      >
+                        <span>📊</span> CSV
+                      </button>
+                    </div>
+                  )}
+                </div>
               </>
             )}
             <button
