@@ -1411,6 +1411,11 @@ type SharePhase =
   | { phase: 'generating' }
   | { phase: 'preview'; imageUrl: string; filename: string; file: File };
 
+type DownloadPhase =
+  | { phase: 'options' }
+  | { phase: 'generating' }
+  | { phase: 'ready'; imageUrl: string; filename: string };
+
 const ShareModal = ({
   sharePhase,
   xHref,
@@ -1537,6 +1542,94 @@ const ShareModal = ({
   </>
 );
 
+// ── Download modal ────────────────────────────────────────────────────────────
+
+const DownloadModal = ({
+  downloadPhase,
+  onImage,
+  onCsv,
+  onClose,
+}: {
+  downloadPhase: DownloadPhase;
+  onImage: () => void;
+  onCsv: () => void;
+  onClose: () => void;
+}) => (
+  <>
+    <div
+      className="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-sm animate-fade-in"
+      onClick={onClose}
+    />
+    <div className="fixed inset-0 z-[61] flex items-center justify-center p-4 animate-slide-up">
+      <div
+        className="w-full max-w-sm rounded-xl border border-white/10 bg-slate-900 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {downloadPhase.phase === 'options' && (
+          <>
+            <p className="mb-4 text-sm font-bold text-white">ダウンロード形式を選択</p>
+            <div className="space-y-2">
+              <button
+                onClick={onImage}
+                className="flex w-full items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-left transition hover:border-cyan-300/30 hover:bg-cyan-300/5"
+              >
+                <span className="text-xl">📷</span>
+                <div>
+                  <p className="text-sm font-bold text-white">画像をダウンロード</p>
+                  <p className="mt-0.5 text-xs text-slate-500">カレンダー画像をPNGで保存</p>
+                </div>
+              </button>
+              <button
+                onClick={onCsv}
+                className="flex w-full items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-left transition hover:border-white/20 hover:bg-white/[0.06]"
+              >
+                <span className="text-xl">📊</span>
+                <div>
+                  <p className="text-sm font-bold text-white">CSVをダウンロード</p>
+                  <p className="mt-0.5 text-xs text-slate-500">取引データをCSVで書き出し</p>
+                </div>
+              </button>
+            </div>
+            <button
+              onClick={onClose}
+              className="mt-3 w-full rounded-full py-2 text-xs text-slate-600 transition hover:text-slate-400"
+            >
+              キャンセル
+            </button>
+          </>
+        )}
+
+        {downloadPhase.phase === 'generating' && (
+          <div className="flex flex-col items-center py-10">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-300 border-t-transparent" />
+            <p className="mt-4 text-sm text-slate-400">画像を生成中...</p>
+          </div>
+        )}
+
+        {downloadPhase.phase === 'ready' && (
+          <>
+            <p className="mb-3 text-sm font-bold text-white">画像を保存</p>
+            <img src={downloadPhase.imageUrl} alt="PnL Card" className="w-full rounded-lg" />
+            <a
+              href={downloadPhase.imageUrl}
+              download={downloadPhase.filename}
+              className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-cyan-300 text-sm font-bold text-slate-950 transition hover:bg-cyan-200"
+            >
+              ↓ ダウンロード
+            </a>
+            <button
+              onClick={onClose}
+              className="mt-2 w-full rounded-full py-2 text-xs text-slate-600 transition hover:text-slate-400"
+            >
+              閉じる
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  </>
+);
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export const PnLCalendarTool = () => {
@@ -1561,7 +1654,7 @@ export const PnLCalendarTool = () => {
   const [showEditForm, setShowEditForm] = useState(false);
   const [showPremiumUpsell, setShowPremiumUpsell] = useState(false);
   const [shareModal, setShareModal] = useState<SharePhase | null>(null);
-  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const [downloadModal, setDownloadModal] = useState<DownloadPhase | null>(null);
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
   const [weekLayout, setWeekLayout] = useState<'list' | 'grid'>('list');
   const [navDir, setNavDir] = useState<'left' | 'right' | null>(null);
@@ -1720,6 +1813,30 @@ export const PnLCalendarTool = () => {
     } catch (e) {
       console.error(e);
       setShareModal(null);
+    }
+  };
+
+  const handleDownloadScreenshot = async () => {
+    setDownloadModal({ phase: 'generating' });
+    try {
+      const blob = await generatePnLCard({
+        stats: displayStats,
+        records: viewMode === 'week' ? weekRecords : monthRecords,
+        periodLabel,
+        unit,
+        accountName: selectedAccount?.name ?? '',
+        viewMode,
+        year: viewMode === 'week' ? weekStart.getFullYear() : year,
+        month: viewMode === 'week' ? weekStart.getMonth() : month,
+        weekStart: viewMode === 'week' ? weekStart : undefined,
+      });
+      const safeName = (selectedAccount?.name ?? 'account').replace(/[^\w぀-ヿ一-鿿]/g, '_');
+      const filename = `pnl_${safeName}_${periodLabel.replace(/[年月 \/〜]/g, '')}.png`;
+      const imageUrl = URL.createObjectURL(blob);
+      setDownloadModal({ phase: 'ready', imageUrl, filename });
+    } catch (e) {
+      console.error(e);
+      setDownloadModal(null);
     }
   };
 
@@ -1923,52 +2040,13 @@ export const PnLCalendarTool = () => {
                 >
                   <span>𝕏</span> シェア
                 </button>
-                {/* Download dropdown */}
-                <div className="relative">
-                  {showDownloadMenu && (
-                    <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setShowDownloadMenu(false)}
-                    />
-                  )}
-                  <button
-                    onClick={() => setShowDownloadMenu((v) => !v)}
-                    title="ダウンロード"
-                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-white/[0.04] px-3 text-xs font-semibold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
-                  >
-                    <span>↓</span> ダウンロード
-                  </button>
-                  {showDownloadMenu && (
-                    <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-lg border border-white/10 bg-slate-950/95 p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.5)] backdrop-blur">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowDownloadMenu(false);
-                          void handleShareScreenshot();
-                        }}
-                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-200 transition hover:bg-white/[0.06]"
-                      >
-                        <span>📷</span> 画像
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowDownloadMenu(false);
-                          exportMonthCsv(
-                            viewMode === 'week' ? weekRecords : monthRecords,
-                            viewMode === 'week' ? weekStart.getFullYear() : year,
-                            viewMode === 'week' ? weekStart.getMonth() : month,
-                            selectedAccount?.name ?? 'account',
-                            unit,
-                          );
-                        }}
-                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-200 transition hover:bg-white/[0.06]"
-                      >
-                        <span>📊</span> CSV
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <button
+                  onClick={() => setDownloadModal({ phase: 'options' })}
+                  title="ダウンロード"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full bg-white/[0.04] px-3 text-xs font-semibold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+                >
+                  <span>↓</span> ダウンロード
+                </button>
               </>
             )}
             <button
@@ -2051,6 +2129,27 @@ export const PnLCalendarTool = () => {
           onClose={() => {
             if (shareModal.phase === 'preview') URL.revokeObjectURL(shareModal.imageUrl);
             setShareModal(null);
+          }}
+        />
+      )}
+
+      {downloadModal && (
+        <DownloadModal
+          downloadPhase={downloadModal}
+          onImage={() => { void handleDownloadScreenshot(); }}
+          onCsv={() => {
+            exportMonthCsv(
+              viewMode === 'week' ? weekRecords : monthRecords,
+              viewMode === 'week' ? weekStart.getFullYear() : year,
+              viewMode === 'week' ? weekStart.getMonth() : month,
+              selectedAccount?.name ?? 'account',
+              unit,
+            );
+            setDownloadModal(null);
+          }}
+          onClose={() => {
+            if (downloadModal.phase === 'ready') URL.revokeObjectURL(downloadModal.imageUrl);
+            setDownloadModal(null);
           }}
         />
       )}
