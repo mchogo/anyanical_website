@@ -1434,7 +1434,7 @@ const ShareModal = ({
       className="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     />
-    <div className="fixed inset-0 z-[61] flex items-center justify-center p-4 animate-slide-up">
+    <div className="fixed inset-0 z-[61] flex items-center justify-center p-4 animate-slide-up" onClick={onClose}>
       <div
         className="w-full max-w-sm rounded-xl border border-white/10 bg-slate-900 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
         onClick={(e) => e.stopPropagation()}
@@ -1560,7 +1560,7 @@ const DownloadModal = ({
       className="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     />
-    <div className="fixed inset-0 z-[61] flex items-center justify-center p-4 animate-slide-up">
+    <div className="fixed inset-0 z-[61] flex items-center justify-center p-4 animate-slide-up" onClick={onClose}>
       <div
         className="w-full max-w-sm rounded-xl border border-white/10 bg-slate-900 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
         onClick={(e) => e.stopPropagation()}
