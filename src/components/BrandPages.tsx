@@ -652,12 +652,14 @@ const PnLShowcaseCard = () => {
   // Tracks the currently-shown blob URL so we only revoke it once the next
   // image has taken its place — revoking eagerly made the <img> flash empty.
   const currentUrlRef = useRef<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     if (state.phase !== 'ready') return;
     const acc = state.data.accounts[clampedIdx];
     if (!acc) return;
     let cancelled = false;
+    setIsGenerating(true);
     generatePnLCard({
       stats: calcStats(acc.records),
       records: acc.records,
@@ -673,6 +675,7 @@ const PnLShowcaseCard = () => {
       const oldUrl = currentUrlRef.current;
       currentUrlRef.current = newUrl;
       setImgUrl(newUrl);
+      setIsGenerating(false);
       if (oldUrl) URL.revokeObjectURL(oldUrl);
     });
     return () => {
@@ -783,21 +786,28 @@ const PnLShowcaseCard = () => {
         <div className="mt-4 aspect-[1200/630] w-full animate-pulse rounded-lg bg-slate-950/40" />
       )}
       {imgUrl && (
-        <div
-          key={imgUrl}
-          className={
-            navDir === 'left'
-              ? 'animate-slide-in-right'
-              : navDir === 'right'
-                ? 'animate-slide-in-left'
-                : 'animate-fade-in'
-          }
-        >
-          <img
-            src={imgUrl}
-            alt="損益カレンダー"
-            className="mt-4 w-full rounded-lg border border-white/10"
-          />
+        <div className="relative">
+          <div
+            key={imgUrl}
+            className={
+              navDir === 'left'
+                ? 'animate-shift-in-right'
+                : navDir === 'right'
+                  ? 'animate-shift-in-left'
+                  : 'animate-fade-in'
+            }
+          >
+            <img
+              src={imgUrl}
+              alt="損益カレンダー"
+              className="mt-4 w-full rounded-lg border border-white/10"
+            />
+          </div>
+          {isGenerating && (
+            <div className="absolute inset-0 mt-4 grid place-items-center rounded-lg bg-slate-950/50 backdrop-blur-[1px]">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-300 border-t-transparent" />
+            </div>
+          )}
         </div>
       )}
 

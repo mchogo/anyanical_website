@@ -35,6 +35,14 @@ export default {
           from: { opacity: '0', transform: 'translateX(-20px)' },
           to: { opacity: '1', transform: 'translateX(0)' },
         },
+        shiftInFromRight: {
+          from: { transform: 'translateX(16px)' },
+          to: { transform: 'translateX(0)' },
+        },
+        shiftInFromLeft: {
+          from: { transform: 'translateX(-16px)' },
+          to: { transform: 'translateX(0)' },
+        },
       },
       animation: {
         'fade-in': 'fadeIn 150ms ease both',
@@ -43,6 +51,10 @@ export default {
         'slide-down': 'slideDown 150ms ease-in both',
         'slide-in-right': 'slideInFromRight 220ms cubic-bezier(0.16,1,0.3,1) both',
         'slide-in-left': 'slideInFromLeft 220ms cubic-bezier(0.16,1,0.3,1) both',
+        // Position-only (no opacity fade) variants — for swapping an <img>
+        // in place without the old/new frame ever going semi-transparent.
+        'shift-in-right': 'shiftInFromRight 200ms cubic-bezier(0.16,1,0.3,1) both',
+        'shift-in-left': 'shiftInFromLeft 200ms cubic-bezier(0.16,1,0.3,1) both',
       },
     },
   },
