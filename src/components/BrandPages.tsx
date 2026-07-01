@@ -636,6 +636,7 @@ const PnLShowcaseCard = () => {
   const [year, setYear] = useState(initial.year);
   const [month, setMonth] = useState(initial.month);
   const [activeIdx, setActiveIdx] = useState(0);
+  const [navDir, setNavDir] = useState<'left' | 'right' | null>(null);
   const state = usePnLShowcase(year, month);
   const [imgUrl, setImgUrl] = useState<string | null>(null);
 
@@ -648,6 +649,7 @@ const PnLShowcaseCard = () => {
     if (!acc) return;
     let revoked = false;
     let url: string | null = null;
+    setImgUrl(null);
     generatePnLCard({
       stats: calcStats(acc.records),
       records: acc.records,
@@ -680,6 +682,7 @@ const PnLShowcaseCard = () => {
 
   const prevMonth = () => {
     if (!canGoPrev) return;
+    setNavDir('right');
     if (month === 0) {
       setYear((y) => y - 1);
       setMonth(11);
@@ -689,12 +692,17 @@ const PnLShowcaseCard = () => {
   };
   const nextMonth = () => {
     if (!canGoNext) return;
+    setNavDir('left');
     if (month === 11) {
       setYear((y) => y + 1);
       setMonth(0);
     } else {
       setMonth((m) => m + 1);
     }
+  };
+  const selectTab = (i: number) => {
+    setNavDir(null);
+    setActiveIdx(i);
   };
 
   return (
@@ -733,7 +741,7 @@ const PnLShowcaseCard = () => {
             {accounts.map((acc, i) => (
               <button
                 key={acc.accountId}
-                onClick={() => setActiveIdx(i)}
+                onClick={() => selectTab(i)}
                 className={`rounded-full px-3 py-0.5 text-xs font-bold transition ${
                   i === clampedIdx
                     ? 'bg-cyan-300 text-slate-950'
@@ -747,15 +755,26 @@ const PnLShowcaseCard = () => {
         )}
       </div>
 
-      {state.phase === 'loading' && (
+      {!imgUrl && (
         <div className="mt-4 aspect-[1200/630] w-full animate-pulse rounded-lg bg-slate-950/40" />
       )}
       {imgUrl && (
-        <img
-          src={imgUrl}
-          alt="損益カレンダー"
-          className="mt-4 w-full rounded-lg border border-white/10"
-        />
+        <div
+          key={`${year}-${month}-${clampedIdx}`}
+          className={
+            navDir === 'left'
+              ? 'animate-slide-in-right'
+              : navDir === 'right'
+                ? 'animate-slide-in-left'
+                : 'animate-fade-in'
+          }
+        >
+          <img
+            src={imgUrl}
+            alt="損益カレンダー"
+            className="mt-4 w-full rounded-lg border border-white/10"
+          />
+        </div>
       )}
 
       <p className="mt-3 text-xs leading-5 text-slate-500">
