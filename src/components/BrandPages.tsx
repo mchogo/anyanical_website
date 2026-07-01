@@ -5,6 +5,8 @@ import recommendedSettingScreen from '../assets/copytrade/recommended-setting-sc
 import cancelCountProof from '../assets/proof/cancel-count.png';
 import memberCountProof from '../assets/proof/member-count.png';
 import { EXTERNAL_LINKS } from '../config/navigation';
+import { getJstYearMonth, usePnLShowcase } from '../hooks/usePnLShowcase';
+import { calcStats, generatePnLCard } from '../utils/pnlCard';
 
 const CountUp = ({
   to,
@@ -629,6 +631,140 @@ export const StrategyGuidePage = () => (
   </section>
 );
 
+const PnLShowcaseCard = () => {
+  const initial = getJstYearMonth();
+  const [year, setYear] = useState(initial.year);
+  const [month, setMonth] = useState(initial.month);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const state = usePnLShowcase(year, month);
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
+
+  const accounts = state.phase === 'ready' ? state.data.accounts : [];
+  const clampedIdx = Math.min(activeIdx, Math.max(accounts.length - 1, 0));
+
+  useEffect(() => {
+    if (state.phase !== 'ready') return;
+    const acc = state.data.accounts[clampedIdx];
+    if (!acc) return;
+    let revoked = false;
+    let url: string | null = null;
+    generatePnLCard({
+      stats: calcStats(acc.records),
+      records: acc.records,
+      periodLabel: `${state.data.year}年${state.data.month + 1}月`,
+      unit: acc.unit,
+      accountName: acc.accountName,
+      viewMode: 'month',
+      year: state.data.year,
+      month: state.data.month,
+    }).then((blob) => {
+      if (revoked) return;
+      url = URL.createObjectURL(blob);
+      setImgUrl(url);
+    });
+    return () => {
+      revoked = true;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [state, clampedIdx]);
+
+  if (state.phase === 'empty' || state.phase === 'error') return null;
+
+  const nowYm = (() => {
+    const now = getJstYearMonth();
+    return now.year * 12 + now.month;
+  })();
+  const curYm = year * 12 + month;
+  const canGoPrev = nowYm - curYm < 12;
+  const canGoNext = curYm < nowYm;
+
+  const prevMonth = () => {
+    if (!canGoPrev) return;
+    if (month === 0) {
+      setYear((y) => y - 1);
+      setMonth(11);
+    } else {
+      setMonth((m) => m - 1);
+    }
+  };
+  const nextMonth = () => {
+    if (!canGoNext) return;
+    if (month === 11) {
+      setYear((y) => y + 1);
+      setMonth(0);
+    } else {
+      setMonth((m) => m + 1);
+    }
+  };
+
+  return (
+    <section className="rounded-lg border border-white/10 bg-slate-900/80 p-5">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-semibold text-emerald-200">Live Track Record</p>
+          <h3 className="mt-1 text-lg font-bold text-white">損益実績</h3>
+        </div>
+        <p className="text-sm text-slate-500">損益カレンダーの実データを自動反映しています。</p>
+      </div>
+
+      <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={prevMonth}
+            disabled={!canGoPrev}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/[0.04] text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            ←
+          </button>
+          <p className="min-w-[6.5rem] text-center text-sm font-bold text-white">
+            {year}年{month + 1}月
+          </p>
+          <button
+            onClick={nextMonth}
+            disabled={!canGoNext}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/[0.04] text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            →
+          </button>
+        </div>
+
+        {accounts.length > 1 && (
+          <div className="flex rounded-full bg-white/[0.04] p-0.5 ring-1 ring-white/10">
+            {accounts.map((acc, i) => (
+              <button
+                key={acc.accountId}
+                onClick={() => setActiveIdx(i)}
+                className={`rounded-full px-3 py-0.5 text-xs font-bold transition ${
+                  i === clampedIdx
+                    ? 'bg-cyan-300 text-slate-950'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {acc.accountName}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {state.phase === 'loading' && (
+        <div className="mt-4 aspect-[1200/630] w-full animate-pulse rounded-lg bg-slate-950/40" />
+      )}
+      {imgUrl && (
+        <img
+          src={imgUrl}
+          alt="損益カレンダー"
+          className="mt-4 w-full rounded-lg border border-white/10"
+        />
+      )}
+
+      <p className="mt-3 text-xs leading-5 text-slate-500">
+        ※ このデータは週次〜月次で更新しています。最新の損益は実際の口座でご確認ください。
+      </p>
+    </section>
+  );
+};
+
 export const CopyTradeGuidePage = () => (
   <section className="space-y-6">
     <section className="rounded-lg border border-emerald-300/20 bg-emerald-300/10 p-5">
@@ -675,6 +811,8 @@ export const CopyTradeGuidePage = () => (
         ))}
       </div>
     </section>
+
+    <PnLShowcaseCard />
 
     <section className="rounded-lg border border-emerald-300/20 bg-slate-900/80 p-5">
       <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">

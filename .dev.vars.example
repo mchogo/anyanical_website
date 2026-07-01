@@ -1,0 +1,10 @@
+# wrangler dev picks this up automatically. Copy to .dev.vars (gitignored)
+# and fill in real values for local worker development.
+
+# Comma-separated Discord user IDs allowed to hit /api/admin/*
+ADMIN_USER_IDS=
+
+# Comma-separated accounts.id to expose publicly on GET /api/pnl/showcase
+# (used to render the "損益実績" tabs/card on the copytrade page, one tab per
+# account, in this order). Leave empty to keep that section hidden.
+SHOWCASE_ACCOUNT_IDS=

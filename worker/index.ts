@@ -2,6 +2,7 @@ interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
   ADMIN_USER_IDS?: string; // comma-separated Discord user IDs — set via wrangler secret
+  SHOWCASE_ACCOUNT_IDS?: string; // comma-separated accounts.id to expose publicly on /api/pnl/showcase — set via wrangler secret
 }
 
 interface AccountRow {
@@ -62,6 +63,82 @@ const isAdmin = (userId: string, env: Env): boolean => {
   if (!env.ADMIN_USER_IDS) return false;
   return env.ADMIN_USER_IDS.split(',').map((id) => id.trim()).includes(userId);
 };
+
+// ── GET /api/pnl/showcase (public, no auth) ─────────────────────────────────
+// Exposes only date/pnl (never `notes`) for a fixed set of admin-configured
+// accounts, for a single requested month. Defaults to the current JST month;
+// callers may look back up to 12 months via ?year=&month= (0-indexed).
+async function handleShowcase(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return json({ error: 'Not Found' }, 404);
+
+  const accountIds = (env.SHOWCASE_ACCOUNT_IDS ?? '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+  if (accountIds.length === 0) return json({ error: 'Not Found' }, 404);
+
+  const url = new URL(request.url);
+  const yearParam = url.searchParams.get('year');
+  const monthParam = url.searchParams.get('month');
+  if ((yearParam === null) !== (monthParam === null)) {
+    return json({ error: 'Bad Request' }, 400);
+  }
+
+  const nowYmd = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+  }).format(new Date());
+  const [nowYearStr, nowMonthStr] = nowYmd.split('-');
+  const nowYear = Number(nowYearStr);
+  const nowMonth = Number(nowMonthStr) - 1; // 0-indexed, matches CardOpts.month
+
+  const year = yearParam !== null ? Number(yearParam) : nowYear;
+  const month = monthParam !== null ? Number(monthParam) : nowMonth;
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 0 || month > 11) {
+    return json({ error: 'Bad Request' }, 400);
+  }
+
+  // Allow only the current month down to 12 months back — never the future,
+  // never further back than a year (this endpoint is unauthenticated).
+  const diff = nowYear * 12 + nowMonth - (year * 12 + month);
+  if (diff < 0 || diff > 12) return json({ error: 'Out of range' }, 400);
+
+  const db = env.DB;
+  const placeholders = accountIds.map(() => '?').join(',');
+  const { results: accountRows } = await db
+    .prepare(`SELECT id, name, unit FROM accounts WHERE id IN (${placeholders})`)
+    .bind(...accountIds)
+    .all<{ id: string; name: string; unit: string }>();
+  if (accountRows.length === 0) return json({ error: 'Not Found' }, 404);
+
+  // Preserve the order configured in SHOWCASE_ACCOUNT_IDS (SQL `IN` doesn't).
+  const accountsById = new Map(accountRows.map((a) => [a.id, a]));
+  const orderedAccounts = accountIds
+    .map((id) => accountsById.get(id))
+    .filter((a): a is { id: string; name: string; unit: string } => a !== undefined);
+
+  const monthStr = String(month + 1).padStart(2, '0');
+  const { results: recordRows } = await db
+    .prepare(
+      `SELECT account_id, date, pnl FROM daily_records WHERE account_id IN (${placeholders}) AND date LIKE ?`,
+    )
+    .bind(...accountIds, `${year}-${monthStr}-%`)
+    .all<{ account_id: string; date: string; pnl: number }>();
+
+  return json({
+    year,
+    month,
+    accounts: orderedAccounts.map((acc) => ({
+      accountId: acc.id,
+      accountName: acc.name,
+      unit: acc.unit,
+      records: recordRows
+        .filter((r) => r.account_id === acc.id)
+        .map((r) => ({ date: r.date, pnl: r.pnl })),
+    })),
+  });
+}
 
 async function handleApi(request: Request, env: Env): Promise<Response> {
   const userId = await verifyToken(request);
@@ -400,6 +477,9 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    if (url.pathname === '/api/pnl/showcase') {
+      return handleShowcase(request, env);
+    }
     if (url.pathname.startsWith('/api/')) {
       return handleApi(request, env);
     }
