@@ -653,6 +653,10 @@ const PnLShowcaseCard = () => {
   // image has taken its place — revoking eagerly made the <img> flash empty.
   const currentUrlRef = useRef<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  // Show the loading overlay from the moment nav is clicked (while the month
+  // refetch is in flight), not just during canvas generation — otherwise the
+  // old image sat frozen for a beat and then suddenly animated on its own.
+  const isLoading = state.phase === 'loading' || isGenerating;
 
   useEffect(() => {
     if (state.phase !== 'ready') return;
@@ -810,7 +814,7 @@ const PnLShowcaseCard = () => {
               className="mt-4 w-full rounded-lg border border-white/10"
             />
           </div>
-          {isGenerating && (
+          {isLoading && (
             <div className="absolute inset-0 mt-4 grid place-items-center rounded-lg bg-slate-950/50 backdrop-blur-[1px]">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-300 border-t-transparent" />
             </div>
