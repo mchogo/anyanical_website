@@ -636,7 +636,14 @@ const PnLShowcaseCard = () => {
   const [year, setYear] = useState(initial.year);
   const [month, setMonth] = useState(initial.month);
   const [activeIdx, setActiveIdx] = useState(0);
-  const [navDir, setNavDir] = useState<'left' | 'right' | null>(null);
+  // The nav direction is read inside the generation effect below to decide
+  // the swap animation, but must NOT be component state: if it were, clicking
+  // nav would re-render the still-old image with a new className immediately
+  // (before the new image is even ready), re-triggering the CSS animation on
+  // the stale frame. A ref lets prevMonth/nextMonth record the direction
+  // without causing that extra render.
+  const navDirRef = useRef<'left' | 'right' | null>(null);
+  const [imgAnimClass, setImgAnimClass] = useState('animate-fade-in-slow');
   const state = usePnLShowcase(year, month);
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   // Keep showing the tab list (account names don't change month to month)
@@ -685,6 +692,13 @@ const PnLShowcaseCard = () => {
       const newUrl = URL.createObjectURL(blob);
       const oldUrl = currentUrlRef.current;
       currentUrlRef.current = newUrl;
+      setImgAnimClass(
+        navDirRef.current === 'left'
+          ? 'animate-shift-in-right'
+          : navDirRef.current === 'right'
+            ? 'animate-shift-in-left'
+            : 'animate-fade-in-slow',
+      );
       setImgUrl(newUrl);
       setIsGenerating(false);
       if (oldUrl) URL.revokeObjectURL(oldUrl);
@@ -712,7 +726,7 @@ const PnLShowcaseCard = () => {
 
   const prevMonth = () => {
     if (!canGoPrev) return;
-    setNavDir('right');
+    navDirRef.current = 'right';
     if (month === 0) {
       setYear((y) => y - 1);
       setMonth(11);
@@ -722,7 +736,7 @@ const PnLShowcaseCard = () => {
   };
   const nextMonth = () => {
     if (!canGoNext) return;
-    setNavDir('left');
+    navDirRef.current = 'left';
     if (month === 11) {
       setYear((y) => y + 1);
       setMonth(0);
@@ -731,7 +745,7 @@ const PnLShowcaseCard = () => {
     }
   };
   const selectTab = (i: number) => {
-    setNavDir(null);
+    navDirRef.current = null;
     setActiveIdx(i);
   };
 
@@ -798,16 +812,7 @@ const PnLShowcaseCard = () => {
       )}
       {imgUrl && (
         <div className="relative">
-          <div
-            key={imgUrl}
-            className={
-              navDir === 'left'
-                ? 'animate-shift-in-right'
-                : navDir === 'right'
-                  ? 'animate-shift-in-left'
-                  : 'animate-fade-in-slow'
-            }
-          >
+          <div key={imgUrl} className={imgAnimClass}>
             <img
               src={imgUrl}
               alt="損益カレンダー"
