@@ -649,14 +649,15 @@ const PnLShowcaseCard = () => {
 
   const accounts = state.phase === 'ready' ? state.data.accounts : lastAccounts;
   const clampedIdx = Math.min(activeIdx, Math.max(accounts.length - 1, 0));
+  // Tracks the currently-shown blob URL so we only revoke it once the next
+  // image has taken its place — revoking eagerly made the <img> flash empty.
+  const currentUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (state.phase !== 'ready') return;
     const acc = state.data.accounts[clampedIdx];
     if (!acc) return;
-    let revoked = false;
-    let url: string | null = null;
-    setImgUrl(null);
+    let cancelled = false;
     generatePnLCard({
       stats: calcStats(acc.records),
       records: acc.records,
@@ -667,15 +668,23 @@ const PnLShowcaseCard = () => {
       year: state.data.year,
       month: state.data.month,
     }).then((blob) => {
-      if (revoked) return;
-      url = URL.createObjectURL(blob);
-      setImgUrl(url);
+      if (cancelled) return;
+      const newUrl = URL.createObjectURL(blob);
+      const oldUrl = currentUrlRef.current;
+      currentUrlRef.current = newUrl;
+      setImgUrl(newUrl);
+      if (oldUrl) URL.revokeObjectURL(oldUrl);
     });
     return () => {
-      revoked = true;
-      if (url) URL.revokeObjectURL(url);
+      cancelled = true;
     };
   }, [state, clampedIdx]);
+
+  useEffect(() => {
+    return () => {
+      if (currentUrlRef.current) URL.revokeObjectURL(currentUrlRef.current);
+    };
+  }, []);
 
   if (state.phase === 'empty' || state.phase === 'error') return null;
 
@@ -719,7 +728,15 @@ const PnLShowcaseCard = () => {
           <p className="text-sm font-semibold text-emerald-200">Live Track Record</p>
           <h3 className="mt-1 text-lg font-bold text-white">損益実績</h3>
         </div>
-        <p className="text-sm text-slate-500">損益カレンダーの実データを自動反映しています。</p>
+        <p className="text-sm text-slate-500">
+          <a
+            href="#/tools/trade-journal"
+            className="font-semibold text-cyan-300 underline decoration-dotted underline-offset-2 transition hover:text-cyan-200"
+          >
+            損益カレンダー
+          </a>
+          の実データを自動反映しています。
+        </p>
       </div>
 
       <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
@@ -767,7 +784,7 @@ const PnLShowcaseCard = () => {
       )}
       {imgUrl && (
         <div
-          key={`${year}-${month}-${clampedIdx}`}
+          key={imgUrl}
           className={
             navDir === 'left'
               ? 'animate-slide-in-right'
@@ -787,6 +804,12 @@ const PnLShowcaseCard = () => {
       <p className="mt-3 text-xs leading-5 text-slate-500">
         ※ このデータは週次〜月次で更新しています。最新の損益は実際の口座でご確認ください。
       </p>
+      <a
+        href="#/tools/trade-journal"
+        className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-cyan-300 transition hover:text-cyan-200"
+      >
+        自分の損益カレンダーを記録する →
+      </a>
     </section>
   );
 };
