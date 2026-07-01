@@ -5,7 +5,7 @@ import recommendedSettingScreen from '../assets/copytrade/recommended-setting-sc
 import cancelCountProof from '../assets/proof/cancel-count.png';
 import memberCountProof from '../assets/proof/member-count.png';
 import { EXTERNAL_LINKS } from '../config/navigation';
-import { getJstYearMonth, usePnLShowcase } from '../hooks/usePnLShowcase';
+import { getJstYearMonth, usePnLShowcase, type ShowcaseAccount } from '../hooks/usePnLShowcase';
 import { calcStats, generatePnLCard } from '../utils/pnlCard';
 
 const CountUp = ({
@@ -639,8 +639,15 @@ const PnLShowcaseCard = () => {
   const [navDir, setNavDir] = useState<'left' | 'right' | null>(null);
   const state = usePnLShowcase(year, month);
   const [imgUrl, setImgUrl] = useState<string | null>(null);
+  // Keep showing the tab list (account names don't change month to month)
+  // while a new month is loading, so the button row doesn't flash empty.
+  const [lastAccounts, setLastAccounts] = useState<ShowcaseAccount[]>([]);
 
-  const accounts = state.phase === 'ready' ? state.data.accounts : [];
+  useEffect(() => {
+    if (state.phase === 'ready') setLastAccounts(state.data.accounts);
+  }, [state]);
+
+  const accounts = state.phase === 'ready' ? state.data.accounts : lastAccounts;
   const clampedIdx = Math.min(activeIdx, Math.max(accounts.length - 1, 0));
 
   useEffect(() => {
