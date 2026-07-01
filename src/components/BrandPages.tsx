@@ -660,16 +660,23 @@ const PnLShowcaseCard = () => {
     if (!acc) return;
     let cancelled = false;
     setIsGenerating(true);
-    generatePnLCard({
-      stats: calcStats(acc.records),
-      records: acc.records,
-      periodLabel: `${state.data.year}年${state.data.month + 1}月`,
-      unit: acc.unit,
-      accountName: acc.accountName,
-      viewMode: 'month',
-      year: state.data.year,
-      month: state.data.month,
-    }).then((blob) => {
+    // Canvas generation is near-instant, which made the loading spinner and
+    // the swap animation both flash by unnoticed. Pad with a minimum delay
+    // so the transition actually reads as motion.
+    const MIN_GENERATE_MS = 300;
+    Promise.all([
+      generatePnLCard({
+        stats: calcStats(acc.records),
+        records: acc.records,
+        periodLabel: `${state.data.year}年${state.data.month + 1}月`,
+        unit: acc.unit,
+        accountName: acc.accountName,
+        viewMode: 'month',
+        year: state.data.year,
+        month: state.data.month,
+      }),
+      new Promise((resolve) => setTimeout(resolve, MIN_GENERATE_MS)),
+    ]).then(([blob]) => {
       if (cancelled) return;
       const newUrl = URL.createObjectURL(blob);
       const oldUrl = currentUrlRef.current;
@@ -794,7 +801,7 @@ const PnLShowcaseCard = () => {
                 ? 'animate-shift-in-right'
                 : navDir === 'right'
                   ? 'animate-shift-in-left'
-                  : 'animate-fade-in'
+                  : 'animate-fade-in-slow'
             }
           >
             <img

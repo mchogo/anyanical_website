@@ -36,11 +36,11 @@ export default {
           to: { opacity: '1', transform: 'translateX(0)' },
         },
         shiftInFromRight: {
-          from: { transform: 'translateX(16px)' },
+          from: { transform: 'translateX(28px)' },
           to: { transform: 'translateX(0)' },
         },
         shiftInFromLeft: {
-          from: { transform: 'translateX(-16px)' },
+          from: { transform: 'translateX(-28px)' },
           to: { transform: 'translateX(0)' },
         },
       },
@@ -53,8 +53,11 @@ export default {
         'slide-in-left': 'slideInFromLeft 220ms cubic-bezier(0.16,1,0.3,1) both',
         // Position-only (no opacity fade) variants — for swapping an <img>
         // in place without the old/new frame ever going semi-transparent.
-        'shift-in-right': 'shiftInFromRight 200ms cubic-bezier(0.16,1,0.3,1) both',
-        'shift-in-left': 'shiftInFromLeft 200ms cubic-bezier(0.16,1,0.3,1) both',
+        // Slower + a longer travel distance than the other nav animations so
+        // it actually reads as motion on a large 1200x630 card.
+        'shift-in-right': 'shiftInFromRight 420ms cubic-bezier(0.16,1,0.3,1) both',
+        'shift-in-left': 'shiftInFromLeft 420ms cubic-bezier(0.16,1,0.3,1) both',
+        'fade-in-slow': 'fadeIn 350ms ease both',
       },
     },
   },
