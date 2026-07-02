@@ -120,6 +120,8 @@ const toolPageIds: ToolPageId[] = [
   'member-dashboard',
   'daily-mission',
   'gap-prediction',
+  'highlow-sprint',
+  'candle-swipe',
 ];
 
 const categoryPageIds: CategoryPageId[] = ['market', 'games', 'ea-copytrade', 'premium'];
