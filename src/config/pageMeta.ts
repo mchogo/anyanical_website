@@ -95,6 +95,14 @@ export const ROUTE_META: Record<string, PageMeta> = {
     t('ギャップ予想'),
     '日曜のギャップ方向を予想してコミュニティで競うイベント。過去の的中率も確認できます。',
   ),
+  'tools/highlow-sprint': s(
+    t('60セカンズ・ハイロー'),
+    'BTC・GOLDのリアルタイム価格が60秒後に上がるか下がるかを予想するミニゲーム。連勝でスコア倍率アップ。',
+  ),
+  'tools/candle-swipe': s(
+    t('ローソク足スワイプ道場'),
+    '実際の過去チャートの続きを右・左スワイプで即断するトレーニングゲーム。連続正解でハイスコアを狙えます。',
+  ),
 };
 
 export const DEFAULT_META: PageMeta = ROUTE_META[''];

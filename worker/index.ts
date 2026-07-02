@@ -41,6 +41,21 @@ interface QuizResultRow {
   created_at: string;
 }
 
+interface GameScoreRow {
+  id: string;
+  discord_user_id: string;
+  game: string;
+  score: number;
+  best_streak: number;
+  meta_json: string | null;
+  created_at: string;
+}
+
+const VALID_GAMES = ['highlow', 'candle_swipe'] as const;
+type GameId = (typeof VALID_GAMES)[number];
+const isValidGame = (value: unknown): value is GameId =>
+  typeof value === 'string' && (VALID_GAMES as readonly string[]).includes(value);
+
 const json = (data: unknown, status = 200): Response => Response.json(data, { status });
 
 async function verifyToken(request: Request): Promise<string | null> {
@@ -61,7 +76,9 @@ async function verifyToken(request: Request): Promise<string | null> {
 
 const isAdmin = (userId: string, env: Env): boolean => {
   if (!env.ADMIN_USER_IDS) return false;
-  return env.ADMIN_USER_IDS.split(',').map((id) => id.trim()).includes(userId);
+  return env.ADMIN_USER_IDS.split(',')
+    .map((id) => id.trim())
+    .includes(userId);
 };
 
 // ── GET /api/pnl/showcase (public, no auth) ─────────────────────────────────
@@ -153,11 +170,18 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   // ── GET /api/pnl/accounts ────────────────────────────────────────────────
   if (apiPath === 'pnl/accounts' && method === 'GET') {
     const { results } = await db
-      .prepare('SELECT id, name, unit, created_at FROM accounts WHERE discord_user_id = ?')
+      .prepare(
+        'SELECT id, name, unit, created_at FROM accounts WHERE discord_user_id = ?',
+      )
       .bind(userId)
       .all<AccountRow>();
     return json(
-      results.map((r) => ({ id: r.id, name: r.name, unit: r.unit, createdAt: r.created_at })),
+      results.map((r) => ({
+        id: r.id,
+        name: r.name,
+        unit: r.unit,
+        createdAt: r.created_at,
+      })),
     );
   }
 
@@ -175,11 +199,18 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       )
       .bind(body.id, userId, body.name.trim(), body.unit.trim(), body.createdAt)
       .run();
-    return json({ id: body.id, name: body.name, unit: body.unit, createdAt: body.createdAt }, 201);
+    return json(
+      { id: body.id, name: body.name, unit: body.unit, createdAt: body.createdAt },
+      201,
+    );
   }
 
   // ── PATCH /api/pnl/accounts/:id ─────────────────────────────────────────
-  if (apiPath.startsWith('pnl/accounts/') && method === 'PATCH' && segments.length === 3) {
+  if (
+    apiPath.startsWith('pnl/accounts/') &&
+    method === 'PATCH' &&
+    segments.length === 3
+  ) {
     const accountId = segments[2];
     const body = (await request.json()) as { unit?: string; name?: string };
     const row = await db
@@ -189,11 +220,19 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     if (!row) return json({ error: 'Not Found' }, 404);
     const setParts: string[] = [];
     const binds: string[] = [];
-    if (body.name !== undefined) { setParts.push('name = ?'); binds.push(body.name.trim()); }
-    if (body.unit !== undefined) { setParts.push('unit = ?'); binds.push(body.unit.trim()); }
+    if (body.name !== undefined) {
+      setParts.push('name = ?');
+      binds.push(body.name.trim());
+    }
+    if (body.unit !== undefined) {
+      setParts.push('unit = ?');
+      binds.push(body.unit.trim());
+    }
     if (setParts.length > 0) {
       await db
-        .prepare(`UPDATE accounts SET ${setParts.join(', ')} WHERE id = ? AND discord_user_id = ?`)
+        .prepare(
+          `UPDATE accounts SET ${setParts.join(', ')} WHERE id = ? AND discord_user_id = ?`,
+        )
         .bind(...binds, accountId, userId)
         .run();
     }
@@ -259,7 +298,13 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       )
       .bind(id, body.accountId, userId, body.date, body.pnl, notes)
       .run();
-    return json({ id, accountId: body.accountId, date: body.date, pnl: body.pnl, notes: notes ?? undefined });
+    return json({
+      id,
+      accountId: body.accountId,
+      date: body.date,
+      pnl: body.pnl,
+      notes: notes ?? undefined,
+    });
   }
 
   // ── GET /api/favorites ──────────────────────────────────────────────────
@@ -275,7 +320,9 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   // ── PUT /api/favorites ──────────────────────────────────────────────────
   if (apiPath === 'favorites' && method === 'PUT') {
     const body = (await request.json()) as { favorites: unknown };
-    const list = Array.isArray(body.favorites) ? (body.favorites as string[]).slice(0, 30) : [];
+    const list = Array.isArray(body.favorites)
+      ? (body.favorites as string[]).slice(0, 30)
+      : [];
     const favJson = JSON.stringify(list);
     await db
       .prepare(
@@ -288,7 +335,11 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   }
 
   // ── DELETE /api/pnl/records/:accountId/:date ─────────────────────────────
-  if (apiPath.startsWith('pnl/records/') && method === 'DELETE' && segments.length === 4) {
+  if (
+    apiPath.startsWith('pnl/records/') &&
+    method === 'DELETE' &&
+    segments.length === 4
+  ) {
     const accountId = segments[2];
     const date = segments[3];
     await db
@@ -310,8 +361,13 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       .all<GapPredictionRow>();
     return json(
       results.map((r) => ({
-        id: r.id, weekKey: r.week_key, symbol: r.symbol,
-        direction: r.direction, confidence: r.confidence, note: r.note, createdAt: r.created_at,
+        id: r.id,
+        weekKey: r.week_key,
+        symbol: r.symbol,
+        direction: r.direction,
+        confidence: r.confidence,
+        note: r.note,
+        createdAt: r.created_at,
       })),
     );
   }
@@ -320,7 +376,10 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   if (apiPath === 'gap-predictions' && method === 'PUT') {
     const body = (await request.json()) as { predictions: GapPredictionRow[] };
     const list = Array.isArray(body.predictions) ? body.predictions.slice(0, 200) : [];
-    await db.prepare('DELETE FROM gap_predictions WHERE discord_user_id = ?').bind(userId).run();
+    await db
+      .prepare('DELETE FROM gap_predictions WHERE discord_user_id = ?')
+      .bind(userId)
+      .run();
     if (list.length > 0) {
       await db.batch(
         list.map((p) =>
@@ -328,7 +387,16 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
             .prepare(
               'INSERT INTO gap_predictions (id, discord_user_id, week_key, symbol, direction, confidence, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
             )
-            .bind(p.id ?? crypto.randomUUID(), userId, p.weekKey ?? p.week_key, p.symbol, p.direction, p.confidence, p.note ?? '', p.createdAt ?? p.created_at),
+            .bind(
+              p.id ?? crypto.randomUUID(),
+              userId,
+              p.weekKey ?? p.week_key,
+              p.symbol,
+              p.direction,
+              p.confidence,
+              p.note ?? '',
+              p.createdAt ?? p.created_at,
+            ),
         ),
       );
     }
@@ -345,7 +413,8 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       .all<QuizResultRow>();
     return json(
       results.map((r) => ({
-        id: r.id, typeCode: r.type_code,
+        id: r.id,
+        typeCode: r.type_code,
         answers: r.answers_json ? (JSON.parse(r.answers_json) as unknown) : {},
         createdAt: r.created_at,
       })),
@@ -355,15 +424,127 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   // ── POST /api/quiz-results ───────────────────────────────────────────────
   if (apiPath === 'quiz-results' && method === 'POST') {
     const body = (await request.json()) as {
-      id: string; typeCode: string; answers?: Record<string, string>; createdAt: string;
+      id: string;
+      typeCode: string;
+      answers?: Record<string, string>;
+      createdAt: string;
     };
     await db
       .prepare(
         'INSERT OR IGNORE INTO quiz_results (id, discord_user_id, type_code, answers_json, created_at) VALUES (?, ?, ?, ?, ?)',
       )
-      .bind(body.id, userId, body.typeCode, body.answers ? JSON.stringify(body.answers) : null, body.createdAt)
+      .bind(
+        body.id,
+        userId,
+        body.typeCode,
+        body.answers ? JSON.stringify(body.answers) : null,
+        body.createdAt,
+      )
       .run();
     return json({ ok: true }, 201);
+  }
+
+  // ── GET /api/games/scores?game=highlow ───────────────────────────────────
+  if (apiPath === 'games/scores' && method === 'GET') {
+    const game = new URL(request.url).searchParams.get('game');
+    if (!isValidGame(game)) return json({ error: 'Bad Request' }, 400);
+    const [bestRes, recentRes] = await db.batch([
+      db
+        .prepare(
+          'SELECT MAX(score) AS best_score, MAX(best_streak) AS best_streak FROM game_scores WHERE discord_user_id = ? AND game = ?',
+        )
+        .bind(userId, game),
+      db
+        .prepare(
+          'SELECT id, score, best_streak, meta_json, created_at FROM game_scores WHERE discord_user_id = ? AND game = ? ORDER BY created_at DESC LIMIT 10',
+        )
+        .bind(userId, game),
+    ]);
+    const best = bestRes.results[0] as {
+      best_score: number | null;
+      best_streak: number | null;
+    };
+    return json({
+      bestScore: best?.best_score ?? 0,
+      bestStreak: best?.best_streak ?? 0,
+      recent: (recentRes.results as GameScoreRow[]).map((r) => ({
+        id: r.id,
+        score: r.score,
+        bestStreak: r.best_streak,
+        meta: r.meta_json ? (JSON.parse(r.meta_json) as unknown) : undefined,
+        createdAt: r.created_at,
+      })),
+    });
+  }
+
+  // ── POST /api/games/scores ───────────────────────────────────────────────
+  if (apiPath === 'games/scores' && method === 'POST') {
+    const body = (await request.json()) as {
+      game: unknown;
+      score: unknown;
+      bestStreak?: unknown;
+      meta?: unknown;
+    };
+    if (!isValidGame(body.game)) return json({ error: 'Bad Request' }, 400);
+    const score = Number(body.score);
+    const bestStreak = Number(body.bestStreak ?? 0);
+    if (
+      !Number.isInteger(score) ||
+      score < 0 ||
+      score > 1_000_000_000 ||
+      !Number.isInteger(bestStreak) ||
+      bestStreak < 0 ||
+      bestStreak > 1_000_000
+    ) {
+      return json({ error: 'Bad Request' }, 400);
+    }
+    const metaJson = body.meta !== undefined ? JSON.stringify(body.meta) : null;
+    if (metaJson !== null && metaJson.length > 2000)
+      return json({ error: 'Bad Request' }, 400);
+    const id = crypto.randomUUID();
+    const createdAt = new Date().toISOString();
+    // discord_user_id は必ずトークン由来の userId を使う（ボディからは受け取らない）
+    await db
+      .prepare(
+        'INSERT INTO game_scores (id, discord_user_id, game, score, best_streak, meta_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      )
+      .bind(id, userId, body.game, score, bestStreak, metaJson, createdAt)
+      .run();
+    return json({ id, score, bestStreak, createdAt }, 201);
+  }
+
+  // ── GET /api/games/leaderboard?game=highlow&limit=10 ─────────────────────
+  if (apiPath === 'games/leaderboard' && method === 'GET') {
+    const url = new URL(request.url);
+    const game = url.searchParams.get('game');
+    if (!isValidGame(game)) return json({ error: 'Bad Request' }, 400);
+    const limitParam = Number(url.searchParams.get('limit') ?? 10);
+    const limit = Number.isInteger(limitParam)
+      ? Math.min(Math.max(limitParam, 1), 50)
+      : 10;
+    const { results } = await db
+      .prepare(
+        `SELECT discord_user_id, MAX(score) AS best_score, MAX(best_streak) AS best_streak, MAX(created_at) AS last_played
+         FROM game_scores WHERE game = ? GROUP BY discord_user_id ORDER BY best_score DESC LIMIT ?`,
+      )
+      .bind(game, limit)
+      .all<{
+        discord_user_id: string;
+        best_score: number;
+        best_streak: number;
+        last_played: string;
+      }>();
+    return json(
+      results.map((r, i) => ({
+        rank: i + 1,
+        // プライバシー配慮: IDは末尾4桁のみ返す（本人判定用にisMeを付与）
+        userTag: `****${r.discord_user_id.slice(-4)}`,
+        isMe: r.discord_user_id === userId,
+        bestScore: r.best_score,
+        bestStreak: r.best_streak,
+        lastPlayed: r.last_played,
+      })),
+    );
   }
 
   // ── GET /api/admin/overview ─────────────────────────────────────────────
@@ -423,8 +604,13 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       .all<GapPredictionRow>();
     return json(
       results.map((r) => ({
-        discordUserId: r.discord_user_id, weekKey: r.week_key, symbol: r.symbol,
-        direction: r.direction, confidence: r.confidence, note: r.note, createdAt: r.created_at,
+        discordUserId: r.discord_user_id,
+        weekKey: r.week_key,
+        symbol: r.symbol,
+        direction: r.direction,
+        confidence: r.confidence,
+        note: r.note,
+        createdAt: r.created_at,
       })),
     );
   }
@@ -438,7 +624,11 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       )
       .all<{ discord_user_id: string; type_code: string; created_at: string }>();
     return json(
-      results.map((r) => ({ discordUserId: r.discord_user_id, typeCode: r.type_code, createdAt: r.created_at })),
+      results.map((r) => ({
+        discordUserId: r.discord_user_id,
+        typeCode: r.type_code,
+        createdAt: r.created_at,
+      })),
     );
   }
 
@@ -447,7 +637,11 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     if (!isAdmin(userId, env)) return json({ error: 'Forbidden' }, 403);
     const targetId = segments[2];
     const [accountsRes, recordsRes] = await db.batch([
-      db.prepare('SELECT id, name, unit, created_at FROM accounts WHERE discord_user_id = ?').bind(targetId),
+      db
+        .prepare(
+          'SELECT id, name, unit, created_at FROM accounts WHERE discord_user_id = ?',
+        )
+        .bind(targetId),
       db
         .prepare(
           'SELECT id, account_id, date, pnl, notes FROM daily_records WHERE discord_user_id = ? ORDER BY date DESC',

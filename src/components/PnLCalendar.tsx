@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { SITE_URL } from '../config/pageMeta';
 import { useDiscordAuth } from '../hooks/useDiscordAuth';
 import { usePnLCalendar, type Account, type DailyRecord } from '../hooks/usePnLCalendar';
+import { badgeTier, evaluateBadges, type PnLBadge } from '../utils/pnlBadges';
 import {
   buildCalendarDays,
   calcStats,
@@ -12,6 +13,65 @@ import {
 } from '../utils/pnlCard';
 
 const TRADE_JOURNAL_URL = `${SITE_URL}/#/tools/trade-journal`;
+
+// ── Achievement badges ────────────────────────────────────────────────────────
+
+const tierLabels = { gold: 'GOLD', silver: 'SILVER', none: null } as const;
+
+const BadgeShelf = ({ badges }: { badges: PnLBadge[] }) => {
+  const achievedCount = badges.filter((b) => b.achieved).length;
+  const tier = badgeTier(badges);
+  const tierLabel = tierLabels[tier];
+  return (
+    <div className="mb-4 rounded-lg border border-white/10 bg-white/[0.02] p-4">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="text-xs font-bold tracking-wider text-slate-400">
+          実績バッジ{' '}
+          <span className="text-slate-500">
+            {achievedCount}/{badges.length}
+          </span>
+        </p>
+        {tierLabel && (
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-widest ${
+              tier === 'gold'
+                ? 'bg-amber-300/15 text-amber-300 ring-1 ring-amber-300/40'
+                : 'bg-slate-300/10 text-slate-300 ring-1 ring-slate-300/30'
+            }`}
+          >
+            {tierLabel}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {badges.map((badge) => (
+          <span
+            key={badge.id}
+            title={badge.description}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs transition ${
+              badge.achieved
+                ? 'bg-amber-300/10 font-bold text-amber-200 ring-1 ring-amber-300/30'
+                : 'bg-white/[0.03] text-slate-600 ring-1 ring-white/[0.06]'
+            }`}
+          >
+            <span className={badge.achieved ? '' : 'grayscale opacity-50'}>
+              {badge.emoji}
+            </span>
+            {badge.label}
+            {!badge.achieved && badge.progress && (
+              <span className="text-[10px] text-slate-700">{badge.progress}</span>
+            )}
+          </span>
+        ))}
+      </div>
+      {tier === 'gold' && (
+        <p className="mt-2 text-[11px] text-amber-200/60">
+          ゴールド達成中はシェア画像にプレミアムエフェクトが付きます
+        </p>
+      )}
+    </div>
+  );
+};
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -107,20 +167,35 @@ type Mt4ColumnMap = {
   commissionIdx: number;
 };
 
-const TRADE_TYPES = new Set(['buy', 'sell', 'buy limit', 'sell limit', 'buy stop', 'sell stop']);
+const TRADE_TYPES = new Set([
+  'buy',
+  'sell',
+  'buy limit',
+  'sell limit',
+  'buy stop',
+  'sell stop',
+]);
 
-const normHeader = (s: string) => s.toLowerCase().replace(/[\s_.()（）【】\[\]\/]/g, '');
+const normHeader = (s: string) => s.toLowerCase().replace(/[\s_.()（）【】[\]/]/g, '');
 
 const detectMt4Columns = (headers: string[]): Mt4ColumnMap | null => {
   const n = headers.map(normHeader);
 
   // Profit column is the anchor — if missing, not a trade history sheet
-  const profitIdx = n.findIndex((h) => h === 'profit' || h === '損益' || h.endsWith('profit'));
+  const profitIdx = n.findIndex(
+    (h) => h === 'profit' || h === '損益' || h.endsWith('profit'),
+  );
   if (profitIdx === -1) return null;
 
   // Close time: use LAST occurrence of a "time" column (open time comes first)
   const timeIndices = n.reduce<number[]>((acc, h, i) => {
-    if (h.includes('time') || h === '時間' || h.includes('closetime') || h.includes('決済時刻')) acc.push(i);
+    if (
+      h.includes('time') ||
+      h === '時間' ||
+      h.includes('closetime') ||
+      h.includes('決済時刻')
+    )
+      acc.push(i);
     return acc;
   }, []);
   const closeTimeIdx = timeIndices.length > 0 ? timeIndices[timeIndices.length - 1] : -1;
@@ -128,7 +203,9 @@ const detectMt4Columns = (headers: string[]): Mt4ColumnMap | null => {
 
   const typeIdx = n.findIndex((h) => h === 'type' || h === 'タイプ');
   const swapIdx = n.findIndex((h) => h.includes('swap') || h.includes('スワップ'));
-  const commissionIdx = n.findIndex((h) => h.includes('commission') || h.includes('手数料'));
+  const commissionIdx = n.findIndex(
+    (h) => h.includes('commission') || h.includes('手数料'),
+  );
 
   return { closeTimeIdx, typeIdx, profitIdx, swapIdx, commissionIdx };
 };
@@ -141,7 +218,11 @@ const detectCurrency = (text: string): string | undefined => {
   return code && KNOWN_CURRENCIES.includes(code) ? code : undefined;
 };
 
-type ParseResult = { dailyPnls: Map<string, number>; currency?: string; dailyNotes?: Map<string, string> };
+type ParseResult = {
+  dailyPnls: Map<string, number>;
+  currency?: string;
+  dailyNotes?: Map<string, string>;
+};
 
 const aggregateRows = (allRows: string[][]): Map<string, number> => {
   const byDate = new Map<string, number>();
@@ -151,7 +232,11 @@ const aggregateRows = (allRows: string[][]): Map<string, number> => {
   let dataStart = -1;
   for (let i = 0; i < Math.min(allRows.length, 20); i++) {
     const cols = detectMt4Columns(allRows[i]);
-    if (cols) { columns = cols; dataStart = i + 1; break; }
+    if (cols) {
+      columns = cols;
+      dataStart = i + 1;
+      break;
+    }
   }
   if (!columns || dataStart === -1) return byDate;
 
@@ -163,21 +248,30 @@ const aggregateRows = (allRows: string[][]): Map<string, number> => {
   for (let i = dataStart; i < Math.min(dataStart + 20, allRows.length); i++) {
     const row = allRows[i];
     if (!row || row.length === 0) continue;
-    if (typeIdx !== -1 && !TRADE_TYPES.has((row[typeIdx] ?? '').toLowerCase().trim())) continue;
-    if (parseMt4DateToYmd(row[columns.closeTimeIdx] ?? '')) { colAdjust = 0; break; }
-    if (parseMt4DateToYmd(row[columns.closeTimeIdx + 1] ?? '')) { colAdjust = 1; break; }
+    if (typeIdx !== -1 && !TRADE_TYPES.has((row[typeIdx] ?? '').toLowerCase().trim()))
+      continue;
+    if (parseMt4DateToYmd(row[columns.closeTimeIdx] ?? '')) {
+      colAdjust = 0;
+      break;
+    }
+    if (parseMt4DateToYmd(row[columns.closeTimeIdx + 1] ?? '')) {
+      colAdjust = 1;
+      break;
+    }
     break;
   }
 
   const closeTimeIdx = columns.closeTimeIdx + colAdjust;
   const profitIdx = columns.profitIdx + colAdjust;
   const swapIdx = columns.swapIdx !== -1 ? columns.swapIdx + colAdjust : -1;
-  const commissionIdx = columns.commissionIdx !== -1 ? columns.commissionIdx + colAdjust : -1;
+  const commissionIdx =
+    columns.commissionIdx !== -1 ? columns.commissionIdx + colAdjust : -1;
 
   for (let i = dataStart; i < allRows.length; i++) {
     const cells = allRows[i];
     if (!cells || cells.length <= profitIdx) continue;
-    if (typeIdx !== -1 && !TRADE_TYPES.has((cells[typeIdx] ?? '').toLowerCase().trim())) continue;
+    if (typeIdx !== -1 && !TRADE_TYPES.has((cells[typeIdx] ?? '').toLowerCase().trim()))
+      continue;
 
     const date = parseMt4DateToYmd(cells[closeTimeIdx] ?? '');
     if (!date) continue;
@@ -186,7 +280,8 @@ const aggregateRows = (allRows: string[][]): Map<string, number> => {
     if (profit === null) continue;
 
     const swap = swapIdx !== -1 ? (parseNumber(cells[swapIdx]) ?? 0) : 0;
-    const commission = commissionIdx !== -1 ? (parseNumber(cells[commissionIdx]) ?? 0) : 0;
+    const commission =
+      commissionIdx !== -1 ? (parseNumber(cells[commissionIdx]) ?? 0) : 0;
 
     byDate.set(date, (byDate.get(date) ?? 0) + profit + swap + commission);
   }
@@ -204,11 +299,15 @@ const decodeHtmlBuffer = (buf: ArrayBuffer): string => {
 const parseMt4Html = (html: string): ParseResult => {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const rows = Array.from(doc.querySelectorAll('tr')).map((row) =>
-    Array.from(row.querySelectorAll('td, th')).map((cell) => cell.textContent?.trim() ?? ''),
+    Array.from(row.querySelectorAll('td, th')).map(
+      (cell) => cell.textContent?.trim() ?? '',
+    ),
   );
-  return { dailyPnls: aggregateRows(rows), currency: detectCurrency(doc.body.textContent ?? '') };
+  return {
+    dailyPnls: aggregateRows(rows),
+    currency: detectCurrency(doc.body.textContent ?? ''),
+  };
 };
-
 
 const parseTradeCsv = (text: string): ParseResult => {
   const lines = text
@@ -233,7 +332,14 @@ const parseTradeCsv = (text: string): ParseResult => {
   const profitIndex = findColumn(headers, ['profit', '損益']);
   const swapIndex = findColumn(headers, ['swap', 'スワップ']);
   const commissionIndex = findColumn(headers, ['commission', '手数料']);
-  const notesIndex = findColumn(headers, ['memo', 'notes', 'note', 'メモ', '備考', 'コメント']);
+  const notesIndex = findColumn(headers, [
+    'memo',
+    'notes',
+    'note',
+    'メモ',
+    '備考',
+    'コメント',
+  ]);
 
   if (closeTimeIndex === -1 || profitIndex === -1) return { dailyPnls: new Map() };
 
@@ -331,37 +437,39 @@ const PremiumUpsellModal = ({ onClose }: { onClose: () => void }) => {
   }, [closing, onClose]);
   const close = () => setClosing(true);
   return (
-  <div
-    className={`fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}
-    onClick={close}
-  >
     <div
-      className={`w-full max-w-md rounded-lg border border-amber-300/30 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)] ${closing ? 'animate-slide-down' : 'animate-slide-up'}`}
-      onClick={(e) => e.stopPropagation()}
+      className={`fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}
+      onClick={close}
     >
-      <p className="text-sm font-semibold text-amber-100">Premium feature</p>
-      <h3 className="mt-1 text-xl font-bold text-white">複数口座はプレミアム限定です</h3>
-      <p className="mt-3 text-sm leading-6 text-slate-400">
-        Discordログインのみでも1口座の損益カレンダーは使えます。複数口座、全口座合計、より細かい運用管理はプレミアムで解放されます。
-      </p>
-      <div className="mt-5 flex flex-wrap gap-2">
-        <a
-          href="#/tools/participation"
-          onClick={close}
-          className="inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
-        >
-          プレミアム内容を見る
-        </a>
-        <button
-          type="button"
-          onClick={close}
-          className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
-        >
-          閉じる
-        </button>
+      <div
+        className={`w-full max-w-md rounded-lg border border-amber-300/30 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)] ${closing ? 'animate-slide-down' : 'animate-slide-up'}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="text-sm font-semibold text-amber-100">Premium feature</p>
+        <h3 className="mt-1 text-xl font-bold text-white">
+          複数口座はプレミアム限定です
+        </h3>
+        <p className="mt-3 text-sm leading-6 text-slate-400">
+          Discordログインのみでも1口座の損益カレンダーは使えます。複数口座、全口座合計、より細かい運用管理はプレミアムで解放されます。
+        </p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <a
+            href="#/tools/participation"
+            onClick={close}
+            className="inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
+          >
+            プレミアム内容を見る
+          </a>
+          <button
+            type="button"
+            onClick={close}
+            className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+          >
+            閉じる
+          </button>
+        </div>
       </div>
     </div>
-  </div>
   );
 };
 
@@ -388,8 +496,14 @@ const AccountForm = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) { setError('口座名を入力してください'); return; }
-    if (!unit.trim()) { setError('単位を入力してください'); return; }
+    if (!name.trim()) {
+      setError('口座名を入力してください');
+      return;
+    }
+    if (!unit.trim()) {
+      setError('単位を入力してください');
+      return;
+    }
     onSubmit(name.trim(), unit.trim());
   };
 
@@ -460,93 +574,139 @@ const ImportGuideModal = ({ onClose }: { onClose: () => void }) => {
   }, [closing, onClose]);
   const close = () => setClosing(true);
   return (
-  <div
-    className={`fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}
-    onClick={close}
-  >
     <div
-      className={`w-full max-w-lg rounded-xl border border-white/10 bg-slate-900 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.6)] ${closing ? 'animate-slide-down' : 'animate-slide-up'}`}
-      onClick={(e) => e.stopPropagation()}
+      className={`fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}
+      onClick={close}
     >
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <h3 className="text-base font-bold text-white">MT4 / MT5 履歴の取り込み方法</h3>
+      <div
+        className={`w-full max-w-lg rounded-xl border border-white/10 bg-slate-900 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.6)] ${closing ? 'animate-slide-down' : 'animate-slide-up'}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <h3 className="text-base font-bold text-white">MT4 / MT5 履歴の取り込み方法</h3>
+          <button
+            onClick={close}
+            className="shrink-0 text-slate-500 transition hover:text-white"
+            aria-label="閉じる"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-5 text-sm">
+          {/* MT4 */}
+          <div>
+            <p className="mb-2 font-bold text-cyan-300">MT4 の場合</p>
+            <ol className="space-y-1.5 text-slate-300">
+              <li className="flex gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                  1
+                </span>
+                <span>
+                  MT4 を開き、上部メニューの{' '}
+                  <strong className="text-white">「表示」→「ターミナル」</strong> を開く
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                  2
+                </span>
+                <span>
+                  ターミナル内の <strong className="text-white">「口座履歴」</strong>{' '}
+                  タブを選択
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                  3
+                </span>
+                <span>期間を右クリック →「すべての履歴」など期間を選択</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                  4
+                </span>
+                <span>
+                  再度右クリック →{' '}
+                  <strong className="text-white">
+                    「詳細な履歴のHTMLレポートを保存」
+                  </strong>{' '}
+                  をクリック
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                  5
+                </span>
+                <span>
+                  保存した <strong className="text-white">.htm ファイル</strong>{' '}
+                  をここで選択
+                </span>
+              </li>
+            </ol>
+          </div>
+
+          <div className="border-t border-white/10" />
+
+          {/* MT5 */}
+          <div>
+            <p className="mb-2 font-bold text-cyan-300">MT5 の場合</p>
+            <ol className="space-y-1.5 text-slate-300">
+              <li className="flex gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                  1
+                </span>
+                <span>
+                  MT5 を開き、
+                  <strong className="text-white">「表示」→「ツールボックス」</strong>
+                  （または Ctrl+T）を開く
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                  2
+                </span>
+                <span>
+                  <strong className="text-white">「履歴」</strong>{' '}
+                  タブを選択し、期間を設定
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                  3
+                </span>
+                <span>
+                  右クリック →{' '}
+                  <strong className="text-white">「レポート」→「HTML形式で保存」</strong>
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                  4
+                </span>
+                <span>
+                  保存した <strong className="text-white">.html ファイル</strong>{' '}
+                  をここで選択
+                </span>
+              </li>
+            </ol>
+          </div>
+
+          <div className="border-t border-white/10" />
+
+          <p className="text-xs text-slate-500">
+            XLSX形式は非対応です。HTML形式のみ対応しています。CSVはMT4/MT5の「CSVとして保存」でも取り込めます。
+          </p>
+        </div>
+
         <button
           onClick={close}
-          className="shrink-0 text-slate-500 transition hover:text-white"
-          aria-label="閉じる"
+          className="mt-5 inline-flex min-h-9 w-full items-center justify-center rounded-full bg-white/[0.06] text-sm font-bold text-slate-300 transition hover:bg-white/10"
         >
-          ✕
+          閉じる
         </button>
       </div>
-
-      <div className="space-y-5 text-sm">
-        {/* MT4 */}
-        <div>
-          <p className="mb-2 font-bold text-cyan-300">MT4 の場合</p>
-          <ol className="space-y-1.5 text-slate-300">
-            <li className="flex gap-2">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">1</span>
-              <span>MT4 を開き、上部メニューの <strong className="text-white">「表示」→「ターミナル」</strong> を開く</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">2</span>
-              <span>ターミナル内の <strong className="text-white">「口座履歴」</strong> タブを選択</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">3</span>
-              <span>期間を右クリック →「すべての履歴」など期間を選択</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">4</span>
-              <span>再度右クリック → <strong className="text-white">「詳細な履歴のHTMLレポートを保存」</strong> をクリック</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">5</span>
-              <span>保存した <strong className="text-white">.htm ファイル</strong> をここで選択</span>
-            </li>
-          </ol>
-        </div>
-
-        <div className="border-t border-white/10" />
-
-        {/* MT5 */}
-        <div>
-          <p className="mb-2 font-bold text-cyan-300">MT5 の場合</p>
-          <ol className="space-y-1.5 text-slate-300">
-            <li className="flex gap-2">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">1</span>
-              <span>MT5 を開き、<strong className="text-white">「表示」→「ツールボックス」</strong>（または Ctrl+T）を開く</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">2</span>
-              <span><strong className="text-white">「履歴」</strong> タブを選択し、期間を設定</span>
-            </li>
-            <li className="flex gap-2">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">3</span>
-              <span>右クリック → <strong className="text-white">「レポート」→「HTML形式で保存」</strong></span>
-            </li>
-            <li className="flex gap-2">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">4</span>
-              <span>保存した <strong className="text-white">.html ファイル</strong> をここで選択</span>
-            </li>
-          </ol>
-        </div>
-
-        <div className="border-t border-white/10" />
-
-        <p className="text-xs text-slate-500">
-          XLSX形式は非対応です。HTML形式のみ対応しています。CSVはMT4/MT5の「CSVとして保存」でも取り込めます。
-        </p>
-      </div>
-
-      <button
-        onClick={close}
-        className="mt-5 inline-flex min-h-9 w-full items-center justify-center rounded-full bg-white/[0.06] text-sm font-bold text-slate-300 transition hover:bg-white/10"
-      >
-        閉じる
-      </button>
     </div>
-  </div>
   );
 };
 
@@ -576,7 +736,9 @@ const CsvImportPanel = ({
         setMessage({ text: '取り込み対象が見つかりませんでした。', ok: false });
         return;
       }
-      const overlapping = Array.from(dailyPnls.keys()).filter((d) => existingDates.has(d));
+      const overlapping = Array.from(dailyPnls.keys()).filter((d) =>
+        existingDates.has(d),
+      );
       if (overlapping.length > 0) {
         const proceed = window.confirm(
           `${overlapping.length}日分のデータが既に登録されています。上書きしますか？`,
@@ -586,15 +748,20 @@ const CsvImportPanel = ({
       onImport(dailyPnls, dailyNotes);
       if (currency) onUpdateUnit?.(currency);
       const suffix = currency ? `（${currency}口座として認識）` : '';
-      setMessage({ text: `${dailyPnls.size}日分の損益を取り込みました${suffix}。`, ok: true });
+      setMessage({
+        text: `${dailyPnls.size}日分の損益を取り込みました${suffix}。`,
+        ok: true,
+      });
       window.setTimeout(() => setMessage(null), 5000);
     };
 
     const reader = new FileReader();
-    reader.onerror = () => setMessage({ text: 'ファイルを読み込めませんでした。', ok: false });
+    reader.onerror = () =>
+      setMessage({ text: 'ファイルを読み込めませんでした。', ok: false });
 
     if (isHtml) {
-      reader.onload = () => finish(parseMt4Html(decodeHtmlBuffer(reader.result as ArrayBuffer)));
+      reader.onload = () =>
+        finish(parseMt4Html(decodeHtmlBuffer(reader.result as ArrayBuffer)));
       reader.readAsArrayBuffer(file);
     } else {
       reader.onload = () => finish(parseTradeCsv(String(reader.result ?? '')));
@@ -641,7 +808,9 @@ const CsvImportPanel = ({
           </label>
         </div>
         {message && (
-          <p className={`mt-3 text-xs leading-5 ${message.ok ? 'text-emerald-300' : 'text-rose-300'}`}>
+          <p
+            className={`mt-3 text-xs leading-5 ${message.ok ? 'text-emerald-300' : 'text-rose-300'}`}
+          >
             {message.text}
           </p>
         )}
@@ -731,7 +900,8 @@ const DayCellModal = ({
         className="fixed inset-x-0 z-[61] flex justify-center px-4 animate-slide-up transition-[bottom] duration-75 sm:inset-0 sm:items-center sm:p-4"
         style={{
           bottom: keyboardOffset,
-          paddingBottom: keyboardOffset > 0 ? '1rem' : 'max(1rem, env(safe-area-inset-bottom))',
+          paddingBottom:
+            keyboardOffset > 0 ? '1rem' : 'max(1rem, env(safe-area-inset-bottom))',
         }}
       >
         {children}
@@ -966,7 +1136,12 @@ const WeekGrid = ({
   const openRecord = openDate ? recordMap.get(openDate) : undefined;
   const startMonth = weekStart.getMonth();
 
-  const cellBase = (ymd: string, isOtherMonth: boolean, isOpen: boolean, isToday: boolean) =>
+  const cellBase = (
+    ymd: string,
+    isOtherMonth: boolean,
+    isOpen: boolean,
+    isToday: boolean,
+  ) =>
     `w-full rounded-lg border text-left transition ${
       isToday
         ? 'border-cyan-300/40'
@@ -1008,15 +1183,22 @@ const WeekGrid = ({
                 style={bg ? { backgroundColor: bg } : undefined}
               >
                 {isOtherMonth && (
-                  <span className="block text-[10px] text-slate-600">{date.getMonth() + 1}月</span>
+                  <span className="block text-[10px] text-slate-600">
+                    {date.getMonth() + 1}月
+                  </span>
                 )}
-                <span className={`block text-sm font-bold ${isToday ? 'text-cyan-200' : isOtherMonth ? 'text-slate-600' : 'text-slate-300'}`}>
+                <span
+                  className={`block text-sm font-bold ${isToday ? 'text-cyan-200' : isOtherMonth ? 'text-slate-600' : 'text-slate-300'}`}
+                >
                   {date.getDate()}
                 </span>
                 {record ? (
                   <>
-                    <span className={`mt-1 block text-xs font-bold leading-tight ${record.pnl > 0 ? 'text-emerald-200' : 'text-rose-200'}`}>
-                      {record.pnl > 0 ? '+' : ''}{record.pnl.toLocaleString('ja-JP')}
+                    <span
+                      className={`mt-1 block text-xs font-bold leading-tight ${record.pnl > 0 ? 'text-emerald-200' : 'text-rose-200'}`}
+                    >
+                      {record.pnl > 0 ? '+' : ''}
+                      {record.pnl.toLocaleString('ja-JP')}
                     </span>
                     {record.notes && (
                       <span className="mt-0.5 block truncate text-[10px] leading-tight text-slate-500">
@@ -1050,21 +1232,31 @@ const WeekGrid = ({
                 style={bg ? { backgroundColor: bg } : undefined}
               >
                 <div className="w-9 shrink-0 text-center">
-                  <span className={`block text-[11px] font-semibold ${isToday ? 'text-cyan-300' : 'text-slate-500'}`}>
+                  <span
+                    className={`block text-[11px] font-semibold ${isToday ? 'text-cyan-300' : 'text-slate-500'}`}
+                  >
                     {WEEKDAYS[date.getDay()]}
                   </span>
-                  <span className={`block text-xl font-bold leading-tight ${isToday ? 'text-cyan-200' : isOtherMonth ? 'text-slate-600' : 'text-slate-200'}`}>
+                  <span
+                    className={`block text-xl font-bold leading-tight ${isToday ? 'text-cyan-200' : isOtherMonth ? 'text-slate-600' : 'text-slate-200'}`}
+                  >
                     {date.getDate()}
                   </span>
                 </div>
                 <div className="min-w-0 flex-1">
                   {record ? (
                     <>
-                      <p className={`text-sm font-bold ${record.pnl > 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-                        {record.pnl > 0 ? '+' : ''}{record.pnl.toLocaleString('ja-JP')}{unit}
+                      <p
+                        className={`text-sm font-bold ${record.pnl > 0 ? 'text-emerald-300' : 'text-rose-300'}`}
+                      >
+                        {record.pnl > 0 ? '+' : ''}
+                        {record.pnl.toLocaleString('ja-JP')}
+                        {unit}
                       </p>
                       {record.notes && (
-                        <p className="mt-0.5 truncate text-xs text-slate-500">{record.notes}</p>
+                        <p className="mt-0.5 truncate text-xs text-slate-500">
+                          {record.notes}
+                        </p>
                       )}
                     </>
                   ) : (
@@ -1076,7 +1268,6 @@ const WeekGrid = ({
           })}
         </div>
       )}
-
 
       {openDate && (
         <DayCellModal onClose={() => setOpenDate(null)}>
@@ -1112,7 +1303,9 @@ const exportMonthCsv = (
   const rows = [['日付', `損益（${unit}）`, 'メモ']];
   const sorted = [...monthRecords].sort((a, b) => a.date.localeCompare(b.date));
   for (const r of sorted) rows.push([r.date, String(r.pnl), r.notes ?? '']);
-  const csv = rows.map((row) => row.map((c) => `"${c.replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const csv = rows
+    .map((row) => row.map((c) => `"${c.replace(/"/g, '""')}"`).join(','))
+    .join('\r\n');
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1169,7 +1362,10 @@ const ShareModal = ({
       className="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     />
-    <div className="fixed inset-0 z-[61] flex items-center justify-center p-4 animate-slide-up" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[61] flex items-center justify-center p-4 animate-slide-up"
+      onClick={onClose}
+    >
       <div
         className="w-full max-w-sm rounded-xl border border-white/10 bg-slate-900 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
         onClick={(e) => e.stopPropagation()}
@@ -1185,7 +1381,9 @@ const ShareModal = ({
                 <span className="text-xl">🖼</span>
                 <div>
                   <p className="text-sm font-bold text-white">スクショ付きでシェア</p>
-                  <p className="mt-0.5 text-xs text-slate-500">カレンダー画像を生成してXに投稿</p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    カレンダー画像を生成してXに投稿
+                  </p>
                 </div>
               </button>
               <button
@@ -1221,11 +1419,16 @@ const ShareModal = ({
             <img src={sharePhase.imageUrl} alt="PnL Card" className="w-full rounded-lg" />
             <div className="mt-3 space-y-2">
               <div className="flex items-center gap-3">
-                <span className="w-5 shrink-0 text-center text-xs font-bold text-slate-500">①</span>
+                <span className="w-5 shrink-0 text-center text-xs font-bold text-slate-500">
+                  ①
+                </span>
                 <button
                   onClick={async () => {
                     const isTouchPrimary = navigator.maxTouchPoints > 1;
-                    if (isTouchPrimary && navigator.canShare?.({ files: [sharePhase.file] })) {
+                    if (
+                      isTouchPrimary &&
+                      navigator.canShare?.({ files: [sharePhase.file] })
+                    ) {
                       try {
                         await navigator.share({ files: [sharePhase.file] });
                       } catch (e) {
@@ -1253,7 +1456,9 @@ const ShareModal = ({
                 </button>
               </div>
               <div className="flex items-center gap-3">
-                <span className="w-5 shrink-0 text-center text-xs font-bold text-slate-500">②</span>
+                <span className="w-5 shrink-0 text-center text-xs font-bold text-slate-500">
+                  ②
+                </span>
                 <a
                   href={xHref}
                   target="_blank"
@@ -1295,7 +1500,10 @@ const DownloadModal = ({
       className="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     />
-    <div className="fixed inset-0 z-[61] flex items-center justify-center p-4 animate-slide-up" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[61] flex items-center justify-center p-4 animate-slide-up"
+      onClick={onClose}
+    >
       <div
         className="w-full max-w-sm rounded-xl border border-white/10 bg-slate-900 p-5 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
         onClick={(e) => e.stopPropagation()}
@@ -1311,7 +1519,9 @@ const DownloadModal = ({
                 <span className="text-xl">📷</span>
                 <div>
                   <p className="text-sm font-bold text-white">画像をダウンロード</p>
-                  <p className="mt-0.5 text-xs text-slate-500">カレンダー画像をPNGで保存</p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    カレンダー画像をPNGで保存
+                  </p>
                 </div>
               </button>
               <button
@@ -1321,7 +1531,9 @@ const DownloadModal = ({
                 <span className="text-xl">📊</span>
                 <div>
                   <p className="text-sm font-bold text-white">CSVをダウンロード</p>
-                  <p className="mt-0.5 text-xs text-slate-500">取引データをCSVで書き出し</p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    取引データをCSVで書き出し
+                  </p>
                 </div>
               </button>
             </div>
@@ -1344,7 +1556,11 @@ const DownloadModal = ({
         {downloadPhase.phase === 'ready' && (
           <>
             <p className="mb-3 text-sm font-bold text-white">画像を保存</p>
-            <img src={downloadPhase.imageUrl} alt="PnL Card" className="w-full rounded-lg" />
+            <img
+              src={downloadPhase.imageUrl}
+              alt="PnL Card"
+              className="w-full rounded-lg"
+            />
             <a
               href={downloadPhase.imageUrl}
               download={downloadPhase.filename}
@@ -1449,6 +1665,9 @@ export const PnLCalendarTool = () => {
   const stats = calcStats(monthRecords);
   const unit = isAllAccounts ? '' : (selectedAccount?.unit ?? '');
 
+  // 実績バッジは月をまたいだ全履歴で判定する（同一日付はevaluateBadges側で合算）
+  const badges = evaluateBadges(isAllAccounts ? records : accountRecords);
+
   // ── Weekly data ──
   const weekDates = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart);
@@ -1461,7 +1680,9 @@ export const PnLCalendarTool = () => {
         const byDate = new Map<string, number>();
         records
           .filter((r) => weekDateSet.has(r.date))
-          .forEach((r) => { byDate.set(r.date, (byDate.get(r.date) ?? 0) + r.pnl); });
+          .forEach((r) => {
+            byDate.set(r.date, (byDate.get(r.date) ?? 0) + r.pnl);
+          });
         return Array.from(byDate.entries()).map(([date, pnl]) => ({
           id: date,
           accountId: '__all__',
@@ -1481,21 +1702,33 @@ export const PnLCalendarTool = () => {
 
   const prevMonth = () => {
     setNavDir('right');
-    if (month === 0) { setYear((y) => y - 1); setMonth(11); }
-    else setMonth((m) => m - 1);
+    if (month === 0) {
+      setYear((y) => y - 1);
+      setMonth(11);
+    } else setMonth((m) => m - 1);
   };
   const nextMonth = () => {
     setNavDir('left');
-    if (month === 11) { setYear((y) => y + 1); setMonth(0); }
-    else setMonth((m) => m + 1);
+    if (month === 11) {
+      setYear((y) => y + 1);
+      setMonth(0);
+    } else setMonth((m) => m + 1);
   };
   const prevWeek = () => {
     setNavDir('right');
-    setWeekStart((d) => { const n = new Date(d); n.setDate(n.getDate() - 7); return n; });
+    setWeekStart((d) => {
+      const n = new Date(d);
+      n.setDate(n.getDate() - 7);
+      return n;
+    });
   };
   const nextWeek = () => {
     setNavDir('left');
-    setWeekStart((d) => { const n = new Date(d); n.setDate(n.getDate() + 7); return n; });
+    setWeekStart((d) => {
+      const n = new Date(d);
+      n.setDate(n.getDate() + 7);
+      return n;
+    });
   };
 
   const switchToWeek = () => {
@@ -1521,9 +1754,13 @@ export const PnLCalendarTool = () => {
 
   const displayStats = viewMode === 'week' ? weekStats : stats;
 
-  const periodLabel =
-    viewMode === 'week' ? weekLabel : `${year}年${month + 1}月`;
-  const tweetText = buildTweetText(displayStats, periodLabel, unit, selectedAccount?.name ?? '');
+  const periodLabel = viewMode === 'week' ? weekLabel : `${year}年${month + 1}月`;
+  const tweetText = buildTweetText(
+    displayStats,
+    periodLabel,
+    unit,
+    selectedAccount?.name ?? '',
+  );
   const xHref = `https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(TRADE_JOURNAL_URL)}`;
 
   const handleShareScreenshot = async () => {
@@ -1539,9 +1776,13 @@ export const PnLCalendarTool = () => {
         year: viewMode === 'week' ? weekStart.getFullYear() : year,
         month: viewMode === 'week' ? weekStart.getMonth() : month,
         weekStart: viewMode === 'week' ? weekStart : undefined,
+        badges,
       });
-      const safeName = (selectedAccount?.name ?? 'account').replace(/[^\w぀-ヿ一-鿿]/g, '_');
-      const filename = `pnl_${safeName}_${periodLabel.replace(/[年月 \/〜]/g, '')}.png`;
+      const safeName = (selectedAccount?.name ?? 'account').replace(
+        /[^\w぀-ヿ一-鿿]/g,
+        '_',
+      );
+      const filename = `pnl_${safeName}_${periodLabel.replace(/[年月 /〜]/g, '')}.png`;
       const file = new File([blob], filename, { type: 'image/png' });
       const imageUrl = URL.createObjectURL(blob);
       setShareModal({ phase: 'preview', imageUrl, filename, file });
@@ -1564,9 +1805,13 @@ export const PnLCalendarTool = () => {
         year: viewMode === 'week' ? weekStart.getFullYear() : year,
         month: viewMode === 'week' ? weekStart.getMonth() : month,
         weekStart: viewMode === 'week' ? weekStart : undefined,
+        badges,
       });
-      const safeName = (selectedAccount?.name ?? 'account').replace(/[^\w぀-ヿ一-鿿]/g, '_');
-      const filename = `pnl_${safeName}_${periodLabel.replace(/[年月 \/〜]/g, '')}.png`;
+      const safeName = (selectedAccount?.name ?? 'account').replace(
+        /[^\w぀-ヿ一-鿿]/g,
+        '_',
+      );
+      const filename = `pnl_${safeName}_${periodLabel.replace(/[年月 /〜]/g, '')}.png`;
       const imageUrl = URL.createObjectURL(blob);
       setDownloadModal({ phase: 'ready', imageUrl, filename });
     } catch (e) {
@@ -1586,7 +1831,10 @@ export const PnLCalendarTool = () => {
         {showAddForm ? (
           <AccountForm
             mode="add"
-            onSubmit={(name, u) => { addAccount(name, u); setShowAddForm(false); }}
+            onSubmit={(name, u) => {
+              addAccount(name, u);
+              setShowAddForm(false);
+            }}
             onCancel={() => setShowAddForm(false)}
           />
         ) : (
@@ -1621,7 +1869,10 @@ export const PnLCalendarTool = () => {
           setShowEditForm(false);
         }}
         onAddClick={() => {
-          if (!canAddAccount) { setShowPremiumUpsell(true); return; }
+          if (!canAddAccount) {
+            setShowPremiumUpsell(true);
+            return;
+          }
           setShowEditForm(false);
           setShowAddForm((v) => !v);
         }}
@@ -1631,7 +1882,10 @@ export const PnLCalendarTool = () => {
       {showAddForm && (
         <AccountForm
           mode="add"
-          onSubmit={(name, u) => { addAccount(name, u); setShowAddForm(false); }}
+          onSubmit={(name, u) => {
+            addAccount(name, u);
+            setShowAddForm(false);
+          }}
           onCancel={() => setShowAddForm(false)}
         />
       )}
@@ -1656,7 +1910,10 @@ export const PnLCalendarTool = () => {
                   単位: <span className="text-slate-300">{selectedAccount.unit}</span>
                 </p>
                 <button
-                  onClick={() => { setShowAddForm(false); setShowEditForm(true); }}
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setShowEditForm(true);
+                  }}
                   className="text-xs text-slate-500 transition hover:text-cyan-300"
                 >
                   口座を編集
@@ -1689,7 +1946,9 @@ export const PnLCalendarTool = () => {
         onImport={(dailyPnls, dailyNotes) => {
           const firstDate = Array.from(dailyPnls.keys()).sort()[0];
           dailyPnls.forEach((pnl, date) => {
-            const note = dailyNotes ? (dailyNotes.get(date) || undefined) : 'MT4/MT5 取り込み';
+            const note = dailyNotes
+              ? dailyNotes.get(date) || undefined
+              : 'MT4/MT5 取り込み';
             setRecord(effectiveAccountId, date, pnl, note);
           });
           if (firstDate) {
@@ -1703,6 +1962,8 @@ export const PnLCalendarTool = () => {
       />
 
       <StatsBar stats={displayStats} unit={unit} />
+
+      <BadgeShelf badges={badges} />
 
       <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
         <div className="mb-4 flex items-center justify-between gap-2">
@@ -1766,24 +2027,25 @@ export const PnLCalendarTool = () => {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
-            {!isAllAccounts && (viewMode === 'week' ? weekRecords : monthRecords).length > 0 && (
-              <>
-                <button
-                  onClick={() => setShareModal({ phase: 'options' })}
-                  title="X (Twitter) でシェア"
-                  className="inline-flex h-8 items-center gap-1.5 rounded-full bg-white/[0.04] px-3 text-xs font-semibold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
-                >
-                  <span>𝕏</span> シェア
-                </button>
-                <button
-                  onClick={() => setDownloadModal({ phase: 'options' })}
-                  title="ダウンロード"
-                  className="inline-flex h-8 items-center gap-1.5 rounded-full bg-white/[0.04] px-3 text-xs font-semibold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
-                >
-                  <span>↓</span> ダウンロード
-                </button>
-              </>
-            )}
+            {!isAllAccounts &&
+              (viewMode === 'week' ? weekRecords : monthRecords).length > 0 && (
+                <>
+                  <button
+                    onClick={() => setShareModal({ phase: 'options' })}
+                    title="X (Twitter) でシェア"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-white/[0.04] px-3 text-xs font-semibold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+                  >
+                    <span>𝕏</span> シェア
+                  </button>
+                  <button
+                    onClick={() => setDownloadModal({ phase: 'options' })}
+                    title="ダウンロード"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-white/[0.04] px-3 text-xs font-semibold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+                  >
+                    <span>↓</span> ダウンロード
+                  </button>
+                </>
+              )}
             <button
               onClick={viewMode === 'week' ? nextWeek : nextMonth}
               className="grid h-8 w-8 place-items-center rounded-full bg-white/[0.04] text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
@@ -1809,14 +2071,23 @@ export const PnLCalendarTool = () => {
         >
           {viewMode === 'week' ? (
             isAllAccounts ? (
-              <WeekGrid weekStart={weekStart} records={weekRecords} unit="" layout={weekLayout} onSave={() => {}} onDelete={() => {}} />
+              <WeekGrid
+                weekStart={weekStart}
+                records={weekRecords}
+                unit=""
+                layout={weekLayout}
+                onSave={() => {}}
+                onDelete={() => {}}
+              />
             ) : (
               <WeekGrid
                 weekStart={weekStart}
                 records={weekRecords}
                 unit={unit}
                 layout={weekLayout}
-                onSave={(date, pnl, notes) => setRecord(effectiveAccountId, date, pnl, notes)}
+                onSave={(date, pnl, notes) =>
+                  setRecord(effectiveAccountId, date, pnl, notes)
+                }
                 onDelete={(date) => deleteRecord(effectiveAccountId, date)}
               />
             )
@@ -1835,7 +2106,9 @@ export const PnLCalendarTool = () => {
               month={month}
               records={monthRecords}
               unit={unit}
-              onSave={(date, pnl, notes) => setRecord(effectiveAccountId, date, pnl, notes)}
+              onSave={(date, pnl, notes) =>
+                setRecord(effectiveAccountId, date, pnl, notes)
+              }
               onDelete={(date) => deleteRecord(effectiveAccountId, date)}
             />
           )}
@@ -1871,7 +2144,9 @@ export const PnLCalendarTool = () => {
       {downloadModal && (
         <DownloadModal
           downloadPhase={downloadModal}
-          onImage={() => { void handleDownloadScreenshot(); }}
+          onImage={() => {
+            void handleDownloadScreenshot();
+          }}
           onCsv={() => {
             exportMonthCsv(
               viewMode === 'week' ? weekRecords : monthRecords,
@@ -1883,7 +2158,8 @@ export const PnLCalendarTool = () => {
             setDownloadModal(null);
           }}
           onClose={() => {
-            if (downloadModal.phase === 'ready') URL.revokeObjectURL(downloadModal.imageUrl);
+            if (downloadModal.phase === 'ready')
+              URL.revokeObjectURL(downloadModal.imageUrl);
             setDownloadModal(null);
           }}
         />

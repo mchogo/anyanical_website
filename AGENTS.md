@@ -29,13 +29,16 @@
 │  ├── App.tsx           # ハッシュルーティングとページ構成
 │  ├── main.tsx          # Reactエントリ
 │  └── index.css         # Tailwindとグローバル背景
+├── worker/index.ts      # Cloudflare Workers バックエンド（全APIエンドポイント集約）
+├── migrations/          # D1 SQLマイグレーション（連番 000N_*.sql）
+├── wrangler.jsonc       # Workers/D1設定
 ├── docs/                # 設計・運用・実装メモ
 ├── package.json         # npm scripts
 ├── vite.config.ts       # Vite設定
 └── tailwind.config.ts   # Tailwind設定
 ```
 
-バックエンドは未導入。ブラウザからHyperliquid Public API/WebSocket、TradingView埋め込み、Investing.com iframeを直接利用するMVP構成。
+バックエンドは Cloudflare Workers + D1（2026-07時点で導入済み。認証はDiscord OAuthトークンを`verifyToken`で検証し、`discord_user_id`でデータをスコープする）。価格データはブラウザからHyperliquid Public API/WebSocketを直接利用。マイグレーションの適用は `npx wrangler d1 migrations apply <db>` をユーザーが実行する。
 
 ---
 

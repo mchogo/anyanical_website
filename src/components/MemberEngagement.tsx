@@ -4,6 +4,7 @@ import { MARKETS, WEEKEND_MARKETS, type MarketPrice } from '../config/markets';
 import { useDiscordAuth, type DiscordAuthSession } from '../hooks/useDiscordAuth';
 import { useFavoritesContext } from '../hooks/useFavorites';
 import { INTERNAL_NAV_LINKS } from '../config/navigation';
+import { GapGauge } from './GapGauge';
 
 const ROUTE_LABELS: Record<string, string> = Object.fromEntries(
   INTERNAL_NAV_LINKS.map((l) => [l.href.replace(/^#\/?/, ''), l.label]),
@@ -278,7 +279,8 @@ const useGapPredictions = (ownerId: string, session?: DiscordAuthSession | null)
       const next = [
         { ...prediction, id: createId(), createdAt: new Date().toISOString() },
         ...current.filter(
-          (item) => !(item.weekKey === prediction.weekKey && item.symbol === prediction.symbol),
+          (item) =>
+            !(item.weekKey === prediction.weekKey && item.symbol === prediction.symbol),
         ),
       ];
       if (session?.accessToken) syncPredictionsToServer(next, session.accessToken);
@@ -991,7 +993,10 @@ export const GapPredictionTool = ({
   prices: Record<string, MarketPrice>;
 }) => {
   const { auth, ownerId } = useStorageOwner();
-  const { predictions, addPrediction, removePrediction } = useGapPredictions(ownerId, auth.session);
+  const { predictions, addPrediction, removePrediction } = useGapPredictions(
+    ownerId,
+    auth.session,
+  );
   const [symbol, setSymbol] = useState('GOLD');
   const [direction, setDirection] = useState<GapDirection>('up');
   const [confidence, setConfidence] = useState(60);
@@ -1138,6 +1143,16 @@ export const GapPredictionTool = ({
             >
               窓開け監視へ →
             </a>
+          </div>
+
+          {/* タコメーター: フォームで選択中の銘柄の窓開け幅をライブ表示 */}
+          <div className="mt-4">
+            <GapGauge
+              label={
+                markets.find((market) => market!.symbol === symbol)?.displayName ?? symbol
+              }
+              price={prices[symbol]}
+            />
           </div>
 
           <div className="mt-4 space-y-3">

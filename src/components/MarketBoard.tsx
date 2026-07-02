@@ -16,6 +16,7 @@ import type {
 } from '../hooks/useAlerts';
 import type { PriceHistoryPoint } from '../hooks/useHyperliquidMids';
 import { MarketCard } from './MarketCard';
+import { MarketHeatmap } from './MarketHeatmap';
 import { FridayCloseReferences } from './FridayCloseReferences';
 
 type MarketBoardProps = {
@@ -114,6 +115,24 @@ export const MarketBoard = ({
 }: MarketBoardProps) => {
   const [categoryFilter, setCategoryFilter] = useState<MarketCategory | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [boardView, setBoardView] = useState<'grid' | 'heatmap'>(() => {
+    try {
+      const stored = localStorage.getItem('market-board:view');
+      if (stored === 'grid' || stored === 'heatmap') return stored;
+    } catch {
+      /* ignore */
+    }
+    return 'grid';
+  });
+
+  const switchBoardView = (view: 'grid' | 'heatmap') => {
+    setBoardView(view);
+    try {
+      localStorage.setItem('market-board:view', view);
+    } catch {
+      /* ignore */
+    }
+  };
   const [pinnedSymbols, setPinnedSymbols] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem('market-board:pinned');
@@ -194,7 +213,7 @@ export const MarketBoard = ({
         </p>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <input
           type="search"
           value={searchQuery}
@@ -202,6 +221,30 @@ export const MarketBoard = ({
           placeholder="銘柄を検索... (例: GOLD、BTC)"
           className="w-full rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-slate-200 placeholder-slate-600 outline-none ring-1 ring-white/10 transition focus:border-cyan-300/30 focus:ring-cyan-300/20 sm:max-w-xs"
         />
+        <div className="flex rounded-full bg-white/[0.04] p-0.5 ring-1 ring-white/10">
+          <button
+            type="button"
+            onClick={() => switchBoardView('grid')}
+            className={`rounded-full px-4 py-1.5 text-xs font-bold transition ${
+              boardView === 'grid'
+                ? 'bg-cyan-300 text-slate-950'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            カード
+          </button>
+          <button
+            type="button"
+            onClick={() => switchBoardView('heatmap')}
+            className={`rounded-full px-4 py-1.5 text-xs font-bold transition ${
+              boardView === 'heatmap'
+                ? 'bg-cyan-300 text-slate-950'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            ヒートマップ
+          </button>
+        </div>
       </div>
 
       <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
@@ -231,7 +274,20 @@ export const MarketBoard = ({
         </p>
       )}
 
-      {filteredWeekendMarkets.length > 0
+      {boardView === 'heatmap' && hasResults ? (
+        <MarketHeatmap
+          markets={[
+            ...filteredWeekendMarkets,
+            ...filteredCryptoMarkets,
+            ...filteredIpoMarkets,
+            ...filteredForexMarkets,
+          ]}
+          prices={prices}
+          isWeekendMode={isWeekendMode}
+        />
+      ) : null}
+
+      {boardView === 'grid' && filteredWeekendMarkets.length > 0
         ? renderMarketCards(
             filteredWeekendMarkets,
             cardProps,
@@ -241,7 +297,7 @@ export const MarketBoard = ({
           )
         : null}
 
-      {filteredCryptoMarkets.length > 0 ? (
+      {boardView === 'grid' && filteredCryptoMarkets.length > 0 ? (
         <div className="mt-10">
           <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
             <div>
@@ -263,7 +319,7 @@ export const MarketBoard = ({
         </div>
       ) : null}
 
-      {filteredIpoMarkets.length > 0 ? (
+      {boardView === 'grid' && filteredIpoMarkets.length > 0 ? (
         <div className="mt-10">
           <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
             <div>
@@ -284,7 +340,7 @@ export const MarketBoard = ({
         </div>
       ) : null}
 
-      {filteredForexMarkets.length > 0 ? (
+      {boardView === 'grid' && filteredForexMarkets.length > 0 ? (
         <div className="mt-10">
           <div className="mb-5 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
             <div>

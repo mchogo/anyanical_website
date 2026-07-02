@@ -16,6 +16,8 @@ import {
 } from './BrandPages';
 import { PnLCalendarTool } from './PnLCalendar';
 import { TraderQuiz } from './TraderQuiz';
+import { HighLowSprint } from './games/HighLowSprint';
+import { CandleSwipe } from './games/CandleSwipe';
 import type { MarketPrice } from '../config/markets';
 import type { PriceHistoryPoint } from '../hooks/useHyperliquidMids';
 
@@ -33,7 +35,9 @@ export type ToolPageId =
   | 'trader-quiz'
   | 'member-dashboard'
   | 'daily-mission'
-  | 'gap-prediction';
+  | 'gap-prediction'
+  | 'highlow-sprint'
+  | 'candle-swipe';
 
 type ToolPageProps = {
   pageId: ToolPageId;
@@ -139,6 +143,20 @@ const toolPages: Array<{
       'GOLD、USDJPY、BTCなどの週末方向感を予想して、週明けに答え合わせするゲームです。',
     href: '#/tools/gap-prediction',
   },
+  {
+    id: 'highlow-sprint',
+    title: '60セカンズ・ハイロー',
+    description:
+      'BTC・GOLDのリアルタイム価格が60秒後に上がるか下がるかを予想するミニゲーム。連勝でスコア倍率が上がります。',
+    href: '#/tools/highlow-sprint',
+  },
+  {
+    id: 'candle-swipe',
+    title: 'ローソク足スワイプ道場',
+    description:
+      '実際の過去チャートの続きを右（上がる）/ 左（下がる）スワイプで即断するトレーニングゲームです。',
+    href: '#/tools/candle-swipe',
+  },
 ];
 
 const renderTool = (
@@ -182,6 +200,10 @@ const renderTool = (
       return <DailyMissionTool />;
     case 'gap-prediction':
       return <GapPredictionTool prices={prices} />;
+    case 'highlow-sprint':
+      return <HighLowSprint prices={prices} />;
+    case 'candle-swipe':
+      return <CandleSwipe />;
   }
 };
 
@@ -362,6 +384,30 @@ const nextActions: Record<
       href: '#/tools/member-dashboard',
     },
   ],
+  'highlow-sprint': [
+    {
+      title: 'ローソク足スワイプ道場',
+      body: '過去チャートの続きを即断するトレーニングにも挑戦します。',
+      href: '#/tools/candle-swipe',
+    },
+    {
+      title: '相場ボードへ',
+      body: 'ゲームで使っている24時間参考価格の全体を確認します。',
+      href: '#/board',
+    },
+  ],
+  'candle-swipe': [
+    {
+      title: '60セカンズ・ハイロー',
+      body: 'リアルタイム価格で60秒後の上下を予想するゲームに挑戦します。',
+      href: '#/tools/highlow-sprint',
+    },
+    {
+      title: 'タイプ診断',
+      body: 'あなたのトレードスタイルを16タイプから診断します。',
+      href: '#/tools/trader-quiz',
+    },
+  ],
 };
 
 const FavUpsellOverlay = ({
@@ -380,7 +426,9 @@ const FavUpsellOverlay = ({
       onClick={(e) => e.stopPropagation()}
     >
       <p className="text-sm font-semibold text-amber-100">Premium feature</p>
-      <h3 className="mt-1 text-xl font-bold text-white">お気に入りはプレミアム限定です</h3>
+      <h3 className="mt-1 text-xl font-bold text-white">
+        お気に入りはプレミアム限定です
+      </h3>
       <p className="mt-3 text-sm leading-6 text-slate-400">
         よく使うページを登録してナビバーからすぐアクセスできます。プレミアム会員向け機能です。
       </p>

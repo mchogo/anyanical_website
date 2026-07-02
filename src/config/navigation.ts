@@ -59,6 +59,14 @@ export const INTERNAL_NAV_LINKS = [
     label: 'タイプ診断',
     href: '#/tools/trader-quiz',
   },
+  {
+    label: 'ハイロー',
+    href: '#/tools/highlow-sprint',
+  },
+  {
+    label: 'スワイプ道場',
+    href: '#/tools/candle-swipe',
+  },
 ] as const;
 
 export const NAV_LINK_GROUPS = [
@@ -88,7 +96,7 @@ export const NAV_LINK_GROUPS = [
   {
     label: 'ゲーム',
     href: '#/games',
-    description: '予想、診断、記録シェア',
+    description: '予想、診断、ハイロー、スワイプ',
     links: [
       {
         label: 'ギャップ予想',
@@ -97,6 +105,14 @@ export const NAV_LINK_GROUPS = [
       {
         label: 'タイプ診断',
         href: '#/tools/trader-quiz',
+      },
+      {
+        label: '60秒ハイロー',
+        href: '#/tools/highlow-sprint',
+      },
+      {
+        label: 'スワイプ道場',
+        href: '#/tools/candle-swipe',
       },
     ],
   },

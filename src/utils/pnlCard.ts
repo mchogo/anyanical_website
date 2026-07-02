@@ -1,8 +1,10 @@
 import type { DailyRecord } from '../hooks/usePnLCalendar';
+import { badgeTier, type PnLBadge } from './pnlBadges';
 
 // Only the fields the card renderer actually reads — lets callers (e.g. the
 // public showcase endpoint) pass minimal records without id/accountId.
-export type PnLCardRecord = Pick<DailyRecord, 'date' | 'pnl'> & Partial<Pick<DailyRecord, 'notes'>>;
+export type PnLCardRecord = Pick<DailyRecord, 'date' | 'pnl'> &
+  Partial<Pick<DailyRecord, 'notes'>>;
 
 // ── Shared date/stats helpers ─────────────────────────────────────────────────
 
@@ -59,7 +61,11 @@ export const calcStats = (monthRecords: PnLCardRecord[]): MonthStats => {
 
 const fillRR = (
   ctx: CanvasRenderingContext2D,
-  x: number, y: number, w: number, h: number, r: number,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
 ) => {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -88,7 +94,11 @@ const drawMonthGrid = (
   const rMap = new Map(records.map((r) => [r.date, r]));
   const maxAbs = Math.max(0, ...records.map((r) => Math.abs(r.pnl)));
   const WD = ['日', '月', '火', '水', '木', '金', '土'];
-  const RX = 608, RY = 78, CW = 72, CH = 70, GAP = 4;
+  const RX = 608,
+    RY = 78,
+    CW = 72,
+    CH = 70,
+    GAP = 4;
 
   ctx.fillStyle = '#475569';
   ctx.font = `bold 12px ${font}`;
@@ -96,22 +106,29 @@ const drawMonthGrid = (
   WD.forEach((d, i) => ctx.fillText(d, RX + i * (CW + GAP) + CW / 2, RY + 18));
 
   cells.forEach((date, idx) => {
-    const col = idx % 7, row = Math.floor(idx / 7);
-    const x = RX + col * (CW + GAP), y = RY + 28 + row * (CH + GAP);
+    const col = idx % 7,
+      row = Math.floor(idx / 7);
+    const x = RX + col * (CW + GAP),
+      y = RY + 28 + row * (CH + GAP);
     if (!date) {
-      ctx.fillStyle = 'rgba(255,255,255,0.02)'; fillRR(ctx, x, y, CW, CH, 6); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.02)';
+      fillRR(ctx, x, y, CW, CH, 6);
+      ctx.fill();
       return;
     }
     const ymd = toYMD(date);
     const rec = rMap.get(ymd);
     if (rec) {
       const op = Math.min(Math.abs(rec.pnl) / (maxAbs || 1), 1) * 0.65 + 0.15;
-      const h = Math.round(op * 255).toString(16).padStart(2, '0');
+      const h = Math.round(op * 255)
+        .toString(16)
+        .padStart(2, '0');
       ctx.fillStyle = rec.pnl > 0 ? `#6ee7b7${h}` : `#fca5a5${h}`;
     } else {
       ctx.fillStyle = 'rgba(255,255,255,0.04)';
     }
-    fillRR(ctx, x, y, CW, CH, 6); ctx.fill();
+    fillRR(ctx, x, y, CW, CH, 6);
+    ctx.fill();
     ctx.fillStyle = rec ? '#f1f5f9' : '#475569';
     ctx.font = `bold 15px ${font}`;
     ctx.textAlign = 'center';
@@ -120,7 +137,11 @@ const drawMonthGrid = (
       ctx.fillStyle = rec.pnl > 0 ? '#a7f3d0' : '#fecaca';
       ctx.font = `10px ${font}`;
       const abs = Math.abs(rec.pnl);
-      const abbr = (rec.pnl > 0 ? '+' : '') + (abs >= 10000 ? `${(rec.pnl / 10000).toFixed(0)}万` : rec.pnl.toLocaleString('ja-JP'));
+      const abbr =
+        (rec.pnl > 0 ? '+' : '') +
+        (abs >= 10000
+          ? `${(rec.pnl / 10000).toFixed(0)}万`
+          : rec.pnl.toLocaleString('ja-JP'));
       ctx.fillText(abbr, x + CW / 2, y + 40);
     }
   });
@@ -135,12 +156,18 @@ const drawWeekBars = (
   font: string,
 ) => {
   const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart); d.setDate(d.getDate() + i); return d;
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    return d;
   });
   const rMap = new Map(records.map((r) => [r.date, r]));
   const maxAbs = Math.max(1, ...records.map((r) => Math.abs(r.pnl)));
   const WD = ['日', '月', '火', '水', '木', '金', '土'];
-  const RX = 600, RY = 72, ROW_H = 70, BAR_X = RX + 60, BAR_MAX = 460;
+  const RX = 600,
+    RY = 72,
+    ROW_H = 70,
+    BAR_X = RX + 60,
+    BAR_MAX = 460;
   const today = toYMD(new Date());
 
   days.forEach((date, i) => {
@@ -149,8 +176,13 @@ const drawWeekBars = (
     const rec = rMap.get(ymd);
     const isToday = ymd === today;
 
-    ctx.fillStyle = isToday ? 'rgba(103,232,249,0.07)' : (i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent');
-    fillRR(ctx, RX - 4, y + 2, 548, ROW_H - 4, 8); ctx.fill();
+    ctx.fillStyle = isToday
+      ? 'rgba(103,232,249,0.07)'
+      : i % 2 === 0
+        ? 'rgba(255,255,255,0.02)'
+        : 'transparent';
+    fillRR(ctx, RX - 4, y + 2, 548, ROW_H - 4, 8);
+    ctx.fill();
 
     ctx.fillStyle = isToday ? '#67e8f9' : '#64748b';
     ctx.font = `bold 12px ${font}`;
@@ -163,11 +195,16 @@ const drawWeekBars = (
     if (rec) {
       const bw = Math.max(4, (Math.abs(rec.pnl) / maxAbs) * BAR_MAX);
       ctx.fillStyle = rec.pnl > 0 ? 'rgba(110,231,183,0.25)' : 'rgba(252,165,165,0.25)';
-      fillRR(ctx, BAR_X, y + 20, bw, 26, 4); ctx.fill();
+      fillRR(ctx, BAR_X, y + 20, bw, 26, 4);
+      ctx.fill();
       ctx.fillStyle = rec.pnl > 0 ? '#6ee7b7' : '#fca5a5';
       ctx.font = `bold 15px ${font}`;
       ctx.textAlign = 'left';
-      ctx.fillText(`${rec.pnl > 0 ? '+' : ''}${rec.pnl.toLocaleString('ja-JP')}${unit}`, BAR_X + 8, y + 38);
+      ctx.fillText(
+        `${rec.pnl > 0 ? '+' : ''}${rec.pnl.toLocaleString('ja-JP')}${unit}`,
+        BAR_X + 8,
+        y + 38,
+      );
       if (rec.notes) {
         ctx.fillStyle = '#475569';
         ctx.font = `12px ${font}`;
@@ -193,67 +230,203 @@ export type CardOpts = {
   year: number;
   month: number;
   weekStart?: Date;
+  /** 獲得済み実績バッジ。省略時は従来デザインのまま（後方互換） */
+  badges?: PnLBadge[];
+};
+
+// ── Premium effects (badge-driven) ───────────────────────────────────────────
+
+const drawPremiumAura = (
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  tier: 'silver' | 'gold',
+) => {
+  // 背面のオーラ（radialグラデーション2灯）
+  const auraColor = tier === 'gold' ? '250,204,21' : '148,163,184';
+  const aura1 = ctx.createRadialGradient(
+    W * 0.2,
+    H * 0.15,
+    0,
+    W * 0.2,
+    H * 0.15,
+    W * 0.55,
+  );
+  aura1.addColorStop(0, `rgba(${auraColor},${tier === 'gold' ? 0.14 : 0.09})`);
+  aura1.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = aura1;
+  ctx.fillRect(0, 0, W, H);
+  const aura2 = ctx.createRadialGradient(
+    W * 0.85,
+    H * 0.9,
+    0,
+    W * 0.85,
+    H * 0.9,
+    W * 0.5,
+  );
+  aura2.addColorStop(0, `rgba(${auraColor},${tier === 'gold' ? 0.1 : 0.06})`);
+  aura2.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = aura2;
+  ctx.fillRect(0, 0, W, H);
+};
+
+const drawPremiumFrame = (
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  tier: 'silver' | 'gold',
+) => {
+  // 外周のメタリック枠（gold: 金グラデ / silver: 銀グラデ）
+  const frame = ctx.createLinearGradient(0, 0, W, H);
+  if (tier === 'gold') {
+    frame.addColorStop(0, 'rgba(253,224,71,0.9)');
+    frame.addColorStop(0.5, 'rgba(180,130,10,0.55)');
+    frame.addColorStop(1, 'rgba(253,224,71,0.9)');
+  } else {
+    frame.addColorStop(0, 'rgba(226,232,240,0.7)');
+    frame.addColorStop(0.5, 'rgba(100,116,139,0.4)');
+    frame.addColorStop(1, 'rgba(226,232,240,0.7)');
+  }
+  ctx.strokeStyle = frame;
+  ctx.lineWidth = 6;
+  fillRR(ctx, 5, 5, W - 10, H - 10, 20);
+  ctx.stroke();
+  ctx.lineWidth = 1;
+};
+
+const drawBadgeChips = (
+  ctx: CanvasRenderingContext2D,
+  badges: PnLBadge[],
+  font: string,
+) => {
+  // 左パネル下部に獲得バッジのチップを並べる（最大4個 + 残数）
+  const achieved = badges.filter((b) => b.achieved);
+  if (achieved.length === 0) return;
+  const shown = achieved.slice(0, 4);
+  const extra = achieved.length - shown.length;
+  let x = 80;
+  const y = 500;
+  ctx.font = `bold 13px ${font}`;
+  for (const badge of shown) {
+    const text = `${badge.emoji} ${badge.label}`;
+    const w = ctx.measureText(text).width + 24;
+    ctx.fillStyle = 'rgba(250,204,21,0.12)';
+    fillRR(ctx, x, y, w, 28, 14);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(250,204,21,0.35)';
+    fillRR(ctx, x, y, w, 28, 14);
+    ctx.stroke();
+    ctx.fillStyle = '#fde68a';
+    ctx.fillText(text, x + 12, y + 19);
+    x += w + 8;
+    if (x > 400) break;
+  }
+  if (extra > 0) {
+    ctx.fillStyle = '#a16207';
+    ctx.fillText(`+${extra}`, x + 4, y + 19);
+  }
 };
 
 export const generatePnLCard = async (opts: CardOpts): Promise<Blob> => {
-  const W = 1200, H = 630;
+  const W = 1200,
+    H = 630;
   const canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
+  canvas.width = W;
+  canvas.height = H;
   const ctx = canvas.getContext('2d')!;
   await document.fonts.ready;
 
   const FONT = '"Noto Sans JP","Hiragino Sans",system-ui,sans-serif';
 
   // Background + gradient
-  ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(0, 0, W, H);
   const grad = ctx.createLinearGradient(0, 0, W, H);
-  grad.addColorStop(0, 'rgba(6,182,212,0.06)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+  grad.addColorStop(0, 'rgba(6,182,212,0.06)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Premium effects (badge tier): aura は背景直後（最背面寄り）に描く
+  const tier = opts.badges ? badgeTier(opts.badges) : 'none';
+  if (tier !== 'none') drawPremiumAura(ctx, W, H, tier);
 
   // Left panel
-  ctx.fillStyle = 'rgba(255,255,255,0.03)'; fillRR(ctx, 48, 48, 508, 534, 16); ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1; fillRR(ctx, 48, 48, 508, 534, 16); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  fillRR(ctx, 48, 48, 508, 534, 16);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  fillRR(ctx, 48, 48, 508, 534, 16);
+  ctx.stroke();
 
   // Right panel
-  ctx.fillStyle = 'rgba(255,255,255,0.03)'; fillRR(ctx, 584, 48, 568, 534, 16); ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1; fillRR(ctx, 584, 48, 568, 534, 16); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  fillRR(ctx, 584, 48, 568, 534, 16);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  fillRR(ctx, 584, 48, 568, 534, 16);
+  ctx.stroke();
 
   // === LEFT side ===
   const LX = 80;
-  ctx.fillStyle = '#67e8f9'; ctx.font = `bold 13px ${FONT}`;
+  ctx.fillStyle = '#67e8f9';
+  ctx.font = `bold 13px ${FONT}`;
   ctx.fillText('アニャニカル覗き部屋 — 損益カレンダー', LX, 92);
 
-  ctx.fillStyle = '#f1f5f9'; ctx.font = `bold 26px ${FONT}`;
+  ctx.fillStyle = '#f1f5f9';
+  ctx.font = `bold 26px ${FONT}`;
   ctx.fillText(truncate(ctx, opts.accountName, 440), LX, 138);
 
-  ctx.fillStyle = '#64748b'; ctx.font = `18px ${FONT}`;
+  ctx.fillStyle = '#64748b';
+  ctx.font = `18px ${FONT}`;
   ctx.fillText(opts.periodLabel, LX, 172);
 
   // Total PnL (auto-size)
   const { stats } = opts;
-  const totalStr = stats.tradeDays === 0
-    ? '記録なし'
-    : `${stats.total > 0 ? '＋' : ''}${stats.total.toLocaleString('ja-JP')}${opts.unit}`;
+  const totalStr =
+    stats.tradeDays === 0
+      ? '記録なし'
+      : `${stats.total > 0 ? '＋' : ''}${stats.total.toLocaleString('ja-JP')}${opts.unit}`;
   ctx.fillStyle = stats.total > 0 ? '#6ee7b7' : stats.total < 0 ? '#fca5a5' : '#94a3b8';
   let fs = 56;
   ctx.font = `bold ${fs}px ${FONT}`;
-  while (ctx.measureText(totalStr).width > 440 && fs > 28) { fs -= 2; ctx.font = `bold ${fs}px ${FONT}`; }
+  while (ctx.measureText(totalStr).width > 440 && fs > 28) {
+    fs -= 2;
+    ctx.font = `bold ${fs}px ${FONT}`;
+  }
   ctx.fillText(totalStr, LX, 252);
 
-  ctx.fillStyle = '#475569'; ctx.font = `13px ${FONT}`;
+  ctx.fillStyle = '#475569';
+  ctx.font = `13px ${FONT}`;
   ctx.fillText('損益合計', LX, 272);
 
   // Divider
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(LX, 290); ctx.lineTo(528, 290); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(LX, 290);
+  ctx.lineTo(528, 290);
+  ctx.stroke();
 
   // Stats
   const stat = (label: string, val: string, col: string, x: number, y: number) => {
-    ctx.fillStyle = '#64748b'; ctx.font = `13px ${FONT}`; ctx.fillText(label, x, y);
-    ctx.fillStyle = col; ctx.font = `bold 22px ${FONT}`; ctx.fillText(val, x, y + 28);
+    ctx.fillStyle = '#64748b';
+    ctx.font = `13px ${FONT}`;
+    ctx.fillText(label, x, y);
+    ctx.fillStyle = col;
+    ctx.font = `bold 22px ${FONT}`;
+    ctx.fillText(val, x, y + 28);
   };
   if (stats.tradeDays > 0) {
-    stat('勝率', stats.winRate !== null ? `${stats.winRate.toFixed(0)}%` : '―', '#f1f5f9', LX, 325);
+    stat(
+      '勝率',
+      stats.winRate !== null ? `${stats.winRate.toFixed(0)}%` : '―',
+      '#f1f5f9',
+      LX,
+      325,
+    );
     stat('取引日数', `${stats.tradeDays}日`, '#f1f5f9', LX + 170, 325);
     stat('勝', `${stats.winDays}日`, '#6ee7b7', LX, 395);
     stat('負', `${stats.lossDays}日`, '#fca5a5', LX + 110, 395);
@@ -263,7 +436,8 @@ export const generatePnLCard = async (opts: CardOpts): Promise<Blob> => {
       stat('最大損失', stats.worst.toLocaleString('ja-JP'), '#fca5a5', LX + 200, 465);
   }
 
-  ctx.fillStyle = '#334155'; ctx.font = `13px ${FONT}`;
+  ctx.fillStyle = '#334155';
+  ctx.font = `13px ${FONT}`;
   ctx.fillText('#FX  #損益カレンダー  #WMB', LX, 558);
 
   // === RIGHT side ===
@@ -273,7 +447,14 @@ export const generatePnLCard = async (opts: CardOpts): Promise<Blob> => {
     drawWeekBars(ctx, opts.weekStart, opts.records, opts.unit, FONT);
   }
 
+  // Premium effects: バッジチップと枠は最前面に描く
+  if (opts.badges) drawBadgeChips(ctx, opts.badges, FONT);
+  if (tier !== 'none') drawPremiumFrame(ctx, W, H, tier);
+
   return new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png'),
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error('toBlob failed'))),
+      'image/png',
+    ),
   );
 };
