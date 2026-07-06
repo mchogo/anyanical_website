@@ -64,6 +64,23 @@ const categoryPages: Record<CategoryPageId, CategoryData> = {
         description: '12問に答えて、あなたのトレードスタイルを16タイプで確認します。',
         href: '#/tools/trader-quiz',
       },
+      {
+        title: '60セカンズ・ハイロー',
+        description:
+          'BTC・GOLDのリアルタイム価格が60秒後に上がるか下がるかを予想するミニゲームです。',
+        href: '#/tools/highlow-sprint',
+      },
+      {
+        title: 'ローソク足スワイプ道場',
+        description:
+          '実際の過去チャートの続きを右（上がる）/ 左（下がる）スワイプで即断するトレーニングゲームです。',
+        href: '#/tools/candle-swipe',
+      },
+      {
+        title: 'トレードタロット',
+        description: '相場の迷いをカードに尋ねる、夜の占い館。トレーダー版大アルカナがあなたに寄り添います。',
+        href: '#/tools/trade-tarot',
+      },
     ],
   },
   'ea-copytrade': {
