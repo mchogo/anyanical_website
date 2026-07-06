@@ -396,3 +396,55 @@ details[open] summary .faq-icon {
   animation-timing-function: linear;
   animation-iteration-count: infinite;
 }
+
+@keyframes profit-tower-land {
+  0% {
+    transform: scaleY(0.55);
+    opacity: 0.6;
+  }
+
+  55% {
+    transform: scaleY(1.12);
+    opacity: 1;
+  }
+
+  80% {
+    transform: scaleY(0.96);
+  }
+
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+.profit-tower-block-land {
+  transform-origin: bottom center;
+  animation: profit-tower-land 260ms ease-out both;
+}
+
+@keyframes profit-tower-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20% {
+    transform: translateX(-6px) rotate(-1deg);
+  }
+
+  40% {
+    transform: translateX(5px) rotate(1deg);
+  }
+
+  60% {
+    transform: translateX(-4px) rotate(-0.6deg);
+  }
+
+  80% {
+    transform: translateX(3px) rotate(0.6deg);
+  }
+}
+
+.profit-tower-shake {
+  animation: profit-tower-shake 420ms ease-in-out both;
+}

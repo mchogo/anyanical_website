@@ -130,6 +130,7 @@ const toolPageIds: ToolPageId[] = [
   'highlow-sprint',
   'candle-swipe',
   'profit-tower',
+  'game-ranking',
   'trade-tarot',
 ];
 

@@ -19,6 +19,7 @@ import { TraderQuiz } from './TraderQuiz';
 import { HighLowSprint } from './games/HighLowSprint';
 import { CandleSwipe } from './games/CandleSwipe';
 import { ProfitTower } from './games/ProfitTower';
+import { GameRankingPage } from './GameRankingPage';
 import type { MarketPrice } from '../config/markets';
 import type { PriceHistoryPoint } from '../hooks/useHyperliquidMids';
 
@@ -40,6 +41,7 @@ export type ToolPageId =
   | 'highlow-sprint'
   | 'candle-swipe'
   | 'profit-tower'
+  | 'game-ranking'
   | 'trade-tarot';
 
 type ToolPageProps = {
@@ -168,6 +170,13 @@ const toolPages: Array<{
     href: '#/tools/profit-tower',
   },
   {
+    id: 'game-ranking',
+    title: 'ゲームランキング',
+    description:
+      '参加中のミニゲームのランキングをまとめて確認し、各ゲームへ遊びに行けます。',
+    href: '#/tools/game-ranking',
+  },
+  {
     id: 'trade-tarot',
     title: 'トレードタロット',
     description:
@@ -223,6 +232,8 @@ const renderTool = (
       return <CandleSwipe />;
     case 'profit-tower':
       return <ProfitTower />;
+    case 'game-ranking':
+      return <GameRankingPage />;
     case 'trade-tarot':
       return <TradeTarotTool />;
   }
@@ -424,9 +435,9 @@ const nextActions: Record<
       href: '#/tools/candle-swipe',
     },
     {
-      title: '相場ボードへ',
-      body: 'ゲームで使っている24時間参考価格の全体を確認します。',
-      href: '#/board',
+      title: 'ゲームランキング',
+      body: '参加中のミニゲームの順位をまとめて確認します。',
+      href: '#/tools/game-ranking',
     },
   ],
   'candle-swipe': [
@@ -446,6 +457,18 @@ const nextActions: Record<
       title: 'ローソク足スワイプ道場',
       body: '過去チャートの続きを即断するトレーニングにも挑戦します。',
       href: '#/tools/candle-swipe',
+    },
+    {
+      title: 'ゲームランキング',
+      body: '参加中のミニゲームの順位をまとめて確認します。',
+      href: '#/tools/game-ranking',
+    },
+  ],
+  'game-ranking': [
+    {
+      title: '利確タワー',
+      body: 'ブロックを積み上げて資金を複利で増やすミニゲームに挑戦します。',
+      href: '#/tools/profit-tower',
     },
     {
       title: '60セカンズ・ハイロー',

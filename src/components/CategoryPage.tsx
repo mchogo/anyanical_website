@@ -83,6 +83,12 @@ const categoryPages: Record<CategoryPageId, CategoryData> = {
         href: '#/tools/profit-tower',
       },
       {
+        title: 'ゲームランキング',
+        description:
+          '参加中のミニゲームのランキングをまとめて確認し、各ゲームへ遊びに行けます。',
+        href: '#/tools/game-ranking',
+      },
+      {
         title: 'トレードタロット',
         description:
           '相場の迷いをカードに尋ねる、夜の占い館。トレーダー版大アルカナがあなたに寄り添います。',
