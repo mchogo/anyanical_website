@@ -77,8 +77,15 @@ const categoryPages: Record<CategoryPageId, CategoryData> = {
         href: '#/tools/candle-swipe',
       },
       {
+        title: '利確タワー',
+        description:
+          '陽線ブロックを積み上げて資金を複利で増やすミニゲーム。重なりがゼロになると崩壊、5段ごとに利確できます。',
+        href: '#/tools/profit-tower',
+      },
+      {
         title: 'トレードタロット',
-        description: '相場の迷いをカードに尋ねる、夜の占い館。トレーダー版大アルカナがあなたに寄り添います。',
+        description:
+          '相場の迷いをカードに尋ねる、夜の占い館。トレーダー版大アルカナがあなたに寄り添います。',
         href: '#/tools/trade-tarot',
       },
     ],

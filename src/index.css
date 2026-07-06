@@ -379,3 +379,20 @@ details[open] summary .faq-icon {
   transform-origin: left center;
   animation: home-bar 1.4s ease-out both;
 }
+
+@keyframes profit-tower-sway {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  50% {
+    transform: translateX(var(--tower-travel, 0px));
+  }
+}
+
+.profit-tower-block-moving {
+  animation-name: profit-tower-sway;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}

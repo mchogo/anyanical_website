@@ -68,6 +68,10 @@ export const INTERNAL_NAV_LINKS = [
     href: '#/tools/candle-swipe',
   },
   {
+    label: '利確タワー',
+    href: '#/tools/profit-tower',
+  },
+  {
     label: 'トレードタロット',
     href: '#/tools/trade-tarot',
   },
@@ -117,6 +121,10 @@ export const NAV_LINK_GROUPS = [
       {
         label: 'スワイプ道場',
         href: '#/tools/candle-swipe',
+      },
+      {
+        label: '利確タワー',
+        href: '#/tools/profit-tower',
       },
       {
         label: 'トレードタロット',

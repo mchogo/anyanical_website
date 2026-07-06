@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { DEFAULT_META, ROUTE_META, SITE_URL } from './config/pageMeta';
-import { FavoritesContext, useFavorites, useFavoritesContext } from './hooks/useFavorites';
+import {
+  FavoritesContext,
+  useFavorites,
+  useFavoritesContext,
+} from './hooks/useFavorites';
 import { ChartSection } from './components/ChartSection';
 import { Disclaimer } from './components/Disclaimer';
 import { ExplainerSections } from './components/ExplainerSections';
@@ -23,7 +27,8 @@ import { isDiscordOAuthRedirect, useDiscordAuth } from './hooks/useDiscordAuth';
 import { useHyperliquidMids } from './hooks/useHyperliquidMids';
 
 const BoardFavButton = () => {
-  const { favorites, canAccessPremium, isAuthenticated, toggleFavorite } = useFavoritesContext();
+  const { favorites, canAccessPremium, isAuthenticated, toggleFavorite } =
+    useFavoritesContext();
   const [showUpsell, setShowUpsell] = useState(false);
   const route = 'board';
   const isFav = favorites.includes(route);
@@ -60,7 +65,9 @@ const BoardFavButton = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <p className="text-sm font-semibold text-amber-100">Premium feature</p>
-            <h3 className="mt-1 text-xl font-bold text-white">お気に入りはプレミアム限定です</h3>
+            <h3 className="mt-1 text-xl font-bold text-white">
+              お気に入りはプレミアム限定です
+            </h3>
             <p className="mt-3 text-sm leading-6 text-slate-400">
               よく使うページを登録してナビバーからすぐアクセスできます。プレミアム会員向け機能です。
             </p>
@@ -122,6 +129,7 @@ const toolPageIds: ToolPageId[] = [
   'gap-prediction',
   'highlow-sprint',
   'candle-swipe',
+  'profit-tower',
   'trade-tarot',
 ];
 
@@ -170,7 +178,11 @@ export const App = () => {
       window.sessionStorage.getItem(MISSION_RETURN_STORAGE_KEY) === '1' &&
       getRoute() !== 'tools/daily-mission',
   );
-  const favoritesCtx = useFavorites(discordAuth.session, discordAuth.canAccessPremium, discordAuth.isAuthenticated);
+  const favoritesCtx = useFavorites(
+    discordAuth.session,
+    discordAuth.canAccessPremium,
+    discordAuth.isAuthenticated,
+  );
   const isWeekendMode = isWeekendModeInJst(now);
   const toolPageId = parseToolPageId(route);
   const categoryPageId = parseCategoryPageId(route);
@@ -198,10 +210,18 @@ export const App = () => {
     const pageUrl = `${SITE_URL}/#/${route}`;
     setMeta('meta[name="description"]', 'name=description', meta.description);
     setMeta('meta[property="og:title"]', 'property=og:title', meta.title);
-    setMeta('meta[property="og:description"]', 'property=og:description', meta.description);
+    setMeta(
+      'meta[property="og:description"]',
+      'property=og:description',
+      meta.description,
+    );
     setMeta('meta[property="og:url"]', 'property=og:url', pageUrl);
     setMeta('meta[name="twitter:title"]', 'name=twitter:title', meta.title);
-    setMeta('meta[name="twitter:description"]', 'name=twitter:description', meta.description);
+    setMeta(
+      'meta[name="twitter:description"]',
+      'name=twitter:description',
+      meta.description,
+    );
     setMeta('meta[name="twitter:url"]', 'name=twitter:url', pageUrl);
   }, [route]);
 
@@ -250,106 +270,106 @@ export const App = () => {
 
   return (
     <FavoritesContext.Provider value={favoritesCtx}>
-    <div className="min-h-screen bg-slate-950 pt-16 text-slate-100">
-      <FloatingNav currentRoute={route} auth={discordAuth} />
-      <SpaceXBanner />
-      <NewFeaturesTicker />
-      <div key={route} className="animate-fade-in">
-      {isAdminRoute ? (
-        <AdminPage auth={discordAuth} />
-      ) : isLoginRoute || isDiscordCallbackRoute ? (
-        <LoginPage auth={discordAuth} isCallbackRoute={isDiscordCallbackRoute} />
-      ) : isSpaceXRoute ? (
-        <SpaceXCountdownPage
-          prices={prices}
-          priceHistory={priceHistory}
-          now={now}
-          isWeekendMode={isWeekendMode}
-          alerts={alerts}
-          addAlert={addAlert}
-          removeAlert={removeAlert}
-          requestPermission={requestPermission}
-          permissionStatus={permissionStatus}
+      <div className="min-h-screen bg-slate-950 pt-16 text-slate-100">
+        <FloatingNav currentRoute={route} auth={discordAuth} />
+        <SpaceXBanner />
+        <NewFeaturesTicker />
+        <div key={route} className="animate-fade-in">
+          {isAdminRoute ? (
+            <AdminPage auth={discordAuth} />
+          ) : isLoginRoute || isDiscordCallbackRoute ? (
+            <LoginPage auth={discordAuth} isCallbackRoute={isDiscordCallbackRoute} />
+          ) : isSpaceXRoute ? (
+            <SpaceXCountdownPage
+              prices={prices}
+              priceHistory={priceHistory}
+              now={now}
+              isWeekendMode={isWeekendMode}
+              alerts={alerts}
+              addAlert={addAlert}
+              removeAlert={removeAlert}
+              requestPermission={requestPermission}
+              permissionStatus={permissionStatus}
+            />
+          ) : isHomeRoute ? (
+            <HomePage
+              prices={prices}
+              priceHistory={priceHistory}
+              connectionStatus={connectionStatus}
+              lastUpdatedAt={lastUpdatedAt}
+              isWeekendMode={isWeekendMode}
+            />
+          ) : categoryPageId ? (
+            <CategoryPage pageId={categoryPageId} />
+          ) : toolPageId ? (
+            <ToolPage
+              pageId={toolPageId}
+              prices={prices}
+              priceHistory={priceHistory}
+              isWeekendMode={isWeekendMode}
+              canAccessPremium={discordAuth.canAccessPremium}
+            />
+          ) : isBoardRoute ? (
+            <main>
+              <Header
+                connectionStatus={connectionStatus}
+                tickCount={tickCount}
+                lastUpdatedAt={lastUpdatedAt}
+                currentTime={new Date(now)}
+                isWeekendMode={isWeekendMode}
+                favButton={<BoardFavButton />}
+              />
+              <MarketBoard
+                prices={prices}
+                priceHistory={priceHistory}
+                now={now}
+                isWeekendMode={isWeekendMode}
+                alerts={alerts}
+                addAlert={addAlert}
+                removeAlert={removeAlert}
+                requestPermission={requestPermission}
+                permissionStatus={permissionStatus}
+              />
+              <ChartSection />
+              <ExplainerSections />
+              <Disclaimer />
+            </main>
+          ) : (
+            <HomePage
+              prices={prices}
+              priceHistory={priceHistory}
+              connectionStatus={connectionStatus}
+              lastUpdatedAt={lastUpdatedAt}
+              isWeekendMode={isWeekendMode}
+            />
+          )}
+        </div>
+        <AlertToasts
+          notifications={notifications}
+          dismissNotification={dismissNotification}
         />
-      ) : isHomeRoute ? (
-        <HomePage
-          prices={prices}
-          priceHistory={priceHistory}
-          connectionStatus={connectionStatus}
-          lastUpdatedAt={lastUpdatedAt}
-          isWeekendMode={isWeekendMode}
-        />
-      ) : categoryPageId ? (
-        <CategoryPage pageId={categoryPageId} />
-      ) : toolPageId ? (
-        <ToolPage
-          pageId={toolPageId}
-          prices={prices}
-          priceHistory={priceHistory}
-          isWeekendMode={isWeekendMode}
-          canAccessPremium={discordAuth.canAccessPremium}
-        />
-      ) : isBoardRoute ? (
-        <main>
-          <Header
-            connectionStatus={connectionStatus}
-            tickCount={tickCount}
-            lastUpdatedAt={lastUpdatedAt}
-            currentTime={new Date(now)}
-            isWeekendMode={isWeekendMode}
-            favButton={<BoardFavButton />}
-          />
-          <MarketBoard
-            prices={prices}
-            priceHistory={priceHistory}
-            now={now}
-            isWeekendMode={isWeekendMode}
-            alerts={alerts}
-            addAlert={addAlert}
-            removeAlert={removeAlert}
-            requestPermission={requestPermission}
-            permissionStatus={permissionStatus}
-          />
-          <ChartSection />
-          <ExplainerSections />
-          <Disclaimer />
-        </main>
-      ) : (
-        <HomePage
-          prices={prices}
-          priceHistory={priceHistory}
-          connectionStatus={connectionStatus}
-          lastUpdatedAt={lastUpdatedAt}
-          isWeekendMode={isWeekendMode}
-        />
-      )}
+        {canGoBack && !isHomeRoute && !showMissionReturn && (
+          <button
+            onClick={goBack}
+            className="fixed bottom-4 left-4 z-[60] inline-flex min-h-11 items-center justify-center rounded-full bg-slate-700 px-5 text-sm font-black text-white shadow-[0_16px_50px_rgba(0,0,0,0.4)] transition hover:bg-slate-600 animate-slide-up"
+          >
+            ← 前のページ
+          </button>
+        )}
+        {showMissionReturn && (
+          <a
+            href="#/tools/daily-mission"
+            onClick={() => {
+              window.sessionStorage.removeItem(MISSION_RETURN_STORAGE_KEY);
+              setShowMissionReturn(false);
+            }}
+            className="fixed bottom-4 left-4 z-[60] inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 text-sm font-black text-slate-950 shadow-[0_16px_50px_rgba(34,211,238,0.22)] transition hover:bg-cyan-200"
+          >
+            ミッションに戻る
+          </a>
+        )}
+        <AnyaAiAssistant />
       </div>
-      <AlertToasts
-        notifications={notifications}
-        dismissNotification={dismissNotification}
-      />
-      {canGoBack && !isHomeRoute && !showMissionReturn && (
-        <button
-          onClick={goBack}
-          className="fixed bottom-4 left-4 z-[60] inline-flex min-h-11 items-center justify-center rounded-full bg-slate-700 px-5 text-sm font-black text-white shadow-[0_16px_50px_rgba(0,0,0,0.4)] transition hover:bg-slate-600 animate-slide-up"
-        >
-          ← 前のページ
-        </button>
-      )}
-      {showMissionReturn && (
-        <a
-          href="#/tools/daily-mission"
-          onClick={() => {
-            window.sessionStorage.removeItem(MISSION_RETURN_STORAGE_KEY);
-            setShowMissionReturn(false);
-          }}
-          className="fixed bottom-4 left-4 z-[60] inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 text-sm font-black text-slate-950 shadow-[0_16px_50px_rgba(34,211,238,0.22)] transition hover:bg-cyan-200"
-        >
-          ミッションに戻る
-        </a>
-      )}
-      <AnyaAiAssistant />
-    </div>
     </FavoritesContext.Provider>
   );
 };

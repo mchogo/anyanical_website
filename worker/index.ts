@@ -51,7 +51,7 @@ interface GameScoreRow {
   created_at: string;
 }
 
-const VALID_GAMES = ['highlow', 'candle_swipe'] as const;
+const VALID_GAMES = ['highlow', 'candle_swipe', 'profit_tower'] as const;
 type GameId = (typeof VALID_GAMES)[number];
 const isValidGame = (value: unknown): value is GameId =>
   typeof value === 'string' && (VALID_GAMES as readonly string[]).includes(value);
@@ -408,10 +408,14 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const date = new URL(request.url).searchParams.get('date');
     if (!date) return json({ error: 'Bad Request' }, 400);
     const row = await db
-      .prepare('SELECT completed_json FROM daily_missions WHERE discord_user_id = ? AND date = ?')
+      .prepare(
+        'SELECT completed_json FROM daily_missions WHERE discord_user_id = ? AND date = ?',
+      )
       .bind(userId, date)
       .first<{ completed_json: string }>();
-    const completedIds: string[] = row ? (JSON.parse(row.completed_json) as string[]) : [];
+    const completedIds: string[] = row
+      ? (JSON.parse(row.completed_json) as string[])
+      : [];
     return json({ completedIds });
   }
 
@@ -420,7 +424,9 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     const body = (await request.json()) as { date?: string; completedIds?: unknown };
     const date = body.date;
     const completedIds = Array.isArray(body.completedIds)
-      ? (body.completedIds as string[]).filter((id) => typeof id === 'string').slice(0, 50)
+      ? (body.completedIds as string[])
+          .filter((id) => typeof id === 'string')
+          .slice(0, 50)
       : [];
     if (!date) return json({ error: 'Bad Request' }, 400);
     await db

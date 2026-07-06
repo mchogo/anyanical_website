@@ -6,7 +6,7 @@ import type { DiscordAuthSession } from './useDiscordAuth';
 // 認証は既存の Discord OAuth トークンを Bearer で送り、Worker 側の
 // verifyToken → discord_user_id スコープに従う。
 
-export type GameId = 'highlow' | 'candle_swipe';
+export type GameId = 'highlow' | 'candle_swipe' | 'profit_tower';
 
 export type LeaderboardEntry = {
   rank: number;

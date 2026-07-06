@@ -18,6 +18,7 @@ import { PnLCalendarTool } from './PnLCalendar';
 import { TraderQuiz } from './TraderQuiz';
 import { HighLowSprint } from './games/HighLowSprint';
 import { CandleSwipe } from './games/CandleSwipe';
+import { ProfitTower } from './games/ProfitTower';
 import type { MarketPrice } from '../config/markets';
 import type { PriceHistoryPoint } from '../hooks/useHyperliquidMids';
 
@@ -38,6 +39,7 @@ export type ToolPageId =
   | 'gap-prediction'
   | 'highlow-sprint'
   | 'candle-swipe'
+  | 'profit-tower'
   | 'trade-tarot';
 
 type ToolPageProps = {
@@ -159,9 +161,17 @@ const toolPages: Array<{
     href: '#/tools/candle-swipe',
   },
   {
+    id: 'profit-tower',
+    title: '利確タワー',
+    description:
+      '陽線ブロックを積み上げて資金を複利で増やすミニゲーム。重なりがゼロになると崩壊、5段ごとに利確できます。',
+    href: '#/tools/profit-tower',
+  },
+  {
     id: 'trade-tarot',
     title: 'トレードタロット',
-    description: '相場の迷いをカードに尋ねる、夜の占い館。トレーダー版大アルカナ22枚があなたに寄り添います。',
+    description:
+      '相場の迷いをカードに尋ねる、夜の占い館。トレーダー版大アルカナ22枚があなたに寄り添います。',
     href: '#/tools/trade-tarot',
   },
 ];
@@ -211,6 +221,8 @@ const renderTool = (
       return <HighLowSprint prices={prices} />;
     case 'candle-swipe':
       return <CandleSwipe />;
+    case 'profit-tower':
+      return <ProfitTower />;
     case 'trade-tarot':
       return <TradeTarotTool />;
   }
@@ -424,9 +436,21 @@ const nextActions: Record<
       href: '#/tools/highlow-sprint',
     },
     {
-      title: 'タイプ診断',
-      body: 'あなたのトレードスタイルを16タイプから診断します。',
-      href: '#/tools/trader-quiz',
+      title: '利確タワー',
+      body: 'ブロックを積み上げて資金を複利で増やすミニゲームにも挑戦します。',
+      href: '#/tools/profit-tower',
+    },
+  ],
+  'profit-tower': [
+    {
+      title: 'ローソク足スワイプ道場',
+      body: '過去チャートの続きを即断するトレーニングにも挑戦します。',
+      href: '#/tools/candle-swipe',
+    },
+    {
+      title: '60セカンズ・ハイロー',
+      body: 'リアルタイム価格で60秒後の上下を予想するゲームに挑戦します。',
+      href: '#/tools/highlow-sprint',
     },
   ],
   'trade-tarot': [
