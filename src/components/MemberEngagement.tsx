@@ -29,7 +29,13 @@ type GapPrediction = {
   createdAt: string;
 };
 
-const missionItems = [
+const missionItems: Array<{
+  id: string;
+  title: string;
+  body: string;
+  href: string;
+  autoDetect?: boolean;
+}> = [
   {
     id: 'board',
     title: '相場ボードを見る',
@@ -59,6 +65,13 @@ const missionItems = [
     title: '1行だけ振り返る',
     body: '今日の相場メモや反省を残す',
     href: '#/tools/trade-journal',
+  },
+  {
+    id: 'tarot',
+    title: '今日の一枚を占う',
+    body: 'トレードタロットで今日の運勢を確認（結果を見ると自動で完了になります）',
+    href: '#/tools/trade-tarot',
+    autoDetect: true,
   },
 ];
 
@@ -183,46 +196,89 @@ const isStoredMissionState = (
   'completedIds' in value &&
   Array.isArray(value.completedIds);
 
-const useDailyMissionState = (ownerId: string) => {
-  const date = todayJst();
-  const [history, setHistory] = useState<StoredMissionHistory>(() => {
-    const stored = readJson<StoredMissionHistory | StoredMissionState>(
-      missionStorageKey(ownerId),
-      {},
-    );
-    if (isStoredMissionState(stored)) {
-      return { [stored.date]: stored.completedIds };
-    }
-    return stored;
+const readMissionHistory = (ownerId: string): StoredMissionHistory => {
+  const stored = readJson<StoredMissionHistory | StoredMissionState>(
+    missionStorageKey(ownerId),
+    {},
+  );
+  if (isStoredMissionState(stored)) {
+    return { [stored.date]: stored.completedIds };
+  }
+  return stored;
+};
+
+const syncMissionToServer = (date: string, completedIds: string[], token: string) => {
+  void fetch('/api/daily-missions', {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ date, completedIds }),
   });
+};
+
+const useDailyMissionState = (ownerId: string, session?: DiscordAuthSession | null) => {
+  const date = todayJst();
+  const [history, setHistory] = useState<StoredMissionHistory>(() => readMissionHistory(ownerId));
 
   useEffect(() => {
-    const stored = readJson<StoredMissionHistory | StoredMissionState>(
-      missionStorageKey(ownerId),
-      {},
-    );
-    if (isStoredMissionState(stored)) {
-      setHistory({ [stored.date]: stored.completedIds });
-      return;
-    }
-    setHistory(stored);
+    setHistory(readMissionHistory(ownerId));
   }, [ownerId]);
 
   useEffect(() => {
     writeJson(missionStorageKey(ownerId), history);
   }, [history, ownerId]);
 
+  // 別フレーム(trade-tarotのiframe埋め込み等)からの同一キー変更を検知して再読込する。
+  useEffect(() => {
+    const handler = (event: StorageEvent) => {
+      if (event.key !== missionStorageKey(ownerId)) return;
+      setHistory(readMissionHistory(ownerId));
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, [ownerId]);
+
+  // storageイベントが発火しないケース(同一タブでの復帰等)へのフォールバック。
+  useEffect(() => {
+    const handler = () => {
+      if (document.visibilityState === 'visible') setHistory(readMissionHistory(ownerId));
+    };
+    document.addEventListener('visibilitychange', handler);
+    window.addEventListener('focus', handler);
+    return () => {
+      document.removeEventListener('visibilitychange', handler);
+      window.removeEventListener('focus', handler);
+    };
+  }, [ownerId]);
+
+  // ログイン時のみ: サーバーから当日分を取得してローカルとORマージする。
+  useEffect(() => {
+    if (!session?.accessToken) return;
+    void fetch(`/api/daily-missions?date=${date}`, {
+      headers: { Authorization: `Bearer ${session.accessToken}` },
+    })
+      .then((r) => r.json() as Promise<{ completedIds: string[] }>)
+      .then(({ completedIds: remote }) => {
+        if (!Array.isArray(remote) || remote.length === 0) return;
+        setHistory((current) => {
+          const local = current[date] ?? [];
+          const merged = Array.from(new Set([...local, ...remote]));
+          return { ...current, [date]: merged };
+        });
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.accessToken, ownerId]);
+
   const toggle = (id: string) => {
     setHistory((current) => {
       const completedIds = current[date] ?? [];
       const exists = completedIds.includes(id);
-      const next = {
-        ...current,
-        [date]: exists
-          ? completedIds.filter((completedId) => completedId !== id)
-          : [...completedIds, id],
-      };
+      const nextCompleted = exists
+        ? completedIds.filter((completedId) => completedId !== id)
+        : [...completedIds, id];
+      const next = { ...current, [date]: nextCompleted };
       writeJson(missionStorageKey(ownerId), next);
+      if (session?.accessToken) syncMissionToServer(date, nextCompleted, session.accessToken);
       return next;
     });
   };
@@ -362,7 +418,7 @@ const roleLabel = (roleAccess: string) => {
 export const MemberDashboard = ({ prices }: { prices: Record<string, MarketPrice> }) => {
   const { auth, ownerId, displayName } = useStorageOwner();
   const [lockedPremiumTitle, setLockedPremiumTitle] = useState<string | null>(null);
-  const { state, history } = useDailyMissionState(ownerId);
+  const { state, history } = useDailyMissionState(ownerId, auth.session);
   const { predictions } = useGapPredictions(ownerId);
   const completedCount = state.completedIds.length;
   const activePredictions = predictions.filter((item) => item.weekKey === weekKeyJst());
@@ -679,7 +735,7 @@ const FavoritesManager = () => {
 
 export const DailyMissionTool = () => {
   const { auth, ownerId } = useStorageOwner();
-  const { state, history, toggle } = useDailyMissionState(ownerId);
+  const { state, history, toggle } = useDailyMissionState(ownerId, auth.session);
   const [showCelebration, setShowCelebration] = useState(false);
   const [lockedPremiumTitle, setLockedPremiumTitle] = useState<string | null>(null);
   const completedCount = state.completedIds.length;
@@ -752,7 +808,7 @@ export const DailyMissionTool = () => {
                 <a
                   href={item.href}
                   onClick={() => {
-                    if (!completed) toggle(item.id);
+                    if (!completed && !item.autoDetect) toggle(item.id);
                     window.sessionStorage.setItem(MISSION_RETURN_STORAGE_KEY, '1');
                   }}
                   className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-cyan-100 ring-1 ring-white/10 transition hover:bg-cyan-300/10"
@@ -953,7 +1009,7 @@ export const DailyMissionTool = () => {
                 今日の相場チェック完了
               </h3>
               <p className="mt-3 text-center text-sm leading-6 text-slate-400">
-                相場ボード、強弱、指標、窓開け、振り返りまで確認できました。
+                相場ボード、強弱、指標、窓開け、振り返り、今日の一枚まで確認できました。
               </p>
               {auth.canAccessPremium && (
                 <div className="mt-5 rounded-lg border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-6 text-amber-50/85">

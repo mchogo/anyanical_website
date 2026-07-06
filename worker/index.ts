@@ -403,6 +403,37 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     return json({ ok: true });
   }
 
+  // ── GET /api/daily-missions?date=YYYY-MM-DD ─────────────────────────────
+  if (apiPath === 'daily-missions' && method === 'GET') {
+    const date = new URL(request.url).searchParams.get('date');
+    if (!date) return json({ error: 'Bad Request' }, 400);
+    const row = await db
+      .prepare('SELECT completed_json FROM daily_missions WHERE discord_user_id = ? AND date = ?')
+      .bind(userId, date)
+      .first<{ completed_json: string }>();
+    const completedIds: string[] = row ? (JSON.parse(row.completed_json) as string[]) : [];
+    return json({ completedIds });
+  }
+
+  // ── PUT /api/daily-missions ──────────────────────────────────────────────
+  if (apiPath === 'daily-missions' && method === 'PUT') {
+    const body = (await request.json()) as { date?: string; completedIds?: unknown };
+    const date = body.date;
+    const completedIds = Array.isArray(body.completedIds)
+      ? (body.completedIds as string[]).filter((id) => typeof id === 'string').slice(0, 50)
+      : [];
+    if (!date) return json({ error: 'Bad Request' }, 400);
+    await db
+      .prepare(
+        `INSERT INTO daily_missions (discord_user_id, date, completed_json, updated_at)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT(discord_user_id, date) DO UPDATE SET completed_json = excluded.completed_json, updated_at = excluded.updated_at`,
+      )
+      .bind(userId, date, JSON.stringify(completedIds), new Date().toISOString())
+      .run();
+    return json({ ok: true });
+  }
+
   // ── GET /api/quiz-results ────────────────────────────────────────────────
   if (apiPath === 'quiz-results' && method === 'GET') {
     const { results } = await db
