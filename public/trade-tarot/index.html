@@ -341,7 +341,12 @@
     background:transparent; color:#9fb0d8; border:1px solid rgba(159,176,216,0.4);
     border-radius:999px; padding:11px 20px; font-size:13px; font-family:'Noto Sans JP',sans-serif; font-weight:700;
   }
-  .btn-share:hover, .btn-copy:hover, .btn-again:hover{ filter:brightness(1.15); }
+  .btn-download{
+    background:rgba(255,255,255,0.06); color:var(--ivory); border:1px solid rgba(255,255,255,0.25);
+    border-radius:999px; padding:11px 20px; font-size:13px; font-family:'Noto Sans JP',sans-serif; font-weight:700;
+  }
+  .btn-share:hover, .btn-copy:hover, .btn-again:hover, .btn-download:hover{ filter:brightness(1.15); }
+  .btn-download:disabled{ opacity:.5; cursor:not-allowed; }
 
   .toast{
     position:fixed; left:50%; bottom:28px; transform:translate(-50%,20px);
@@ -445,6 +450,7 @@
 
       <div class="result-actions">
         <button class="btn btn-share" id="shareBtn">𝕏 でシェア</button>
+        <button class="btn btn-download" id="downloadBtn">📷 画像を保存</button>
         <button class="btn btn-copy" id="copyBtn">結果をコピー</button>
         <button class="btn btn-again" id="againBtn">もう一度占う</button>
       </div>
@@ -459,98 +465,334 @@
 'use strict';
 
 /* =========================================================================
-   1. カードデータ（トレーダー版 大アルカナ 22枚）
+   1. カードデータ（トレーダー版 大アルカナ22枚 + 小アルカナ56枚 = 全78枚）
    ========================================================================= */
-const TAROT_CARDS = [
-  { id:0,  roman:'0',    name:'はじまりのエントリー', eng:'THE FOOL', emoji:'🌱',
+const MAJOR_ARCANA = [
+  { id:0,  arcana:'major', roman:'0',    name:'はじまりのエントリー', eng:'THE FOOL', emoji:'🌱',
     upright:'新しい手法への好奇心が学びを呼ぶ。ロットは最小で小さく試すとき。',
     reversed:'根拠のない「なんとなくエントリー」の警告。入る前に一行根拠を書き出して。',
-    lesson:'根拠を書けないなら、入らない' },
-  { id:1,  roman:'I',    name:'手法の魔術師', eng:'THE MAGICIAN', emoji:'🪄',
+    lessons:['根拠を書けないなら、入らない','小さく始めれば、大きく学べる','好奇心はロットを増やす理由にならない','迷ったら、まず様子見という選択肢を思い出して'] },
+  { id:1,  arcana:'major', roman:'I',    name:'手法の魔術師', eng:'THE MAGICIAN', emoji:'🪄',
     upright:'道具は揃っている。決めた型を淡々と繰り出すとき。新武器は不要。',
     reversed:'聖杯探しのつまみ食い状態。インジケーターを増やすより軸を絞って。',
-    lesson:'聖杯は探すものではなく、育てるもの' },
-  { id:2,  roman:'II',   name:'静観の女教皇', eng:'THE HIGH PRIESTESS', emoji:'🔮',
+    lessons:['聖杯は探すものではなく、育てるもの','道具を増やす前に、今の型を磨け','新しい手法は、心の逃げ場にしないこと','迷ったときほど、基本の型に立ち返れ'] },
+  { id:2,  arcana:'major', roman:'II',   name:'静観の女教皇', eng:'THE HIGH PRIESTESS', emoji:'🔮',
     upright:'「待つ」判断が光るとき。チャートを閉じる静けさが次のチャンスを呼ぶ。',
     reversed:'直感という名の思い込みに注意。その直感を裏付けるデータはあるか？',
-    lesson:'待てない病に、良い縁は寄りつかない' },
-  { id:3,  roman:'III',  name:'複利の女帝', eng:'THE EMPRESS', emoji:'🌳',
+    lessons:['待てない病に、良い縁は寄りつかない','静けさの中にこそ、次の答えがある','直感は根拠のあとに使うもの','画面を閉じる勇気も、立派な技術'] },
+  { id:3,  arcana:'major', roman:'III',  name:'複利の女帝', eng:'THE EMPRESS', emoji:'🌳',
     upright:'小さな成果を守り育てる。慌てて刈り取らず複利を味方に。',
     reversed:'成果を急ぎすぎている。増やすことより減らさないことに軸足を。',
-    lesson:'複利は、退場しなかった者だけの果実' },
-  { id:4,  roman:'IV',   name:'ルールの皇帝', eng:'THE EMPEROR', emoji:'👑',
+    lessons:['複利は、退場しなかった者だけの果実','育てる者は、焦って刈り取らない','小さな利益を笑う者は、複利に泣く','資産は急かすと逃げていく'] },
+  { id:4,  arcana:'major', roman:'IV',   name:'ルールの皇帝', eng:'THE EMPEROR', emoji:'👑',
     upright:'自分で決めたルールが王座を守る。明文化された掟が力になる。',
     reversed:'ルールを「今回だけ」曲げたくなる誘惑あり。例外を作ればルールは崩壊する。',
-    lesson:'ルールを守れない日は、席を立つ' },
-  { id:5,  roman:'V',    name:'検証の教皇', eng:'THE HIEROPHANT', emoji:'📜',
+    lessons:['ルールを守れない日は、席を立つ','例外を許した瞬間、ルールは飾りになる','王座を守るのは、自分で決めた掟だけ','気分でルールを書き換えるな'] },
+  { id:5,  arcana:'major', roman:'V',    name:'検証の教皇', eng:'THE HIEROPHANT', emoji:'📜',
     upright:'過去検証や取引記録が導きになる。自分のデータに耳を傾けて。',
     reversed:'他人の相場観を鵜呑みにしていないか。誰かの一言より検証ノートの一行。',
-    lesson:'他人のポジションは、あなたを守らない' },
-  { id:6,  roman:'VI',   name:'相性の恋人', eng:'THE LOVERS', emoji:'💞',
+    lessons:['他人のポジションは、あなたを守らない','検証ノートは、未来のあなたへの手紙','誰かの正解は、あなたの不正解かもしれない','過去の自分の記録が、最良の師匠'] },
+  { id:6,  arcana:'major', roman:'VI',   name:'相性の恋人', eng:'THE LOVERS', emoji:'💞',
     upright:'相性の良い通貨ペアや得意な時間帯と噛み合う。得意な土俵を選ぶのが戦略。',
     reversed:'合わない相場に片思い中。すべての波に乗る必要はない。静かに離れて。',
-    lesson:'すべての相場と付き合う必要はない' },
-  { id:7,  roman:'VII',  name:'トレンドの戦車', eng:'THE CHARIOT', emoji:'🐎',
+    lessons:['すべての相場と付き合う必要はない','得意な土俵だけを選べば、勝率は上がる','苦手な通貨ペアに、義理立てはいらない','相性の悪い時間帯からは、そっと離れて'] },
+  { id:7,  arcana:'major', roman:'VII',  name:'トレンドの戦車', eng:'THE CHARIOT', emoji:'🐎',
     upright:'流れに乗る力が高まる。伸ばす勇気と、決めた線で降りる冷静さを両方握って。',
     reversed:'暴走の気配。連勝のあとこそ手綱が緩む。ブレーキの点検を。',
-    lesson:'連勝の後の一手が、いちばん高くつく' },
-  { id:8,  roman:'VIII', name:'握力', eng:'STRENGTH', emoji:'💪',
+    lessons:['連勝の後の一手が、いちばん高くつく','勢いに乗る時こそ、手綱を確認せよ','伸ばす勇気と、降りる冷静さは両輪','暴走する前に、一度立ち止まれ'] },
+  { id:8,  arcana:'major', roman:'VIII', name:'握力', eng:'STRENGTH', emoji:'💪',
     upright:'シナリオ通り握り続ける強さが実る。恐怖で離さず、欲で握りつぶさず。',
     reversed:'握るべきでない含み損を握っている。それは握力ではなくただの執着。',
-    lesson:'握力は利に使え、損に使うな' },
-  { id:9,  roman:'IX',   name:'休むも相場の隠者', eng:'THE HERMIT', emoji:'🏮',
+    lessons:['握力は利に使え、損に使うな','恐怖で手放すな、欲で握りつぶすな','握り続ける強さは、シナリオがあってこそ','ただ我慢するだけなら、それは握力ではない'] },
+  { id:9,  arcana:'major', roman:'IX',   name:'休むも相場の隠者', eng:'THE HERMIT', emoji:'🏮',
     upright:'離れて見えるものがある。ノーポジは停滞ではなく、次の一手へのチャージ。',
     reversed:'画面に張り付きすぎている。疲れた目にはチャンスもダマシに見える。',
-    lesson:'ノーポジも、立派なポジション' },
-  { id:10, roman:'X',    name:'相場サイクルの輪', eng:'WHEEL OF FORTUNE', emoji:'🌀',
+    lessons:['ノーポジも、立派なポジション','離れて初めて、見えてくる景色がある','疲れた目に、正しいチャートは映らない','灯りを持って、静かに一人で考える時間を'] },
+  { id:10, arcana:'major', roman:'X',    name:'相場サイクルの輪', eng:'WHEEL OF FORTUNE', emoji:'🌀',
     upright:'流れの変わり目。トレンドと停滞は巡るもの。局面を俯瞰すれば焦りは消える。',
     reversed:'過ぎ去った相場への執着。「あの波をもう一度」は無理。次の周回を待て。',
-    lesson:'相場は逃げない。逃げるのは冷静さ' },
-  { id:11, roman:'XI',   name:'期待値の天秤', eng:'JUSTICE', emoji:'⚖️',
+    lessons:['相場は逃げない。逃げるのは冷静さ','流れは巡る。焦って追いかけなくていい','停滞もトレンドも、いずれ入れ替わる','同じ波は二度と来ない。次の周回を待て'] },
+  { id:11, arcana:'major', roman:'XI',   name:'期待値の天秤', eng:'JUSTICE', emoji:'⚖️',
     upright:'損益比と勝率の天秤を見つめるとき。一回の結果ではなく試行回数の先を見る。',
     reversed:'感情に天秤が傾いている。取り返しの一手や意地のナンピンは気分の取引。',
-    lesson:'一回の勝ち負けは、ただの標本' },
-  { id:12, roman:'XII',  name:'塩漬けの男', eng:'THE HANGED MAN', emoji:'⏳',
+    lessons:['一回の勝ち負けは、ただの標本','天秤を傾けるのは感情ではなく期待値','意地のナンピンは、天秤を壊す重り','試行回数の先にしか、答えは見えない'] },
+  { id:12, arcana:'major', roman:'XII',  name:'塩漬けの男', eng:'THE HANGED MAN', emoji:'⏳',
     upright:'動けない時間にも意味はあるが、それは計画された待機の場合だけ。',
     reversed:'含み損を「長期投資」と呼び替えていないか。逆さまの視点になれば答えは出ている。',
-    lesson:'祈った時点で、それは戦略ではない' },
-  { id:13, roman:'XIII', name:'損切りの死神', eng:'DEATH', emoji:'✂️',
+    lessons:['祈った時点で、それは戦略ではない','逆さまの視点になれば、答えは見えてくる','長期投資という言い訳に、期限はあるか','動けない時間にも、計画があるかを問え'] },
+  { id:13, arcana:'major', roman:'XIII', name:'損切りの死神', eng:'DEATH', emoji:'✂️',
     upright:'終わらせることで始まる。決めた線での損切りは、資金と心を次へ運ぶ儀式。',
     reversed:'終わらせるべきポジションを引きずっている。小さな終わりを拒めば大破滅が待つ。',
-    lesson:'小さく終われる者だけが、長く残る' },
-  { id:14, roman:'XIV',  name:'資金管理の天使', eng:'TEMPERANCE', emoji:'🛡️',
+    lessons:['小さく終われる者だけが、長く残る','終わらせる儀式を、恐れてはいけない','損切りは、次のチャンスへの通行料','引きずったポジションは、いずれ牙をむく'] },
+  { id:14, arcana:'major', roman:'XIV',  name:'資金管理の天使', eng:'TEMPERANCE', emoji:'🛡️',
     upright:'ロットと感情の配合が整う。1回あたりの許容損失を一定にし、残高を守る。',
     reversed:'配分が崩れている。「ここぞ」のロット増しは、たいてい気の迷い。',
-    lesson:'ロットを決めるのは自信ではなく残高' },
-  { id:15, roman:'XV',   name:'ポジポジ病の悪魔', eng:'THE DEVIL', emoji:'😈',
+    lessons:['ロットを決めるのは自信ではなく残高','配合を誤れば、天使は舞い降りない','「ここぞ」のロット増しは、たいてい罠','許容損失は、感情より先に決めておくもの'] },
+  { id:15, arcana:'major', roman:'XV',   name:'ポジポジ病の悪魔', eng:'THE DEVIL', emoji:'😈',
     upright:'誘惑に気づけている。「入りたい」と「入るべき」の区別が鎖を断つ鍵。',
     reversed:'取引すること自体が快楽（ギャンブル）になっている。今夜は画面を閉じるべき。',
-    lesson:'暇つぶしのエントリーに、根拠はない' },
-  { id:16, roman:'XVI',  name:'フルレバの塔', eng:'THE TOWER', emoji:'🗼',
+    lessons:['暇つぶしのエントリーに、根拠はない','「入りたい」は、「入るべき」の理由にならない','鎖を断つ鍵は、自分がすでに持っている','快楽のための取引は、今夜だけでもやめてみて'] },
+  { id:16, arcana:'major', roman:'XVI',  name:'フルレバの塔', eng:'THE TOWER', emoji:'🗼',
     upright:'高すぎる塔は風に弱い。レバレッジを低く積み直せば、嵐が来ても崩れない。',
     reversed:'積み上げたものが一夜で崩れる警告。ロット、建玉、自信が過剰に膨らんでいる。',
-    lesson:'退場だけは、取り返しがつかない' },
-  { id:17, roman:'XVII', name:'希望の星', eng:'THE STAR', emoji:'🌟',
+    lessons:['退場だけは、取り返しがつかない','高すぎる塔は、いつか自分の重さで崩れる','積み上げる前に、崩れる時のことを考えて','嵐が来ても崩れない高さを、今のうちに選べ'] },
+  { id:17, arcana:'major', roman:'XVII', name:'希望の星', eng:'THE STAR', emoji:'🌟',
     upright:'遠くに導きの星が見える。目標という北極星があるなら、今日の一歩は小さくていい。',
     reversed:'一発逆転を狙って足元が留守になっている。それは星ではなく流れ星。追えば転ぶ。',
-    lesson:'一発逆転を狙う者から、消えていく' },
-  { id:18, roman:'XVIII',name:'ダマシの月', eng:'THE MOON', emoji:'🌒',
+    lessons:['一発逆転を狙う者から、消えていく','北極星は遠くにあるからこそ導きになる','小さな一歩は、大きな逆転より確実','流れ星を追いかけると、足元をすくわれる'] },
+  { id:18, arcana:'major', roman:'XVIII',name:'ダマシの月', eng:'THE MOON', emoji:'🌒',
     upright:'不確かなサインを不確かなまま扱う冷静さ。月明かりの相場ではロットを落として。',
     reversed:'ダマシに揺さぶられる暗示。飛び乗る前にひと呼吸置き、再確認を。',
-    lesson:'急がされた取引に、良い思い出はない' },
-  { id:19, roman:'XIX',  name:'利確の太陽', eng:'THE SUN', emoji:'☀️',
+    lessons:['急がされた取引に、良い思い出はない','月明かりの下では、ロットを落として歩け','不確かなサインは、不確かなまま扱うのが正解','飛び乗る前のひと呼吸が、明暗を分ける'] },
+  { id:19, arcana:'major', roman:'XIX',  name:'利確の太陽', eng:'THE SUN', emoji:'☀️',
     upright:'実りのとき。決めた目標に届いたら胸を張って手仕舞い。欲張りすぎは日没を招く。',
     reversed:'「もっと伸びるはず」という欲が影を落とす。太陽は沈む前が最も眩しい。',
-    lesson:'利確に後悔はつきもの。それでも利確' },
-  { id:20, roman:'XX',   name:'トレードノートの審判', eng:'JUDGEMENT', emoji:'📖',
+    lessons:['利確に後悔はつきもの。それでも利確','太陽は沈む前がいちばん眩しい','決めた目標に届いたら、胸を張って手仕舞いを','「もっと」を手放せた日が、成長した日'] },
+  { id:20, arcana:'major', roman:'XX',   name:'トレードノートの審判', eng:'JUDGEMENT', emoji:'📖',
     upright:'過去の記録があなたを救う。負けトレードの振り返りから次の型が立ち上がる。',
     reversed:'同じ失敗の繰り返し。記録なき反省はただの気分転換。今夜ノートに一行書こう。',
-    lesson:'記録しない負けは、また会いに来る' },
-  { id:21, roman:'XXI',  name:'継続の世界', eng:'THE WORLD', emoji:'🌍',
+    lessons:['記録しない負けは、また会いに来る','振り返りのない反省は、ただの気分転換','今夜の一行が、明日のあなたを救う','同じ失敗を繰り返す前に、ノートを開いて'] },
+  { id:21, arcana:'major', roman:'XXI',  name:'継続の世界', eng:'THE WORLD', emoji:'🌍',
     upright:'サイクルが完成に向かう。手法・資金管理・メンタルの輪が噛み合い始めている。',
     reversed:'完成を焦るサイン。世界は一夜では回らない。記録・検証・休息の輪を一つずつ。',
-    lesson:'相場は明日もある。あなたも明日にいること' },
+    lessons:['相場は明日もある。あなたも明日にいること','世界は一夜では回らない。焦らず輪を繋げ','完成を急ぐと、輪は歪んでしまう','記録・検証・休息、一つずつ噛み合わせて'] },
 ];
+
+const MINOR_ARCANA = [
+  // ── Wands（杖）🔥 エントリー・行動力 ──────────────────────────────────
+  { id:22, arcana:'minor', suit:'wands', rank:1, roman:'杖 I', name:'杖のエース', eng:'ACE of WANDS', emoji:'🔥',
+    upright:'新しい戦略やアイデアが閃く瞬間。行動を起こす合図が来ている。',
+    reversed:'閃きだけが先走り、検証が追いついていない。火種はまだ小さいままでいい。',
+    lessons:['閃いた瞬間こそ、一呼吸置け','火は熾すもの、燃え広がらせるものではない','新しい戦略は、小さな炎から試す','行動する前に、燃料（根拠）を確認せよ'] },
+  { id:23, arcana:'minor', suit:'wands', rank:2, roman:'杖 II', name:'杖の2', eng:'2 of WANDS', emoji:'🔥',
+    upright:'次の一手を計画する段階。視野を広げ、複数のシナリオを描くとき。',
+    reversed:'計画倒れの兆候。決断を先延ばしにし続けている。',
+    lessons:['計画は描くもの、迷い続けるものではない','二つの道を同時に歩くことはできない','視野を広げたら、いずれ一つを選べ','決断を遅らせることも、一つの損失'] },
+  { id:24, arcana:'minor', suit:'wands', rank:3, roman:'杖 III', name:'杖の3', eng:'3 of WANDS', emoji:'🔥',
+    upright:'最初の成果が見え始め、次の展開を見渡せるとき。',
+    reversed:'成果に浮かれて視野が狭くなっている。足元の確認を怠るな。',
+    lessons:['最初の成果は、次への足場に過ぎない','遠くを見るときこそ、足元を固めよ','視界が開けた時ほど、慎重に進め','成果は通過点、ゴールではない'] },
+  { id:25, arcana:'minor', suit:'wands', rank:4, roman:'杖 IV', name:'杖の4', eng:'4 of WANDS', emoji:'🔥',
+    upright:'一区切りついた安定期。小さな成功を祝ってもいい頃合い。',
+    reversed:'安定に胡座をかき、次の備えを怠っている。',
+    lessons:['祝杯は一杯まで、二杯目は油断を呼ぶ','安定は続く保証ではない','小さな成功こそ、次への準備を','立ち止まる時も、周囲を見渡して'] },
+  { id:26, arcana:'minor', suit:'wands', rank:5, roman:'杖 V', name:'杖の5', eng:'5 of WANDS', emoji:'🔥',
+    upright:'複数の戦略やシナリオがせめぎ合う時。健全な競争は成長を生む。',
+    reversed:'内なる葛藤が判断を鈍らせている。自分の中の声を整理せよ。',
+    lessons:['競い合うシナリオは、一つに絞って試せ','葛藤は悪ではない、放置が悪い','声が多すぎる時は、一度黙って聞け','戦う相手は市場であり、自分ではない'] },
+  { id:27, arcana:'minor', suit:'wands', rank:6, roman:'杖 VI', name:'杖の6', eng:'6 of WANDS', emoji:'🔥',
+    upright:'勝利の凱旋、努力が実を結ぶ瞬間。ただし驕らず次へ。',
+    reversed:'慢心が判断を狂わせる兆し。勝った直後こそ危険。',
+    lessons:['凱旋の直後にこそ、次の罠が潜む','勝利は祝え、しかし過信はするな','拍手が鳴り止む前に、次の準備を','驕りは、最速で資金を溶かす'] },
+  { id:28, arcana:'minor', suit:'wands', rank:7, roman:'杖 VII', name:'杖の7', eng:'7 of WANDS', emoji:'🔥',
+    upright:'自分のポジションや戦略を守り抜く局面。信念を貫く強さ。',
+    reversed:'守るべきでないものに固執している。撤退も戦略の一つ。',
+    lessons:['守るべきものと、手放すべきものを見極めよ','信念は貫け、意地は手放せ','防衛戦は、勝ち目があるからこそ挑む','疲れたら、退くことも勇気'] },
+  { id:29, arcana:'minor', suit:'wands', rank:8, roman:'杖 VIII', name:'杖の8', eng:'8 of WANDS', emoji:'🔥',
+    upright:'物事が急速に進展する時。相場の勢いに乗る好機。',
+    reversed:'展開が速すぎてついていけていない。焦らず流れを見極めよ。',
+    lessons:['速さに飲まれるな、流れを読め','加速する時ほど、視野は狭くなる','焦って追いかけると、置いていかれる','勢いは味方にも敵にもなる'] },
+  { id:30, arcana:'minor', suit:'wands', rank:9, roman:'杖 IX', name:'杖の9', eng:'9 of WANDS', emoji:'🔥',
+    upright:'疲れが溜まっているが、あと一歩の粘りが実を結ぶ時。',
+    reversed:'限界を超えた消耗。休むべき時に休まないと壊れる。',
+    lessons:['疲れた時の判断は、疲れた判断になる','あと一歩と、もう一歩は違う','粘るべき時と、休むべき時を分けよ','限界のサインは、無視すると牙をむく'] },
+  { id:31, arcana:'minor', suit:'wands', rank:10, roman:'杖 X', name:'杖の10', eng:'10 of WANDS', emoji:'🔥',
+    upright:'責任や成果を抱えすぎている。整理して身軽になる時期。',
+    reversed:'ポジションを抱えすぎて身動きが取れない状態。',
+    lessons:['抱えすぎた重荷は、いずれ全て落とす','ポジションは、背負うものではなく持つもの','身軽さこそ、相場を生き抜く武器','重荷を降ろす勇気も、実力のうち'] },
+  { id:32, arcana:'minor', suit:'wands', rank:11, roman:'杖・見習い', name:'杖の見習い', eng:'PAGE of WANDS', emoji:'🔥',
+    upright:'新しい挑戦に胸を躍らせる見習い。好奇心が学びを加速させる。',
+    reversed:'準備不足のまま飛び込もうとしている。基礎を固めてから。',
+    lessons:['見習いのうちは、小さく試して大きく学べ','情熱は財産、無鉄砲は負債','基礎を飛ばした行動力は、すぐに底をつく','見て学ぶことも、立派な一歩'] },
+  { id:33, arcana:'minor', suit:'wands', rank:12, roman:'杖・実践者', name:'杖の実践者', eng:'KNIGHT of WANDS', emoji:'🔥',
+    upright:'情熱のままに行動する実践者。勢いがあるが制御も必要。',
+    reversed:'勢い任せで計画性を欠いている。手綱を締める時。',
+    lessons:['勢いは武器、暴走は凶器','行動する前に、一度手綱を握れ','情熱だけでは、口座は守れない','猪突猛進の先にあるのは、崖かもしれない'] },
+  { id:34, arcana:'minor', suit:'wands', rank:13, roman:'杖・熟練者', name:'杖の熟練者', eng:'QUEEN of WANDS', emoji:'🔥',
+    upright:'情熱と冷静さを両立させる熟練者。周囲を導く自信がある。',
+    reversed:'自信が過信に変わりかけている。謙虚さを忘れずに。',
+    lessons:['熟練者の自信は、謙虚さの上に立つ','情熱は静かに燃やすほど長持ちする','導く者こそ、まず自分を律せよ','過信は、熟練者が最初に失うもの'] },
+  { id:35, arcana:'minor', suit:'wands', rank:14, roman:'杖・達人', name:'杖の達人', eng:'KING of WANDS', emoji:'🔥',
+    upright:'行動力とビジョンを完全に統率する達人。大局を見て動く。',
+    reversed:'独断的になり、周囲の声を聞かなくなっている。',
+    lessons:['達人は、動く時と待つ時を完全に見極める','統率とは、自分を律することから始まる','大局を見る者ほど、足元も見る','独りよがりのビジョンは、いずれ崩れる'] },
+
+  // ── Cups（聖杯）💧 メンタル・感情の波 ────────────────────────────────
+  { id:36, arcana:'minor', suit:'cups', rank:1, roman:'聖杯 I', name:'聖杯のエース', eng:'ACE of CUPS', emoji:'💧',
+    upright:'トレードへの純粋な喜びや情熱が湧き上がる瞬間。',
+    reversed:'感情が満たされず、虚しさを感じている。原点を思い出して。',
+    lessons:['喜びは燃料、依存にしてはいけない','純粋な情熱を、判断基準にはしない','満たされない時こそ、原点に戻れ','感情の芽生えは、まず観察せよ'] },
+  { id:37, arcana:'minor', suit:'cups', rank:2, roman:'聖杯 II', name:'聖杯の2', eng:'2 of CUPS', emoji:'💧',
+    upright:'仲間やコミュニティとの繋がりが力になる時。',
+    reversed:'情報の受け売りに偏り、自分の軸を見失っている。',
+    lessons:['繋がりは学びの入口、答えではない','誰かの意見は参考、自分の検証が結論','情報交換は、鵜呑みにするためではない','仲間がいても、判断は自分でする'] },
+  { id:38, arcana:'minor', suit:'cups', rank:3, roman:'聖杯 III', name:'聖杯の3', eng:'3 of CUPS', emoji:'💧',
+    upright:'成果を仲間と分かち合う喜び。感謝を忘れずに。',
+    reversed:'祝杯が過剰になり、気の緩みを生んでいる。',
+    lessons:['祝杯は程々に、口座は正直に反応する','分かち合う喜びは、次への活力に変えよ','浮かれた翌日こそ、慎重に','勝利の余韻は、判断力を鈍らせる'] },
+  { id:39, arcana:'minor', suit:'cups', rank:4, roman:'聖杯 IV', name:'聖杯の4', eng:'4 of CUPS', emoji:'💧',
+    upright:'マンネリからチャンスを見逃しかけている。視点を変える時。',
+    reversed:'無関心から抜け出し、新しい興味が芽生え始めている。',
+    lessons:['退屈な相場にも、静かなチャンスは潜む','無関心は、見逃しの始まり','慣れた景色ほど、注意深く見よ','あくびの後ろにチャンスは隠れている'] },
+  { id:40, arcana:'minor', suit:'cups', rank:5, roman:'聖杯 V', name:'聖杯の5', eng:'5 of CUPS', emoji:'💧',
+    upright:'失ったものへの後悔にとらわれている。残っているものに目を向けて。',
+    reversed:'後悔から立ち直り、次に進む準備ができ始めている。',
+    lessons:['こぼれた聖杯を、いつまでも見つめるな','残った杯に、気づけているか','後悔は学びに変えてこそ意味がある','失った額より、学んだ額を数えよ'] },
+  { id:41, arcana:'minor', suit:'cups', rank:6, roman:'聖杯 VI', name:'聖杯の6', eng:'6 of CUPS', emoji:'💧',
+    upright:'初心を思い出させる出来事。原点回帰が力になる時。',
+    reversed:'過去の成功体験に固執し、今の相場を見誤っている。',
+    lessons:['初心は財産、しかし今は今','懐かしさに浸るのは、休憩時間だけにせよ','昔の手法が今も効くとは限らない','原点回帰は、進化のための一歩'] },
+  { id:42, arcana:'minor', suit:'cups', rank:7, roman:'聖杯 VII', name:'聖杯の7', eng:'7 of CUPS', emoji:'💧',
+    upright:'多くの可能性が見えるが、幻想と現実の見極めが必要。',
+    reversed:'現実的な選択肢が見え始め、迷いが晴れつつある。',
+    lessons:['夢見がちなシナリオより、検証済みの一手を','選択肢が多い時ほど、絞る勇気を','幻想のチャンスは、現実の損失を生む','見えている全てが、現実とは限らない'] },
+  { id:43, arcana:'minor', suit:'cups', rank:8, roman:'聖杯 VIII', name:'聖杯の8', eng:'8 of CUPS', emoji:'💧',
+    upright:'今の環境や手法に見切りをつけ、次へ進む決断の時。',
+    reversed:'見切りをつけるべき時に、未練で留まっている。',
+    lessons:['見切りをつける勇気も、成長の証','未練は、次のチャンスを遠ざける','立ち去る背中に、後悔はいらない','次のステージは、手放した先にある'] },
+  { id:44, arcana:'minor', suit:'cups', rank:9, roman:'聖杯 IX', name:'聖杯の9', eng:'9 of CUPS', emoji:'💧',
+    upright:'目標達成の充足感。願いが叶う満たされた時。',
+    reversed:'満足が慢心に変わりかけている。次の目標を見据えて。',
+    lessons:['満足は一晩まで、翌朝は次を見よ','願いが叶った時こそ、次の種を蒔け','充足感に浸りすぎると、成長は止まる','満たされた心は、謙虚さも忘れずに'] },
+  { id:45, arcana:'minor', suit:'cups', rank:10, roman:'聖杯 X', name:'聖杯の10', eng:'10 of CUPS', emoji:'💧',
+    upright:'トレードと生活の調和が取れた、心穏やかな状態。',
+    reversed:'調和が崩れ、トレードが生活を侵食し始めている。',
+    lessons:['平穏こそ、長く続けるための土台','トレードは人生の一部、全部ではない','調和が崩れたら、一度距離を置け','穏やかな心が、最良の判断を生む'] },
+  { id:46, arcana:'minor', suit:'cups', rank:11, roman:'聖杯・見習い', name:'聖杯の見習い', eng:'PAGE of CUPS', emoji:'💧',
+    upright:'自分の感情の動きに気づき始めた見習い。素直な学びの姿勢。',
+    reversed:'感情に振り回され、気づきが行動に繋がっていない。',
+    lessons:['気づきは第一歩、次は向き合うこと','感情を知ることは、感情に従うことではない','素直な心は、学びを加速させる','気づいたら、記録に残せ'] },
+  { id:47, arcana:'minor', suit:'cups', rank:12, roman:'聖杯・実践者', name:'聖杯の実践者', eng:'KNIGHT of CUPS', emoji:'💧',
+    upright:'理想を追う情熱的な実践者。夢とロマンがトレードを彩る。',
+    reversed:'感情の波にトレードが振り回されている。',
+    lessons:['ロマンは大事、しかし資金管理はもっと大事','理想を追うほど、現実の確認を','感情の波に、資金を乗せるな','夢見る力は、検証と両輪で使え'] },
+  { id:48, arcana:'minor', suit:'cups', rank:13, roman:'聖杯・熟練者', name:'聖杯の熟練者', eng:'QUEEN of CUPS', emoji:'💧',
+    upright:'感情を受け止めながらも冷静さを保つ熟練者。共感力が強み。',
+    reversed:'感情移入しすぎて、客観性を失いかけている。',
+    lessons:['受け止めることと、流されることは違う','熟練者の優しさは、厳しさの裏にある','共感は財産、依存は負債','冷静さは、感情を殺すことではない'] },
+  { id:49, arcana:'minor', suit:'cups', rank:14, roman:'聖杯・達人', name:'聖杯の達人', eng:'KING of CUPS', emoji:'💧',
+    upright:'感情の波を完全に統御する達人。動じない心が武器。',
+    reversed:'感情を抑えすぎて、大切なサインを見逃している。',
+    lessons:['達人は、感情を消すのではなく操る','動じない心は、経験の積み重ね','抑えすぎた感情は、いつか爆発する','感情も、判断材料の一つに過ぎない'] },
+
+  // ── Swords（剣）⚔️ 分析・戦略・迷い ──────────────────────────────────
+  { id:50, arcana:'minor', suit:'swords', rank:1, roman:'剣 I', name:'剣のエース', eng:'ACE of SWORDS', emoji:'⚔️',
+    upright:'頭がクリアになり、新しい分析視点が閃く瞬間。',
+    reversed:'閃きが混乱に変わっている。情報過多で頭が重い。',
+    lessons:['閃きは鋭く、しかし振り回すな','クリアな頭こそ、最良のツール','新しい視点は、検証してから使え','切れ味は、使い方次第で武器にも刃にもなる'] },
+  { id:51, arcana:'minor', suit:'swords', rank:2, roman:'剣 II', name:'剣の2', eng:'2 of SWORDS', emoji:'⚔️',
+    upright:'二つの選択肢の間で膠着している。情報を整理する時。',
+    reversed:'膠着状態から抜け出し、決断の準備が整い始めている。',
+    lessons:['目隠しをしたまま、剣は振れない','決められない時は、情報が足りない証拠','膠着は悪ではない、焦った決断より安全','どちらも選ばないことも、一つの選択'] },
+  { id:52, arcana:'minor', suit:'swords', rank:3, roman:'剣 III', name:'剣の3', eng:'3 of SWORDS', emoji:'⚔️',
+    upright:'損切りの痛みと向き合う時。痛みは成長の証でもある。',
+    reversed:'過去の痛みを引きずり、次の一手が打てずにいる。',
+    lessons:['痛みを避け続けると、傷は深くなる','損切りの痛みは、次の利益への投資','刺さった剣は、抜かなければ治らない','痛みに慣れることと、麻痺することは違う'] },
+  { id:53, arcana:'minor', suit:'swords', rank:4, roman:'剣 IV', name:'剣の4', eng:'4 of SWORDS', emoji:'⚔️',
+    upright:'戦いを離れて休息する時。頭を冷やせば次が見える。',
+    reversed:'休むべき時に休めず、消耗が続いている。',
+    lessons:['休息もまた、戦略の一部','頭を冷やさない者に、冷静な判断はない','剣を鞘に収める勇気を持て','戦い続けることが、勝利とは限らない'] },
+  { id:54, arcana:'minor', suit:'swords', rank:5, roman:'剣 V', name:'剣の5', eng:'5 of SWORDS', emoji:'⚔️',
+    upright:'勝つことに固執しすぎている。何を失っているか振り返れ。',
+    reversed:'争いから距離を置き、本当に大切なものが見え始めている。',
+    lessons:['勝つことより、生き残ることを優先せよ','争いに勝って、資金を失う者もいる','こだわりが強すぎる時は、一度手を引け','本当の敵は、市場ではなく自分の意地'] },
+  { id:55, arcana:'minor', suit:'swords', rank:6, roman:'剣 VI', name:'剣の6', eng:'6 of SWORDS', emoji:'⚔️',
+    upright:'困難な局面から静かに移行する時。次のフェーズへの助走。',
+    reversed:'過去から抜け出せず、同じ場所に留まっている。',
+    lessons:['静かな移行こそ、確実な前進','困難を抜けた先に、次の景色がある','留まり続けるより、一歩でも進め','過去に舟を繋いだままでは、進めない'] },
+  { id:56, arcana:'minor', suit:'swords', rank:7, roman:'剣 VII', name:'剣の7', eng:'7 of SWORDS', emoji:'⚔️',
+    upright:'独自の戦略でこっそり動く時。ただし隠れたリスクに注意。',
+    reversed:'隠していたリスクが表面化しつつある。正直に向き合え。',
+    lessons:['隠れたリスクは、いつか必ず表に出る','独自の戦略は、検証もこっそりでは済まない','こっそり動くほど、自分に嘘はつけない','隠すべきは手の内、リスクではない'] },
+  { id:57, arcana:'minor', suit:'swords', rank:8, roman:'剣 VIII', name:'剣の8', eng:'8 of SWORDS', emoji:'⚔️',
+    upright:'思い込みに縛られ、身動きが取れなくなっている状態。',
+    reversed:'思考の縛りから解放され、視界が開け始めている。',
+    lessons:['縛っているのは市場ではなく、自分の思考','身動きが取れない時こそ、前提を疑え','牢獄の鍵は、最初から自分の手の中に','思い込みを手放せば、道は見える'] },
+  { id:58, arcana:'minor', suit:'swords', rank:9, roman:'剣 IX', name:'剣の9', eng:'9 of SWORDS', emoji:'⚔️',
+    upright:'不安に押しつぶされそうな夜。含み損が心を蝕んでいる。',
+    reversed:'不安のピークを越え、光が見え始めている。',
+    lessons:['眠れない夜のポジションは、翌朝見直せ','不安は、ロットが大きすぎるサイン','悪夢を見るロットは、そもそも過大','不安と冷静な判断は、同居できない'] },
+  { id:59, arcana:'minor', suit:'swords', rank:10, roman:'剣 X', name:'剣の10', eng:'10 of SWORDS', emoji:'⚔️',
+    upright:'最悪の局面。しかしどん底は、上に向かう起点でもある。',
+    reversed:'どん底から回復に向かい始めている兆し。',
+    lessons:['どん底を知る者だけが、本当の底値を知る','終わりは、新しい章の始まり','剣が全て刺さった後には、もう恐れるものはない','倒れた場所からしか、立ち上がれない'] },
+  { id:60, arcana:'minor', suit:'swords', rank:11, roman:'剣・見習い', name:'剣の見習い', eng:'PAGE of SWORDS', emoji:'⚔️',
+    upright:'分析の面白さに目覚めた見習い。好奇心旺盛に学ぶ時期。',
+    reversed:'中途半端な知識で分析した気になっている。',
+    lessons:['見習いの分析は、まず疑うことから','知ったつもりが、一番危険','鋭さは、経験と共に研がれていく','学ぶ姿勢こそ、最大の武器'] },
+  { id:61, arcana:'minor', suit:'swords', rank:12, roman:'剣・実践者', name:'剣の実践者', eng:'KNIGHT of SWORDS', emoji:'⚔️',
+    upright:'素早い判断力が武器の実践者。ただし性急さには注意。',
+    reversed:'判断が性急すぎて、大切な確認を飛ばしている。',
+    lessons:['速さは武器、雑さは弱点','踏み込む前の、一呼吸を惜しむな','性急な剣は、自分をも傷つける','速い判断ほど、根拠は明確に'] },
+  { id:62, arcana:'minor', suit:'swords', rank:13, roman:'剣・熟練者', name:'剣の熟練者', eng:'QUEEN of SWORDS', emoji:'⚔️',
+    upright:'感情を排した冷静な観察眼を持つ熟練者。的確な判断力。',
+    reversed:'冷静すぎて、大切な直感のサインを無視している。',
+    lessons:['冷静さは武器、冷淡さは弱点','熟練者の目は、感情の霧を貫く','時には、直感にも耳を傾けよ','鋭い観察眼は、自分にも向けよ'] },
+  { id:63, arcana:'minor', suit:'swords', rank:14, roman:'剣・達人', name:'剣の達人', eng:'KING of SWORDS', emoji:'⚔️',
+    upright:'論理と分析を完全に統率する達人。的確な戦略眼。',
+    reversed:'論理に偏りすぎて、柔軟性を失っている。',
+    lessons:['達人の論理は、状況に応じて姿を変える','完璧な理論も、市場の前では仮説に過ぎない','統率とは、自分の剣を制すること','柔軟性を失った刃は、いずれ折れる'] },
+
+  // ── Pentacles（金貨）🪙 資金管理・資産 ──────────────────────────────
+  { id:64, arcana:'minor', suit:'pentacles', rank:1, roman:'金貨 I', name:'金貨のエース', eng:'ACE of PENTACLES', emoji:'🪙',
+    upright:'新しい資金的なチャンスの種。口座開設や新しい取り組みの一歩。',
+    reversed:'種を蒔く前に、土壌（資金計画）の確認が不十分。',
+    lessons:['種を蒔く前に、土壌を整えよ','新しい資金の種は、小さく試すもの','一歩目の資金計画が、その先を決める','芽が出るまで、焦って掘り返すな'] },
+  { id:65, arcana:'minor', suit:'pentacles', rank:2, roman:'金貨 II', name:'金貨の2', eng:'2 of PENTACLES', emoji:'🪙',
+    upright:'複数の資金や口座のバランスを取る時。柔軟な調整力が試される。',
+    reversed:'バランスが崩れ、資金繰りが綱渡りになっている。',
+    lessons:['綱渡りは、両手に荷物を持ちすぎない','バランスを取る技術も、資金管理の一部','複数口座は、管理できる数までにせよ','揺れる時こそ、軸足を確認せよ'] },
+  { id:66, arcana:'minor', suit:'pentacles', rank:3, roman:'金貨 III', name:'金貨の3', eng:'3 of PENTACLES', emoji:'🪙',
+    upright:'仲間やコミュニティと共に学び、資産形成の土台を築く時。',
+    reversed:'協力の輪から外れ、孤立した学びになっている。',
+    lessons:['一人の学びには、限界がある','コミュニティは鏡、自分の姿を映し出す','共に築いた土台は、簡単には崩れない','孤立した学びは、視野を狭くする'] },
+  { id:67, arcana:'minor', suit:'pentacles', rank:4, roman:'金貨 IV', name:'金貨の4', eng:'4 of PENTACLES', emoji:'🪙',
+    upright:'資産をしっかり守る時期。ただし守りすぎて機会を逃すな。',
+    reversed:'資産への執着が強すぎて、身動きが取れなくなっている。',
+    lessons:['守ることと、抱え込むことは違う','資産は守るもの、しがみつくものではない','固く握った拳には、何も入ってこない','守りすぎた資産は、いずれ錆びつく'] },
+  { id:68, arcana:'minor', suit:'pentacles', rank:5, roman:'金貨 V', name:'金貨の5', eng:'5 of PENTACLES', emoji:'🪙',
+    upright:'資金的な困窮が迫る危機。助けを求める勇気も必要。',
+    reversed:'困窮から抜け出し、回復の兆しが見え始めている。',
+    lessons:['証拠金不足は、警告であり終わりではない','困窮した時こそ、ロットを見直せ','助けを求めることは、弱さではない','寒い夜の後には、必ず朝が来る'] },
+  { id:69, arcana:'minor', suit:'pentacles', rank:6, roman:'金貨 VI', name:'金貨の6', eng:'6 of PENTACLES', emoji:'🪙',
+    upright:'利益を還元し、与え与えられる健全な関係が築ける時。',
+    reversed:'与える・与えられるバランスが崩れている。',
+    lessons:['与えるだけも、受け取るだけも、長くは続かない','利益の還元は、次の縁を呼ぶ','バランスの崩れた関係は、資金にも表れる','分かち合う余裕こそ、真の豊かさ'] },
+  { id:70, arcana:'minor', suit:'pentacles', rank:7, roman:'金貨 VII', name:'金貨の7', eng:'7 of PENTACLES', emoji:'🪙',
+    upright:'忍耐強く資産を育てる途中経過。成果はまだ道半ば。',
+    reversed:'忍耐が切れかけ、途中で刈り取りたい衝動に駆られている。',
+    lessons:['複利の途中経過に、一喜一憂しすぎるな','忍耐強く育てた木ほど、深く根を張る','途中で掘り返せば、根は育たない','成果は道半ば、焦る理由にはならない'] },
+  { id:71, arcana:'minor', suit:'pentacles', rank:8, roman:'金貨 VIII', name:'金貨の8', eng:'8 of PENTACLES', emoji:'🪙',
+    upright:'地道な検証と鍛錬を積み重ねる職人の時間。',
+    reversed:'鍛錬が雑になり、質より量に偏っている。',
+    lessons:['地道な鍛錬に、近道はない','検証の積み重ねが、いずれ大きな差になる','量をこなす前に、質を確認せよ','職人の手は、繰り返しでしか磨かれない'] },
+  { id:72, arcana:'minor', suit:'pentacles', rank:9, roman:'金貨 IX', name:'金貨の9', eng:'9 of PENTACLES', emoji:'🪙',
+    upright:'これまでの努力が実り、資産形成の成果を収穫する時。',
+    reversed:'収穫を急ぎすぎて、木を傷つけている。',
+    lessons:['実りは、育てた分だけ返ってくる','収穫の時こそ、次の種蒔きを忘れずに','急いだ収穫は、翌年の実りを減らす','自分の努力を、素直に認めていい'] },
+  { id:73, arcana:'minor', suit:'pentacles', rank:10, roman:'金貨 X', name:'金貨の10', eng:'10 of PENTACLES', emoji:'🪙',
+    upright:'世代を超えて続く資産の繁栄。長期的な視点が実を結ぶ時。',
+    reversed:'長期的な視点を見失い、目先の利益に走っている。',
+    lessons:['長期的な繁栄は、目先の利益の先にある','資産は、受け継がれてこそ意味を持つ','焦った資産形成は、長続きしない','今日の一手が、10年後の景色を作る'] },
+  { id:74, arcana:'minor', suit:'pentacles', rank:11, roman:'金貨・見習い', name:'金貨の見習い', eng:'PAGE of PENTACLES', emoji:'🪙',
+    upright:'資金管理の大切さに気づき始めた見習い。堅実な学びの姿勢。',
+    reversed:'学びが浅いまま、大きな資金を動かそうとしている。',
+    lessons:['見習いの資金管理は、小さな額から','堅実な学びは、派手さより価値がある','大きく動かす前に、小さく学べ','地道な一歩が、達人への近道'] },
+  { id:75, arcana:'minor', suit:'pentacles', rank:12, roman:'金貨・実践者', name:'金貨の実践者', eng:'KNIGHT of PENTACLES', emoji:'🪙',
+    upright:'着実にコツコツと資産を積み上げる実践者。堅実さが武器。',
+    reversed:'融通が利かず、変化に対応できていない。',
+    lessons:['着実さは武器、頑固さは弱点','コツコツ積み上げた資産は、簡単には崩れない','変化を拒む堅実さは、いずれ時代遅れになる','実践者の強みは、継続する力'] },
+  { id:76, arcana:'minor', suit:'pentacles', rank:13, roman:'金貨・熟練者', name:'金貨の熟練者', eng:'QUEEN of PENTACLES', emoji:'🪙',
+    upright:'堅実に、そして豊かに資産を育てる熟練者。生活との調和も上手。',
+    reversed:'資産を育てることに気を取られ、生活が疎かになっている。',
+    lessons:['堅実さと豊かさは、両立できる','熟練者は、資産と生活の両方を育てる','育てることに夢中で、自分を忘れるな','豊かさは、資産の額だけでは測れない'] },
+  { id:77, arcana:'minor', suit:'pentacles', rank:14, roman:'金貨・達人', name:'金貨の達人', eng:'KING of PENTACLES', emoji:'🪙',
+    upright:'資金と資産を完全に統率する達人。安定と繁栄を築く力。',
+    reversed:'資産への執着が強くなり、視野が狭くなっている。',
+    lessons:['達人の統率は、資金にも心にも及ぶ','安定を築いた者ほど、謙虚であれ','執着は、達人の足を引っ張る唯一のもの','繁栄は、分かち合ってこそ続く'] },
+];
+
+const TAROT_CARDS = [...MAJOR_ARCANA, ...MINOR_ARCANA];
 
 /* =========================================================================
    2. Web Audio API — サウンドエンジン
@@ -697,6 +939,46 @@ function todayDateStr(){
   return `${y}-${m}-${day}`;
 }
 
+/* ── weekend-market-board「今日の相場ミッション」連携 ──────────────────────
+   trade-tarotはweekend-market-boardのToolPage.tsxから同一オリジンでiframe
+   埋め込みされているため、親ページと同じlocalStorageキーを直接読み書きできる
+   （postMessage不要）。ここでのキー名・データ構造は
+   src/components/MemberEngagement.tsx の実装と一致させる必要がある。 */
+function missionDateJst(){
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date());
+}
+
+function getWmbOwnerId(){
+  try {
+    const raw = localStorage.getItem('wmb.discord.session');
+    if (!raw) return 'guest';
+    const session = JSON.parse(raw);
+    if (session && typeof session.expiresAt === 'number' && session.expiresAt > Date.now() && session.user && session.user.id) {
+      return session.user.id;
+    }
+  } catch(e) { /* noop */ }
+  return 'guest';
+}
+
+function markDailyMissionComplete(){
+  try {
+    const key = `wmb.dailyMission.${getWmbOwnerId()}`;
+    const date = missionDateJst();
+    const raw = localStorage.getItem(key);
+    let history = raw ? JSON.parse(raw) : {};
+    if (history && typeof history === 'object' && 'date' in history && 'completedIds' in history) {
+      history = { [history.date]: history.completedIds };
+    }
+    const completed = Array.isArray(history[date]) ? history[date] : [];
+    if (!completed.includes('tarot')) {
+      history[date] = [...completed, 'tarot'];
+      localStorage.setItem(key, JSON.stringify(history));
+    }
+  } catch(e) { /* noop */ }
+}
+
 function getDailySeed(){
   const combined = todayDateStr() + '::' + getUserSeedId();
   return hashString(combined);
@@ -706,7 +988,9 @@ function drawDailyCard(){
   const rng = mulberry32(getDailySeed());
   const idx = Math.floor(rng() * TAROT_CARDS.length);
   const reversed = rng() < 0.5;
-  return { card: TAROT_CARDS[idx], reversed };
+  const card = TAROT_CARDS[idx];
+  const lessonIndex = Math.floor(rng() * card.lessons.length);
+  return { card, reversed, lessonIndex };
 }
 
 /* =========================================================================
@@ -910,12 +1194,13 @@ function beginDraw(count){
       slot:s.key, label:s.label,
       card: deck[i],
       reversed: Math.random() < 0.5,
+      lessonIndex: Math.floor(Math.random() * deck[i].lessons.length),
       flipped:false,
     }));
   } else {
     slotDefs = [ { key:'present', label:'今日のあなたへ' } ];
     const d = drawDailyCard();
-    App.drawn = [{ slot:'present', label:'今日のあなたへ', card:d.card, reversed:d.reversed, flipped:false }];
+    App.drawn = [{ slot:'present', label:'今日のあなたへ', card:d.card, reversed:d.reversed, lessonIndex:d.lessonIndex, flipped:false }];
   }
 
   // スロットDOM生成
@@ -1052,6 +1337,7 @@ function typewriterEffect(text, el, onComplete){
 function goToResult(){
   showScreen('result');
   SoundEngine.playReveal();
+  if (App.isDaily) markDailyMissionComplete();
 
   const miniWrap = $('#miniCards');
   miniWrap.innerHTML = '';
@@ -1068,7 +1354,7 @@ function goToResult(){
 
   typewriterEffect(readingText, readingBox, ()=>{
     const present = getPresentEntry();
-    $('#lessonText').textContent = present.card.lesson;
+    $('#lessonText').textContent = present.card.lessons[present.lessonIndex];
     $('#lessonBox').classList.add('show');
   });
 }
@@ -1078,7 +1364,7 @@ function goToResult(){
    ========================================================================= */
 function buildShareText(){
   const present = getPresentEntry();
-  const lesson = present.card.lesson;
+  const lesson = present.card.lessons[present.lessonIndex];
   return `【トレードタロット】\n今宵のカード：${present.card.emoji} ${present.card.name}（${present.reversed?'逆':'正'}位置）\n今宵の戒め：「${lesson}」\n\n#トレードタロット #FX #トレード`;
 }
 
@@ -1086,6 +1372,147 @@ $('#shareBtn').addEventListener('click', ()=>{
   const text = buildShareText();
   const url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text);
   window.open(url, '_blank', 'noopener,noreferrer');
+});
+
+// ── 結果カード画像生成（Canvas） ─────────────────────────────────────────
+const fillRR = (ctx, x, y, w, h, r) => {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+};
+
+const wrapCenteredText = (ctx, text, cx, y, maxWidth, lineHeight) => {
+  const lines = [];
+  let current = '';
+  for (const ch of text){
+    const test = current + ch;
+    if (current.length > 0 && ctx.measureText(test).width > maxWidth){
+      lines.push(current);
+      current = ch;
+    } else {
+      current = test;
+    }
+  }
+  if (current) lines.push(current);
+  const startY = y - ((lines.length - 1) * lineHeight) / 2;
+  lines.forEach((line, i) => ctx.fillText(line, cx, startY + i * lineHeight));
+  return lines.length;
+};
+
+const generateResultCard = async () => {
+  const W = 1200, H = 630;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  await document.fonts.ready;
+
+  const SERIF = '"Shippori Mincho",serif';
+  const SANS = '"Noto Sans JP",sans-serif';
+
+  ctx.fillStyle = '#030d22'; ctx.fillRect(0, 0, W, H);
+  const grad = ctx.createRadialGradient(W * 0.5, 40, 0, W * 0.5, 40, W * 0.75);
+  grad.addColorStop(0, 'rgba(11,28,74,0.85)');
+  grad.addColorStop(1, 'rgba(1,5,15,0)');
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+
+  for (let i = 0; i < 90; i++){
+    ctx.fillStyle = `rgba(232,217,168,${(Math.random() * 0.5 + 0.15).toFixed(2)})`;
+    ctx.beginPath();
+    ctx.arc(Math.random() * W, Math.random() * H, Math.random() * 1.3 + 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#c9a94f';
+  ctx.font = `13px ${SANS}`;
+  ctx.fillText('TRADE TAROT', W / 2, 56);
+  ctx.fillStyle = '#e8d9a8';
+  ctx.font = `bold 32px ${SERIF}`;
+  ctx.fillText('トレードタロット', W / 2, 96);
+
+  const entries = App.drawn;
+  const n = entries.length;
+  const cardW = 190, cardH = 270, gap = 36;
+  const totalW = n * cardW + (n - 1) * gap;
+  const startX = (W - totalW) / 2;
+  const cardY = 130;
+
+  entries.forEach((entry) => {
+    const x = startX + entries.indexOf(entry) * (cardW + gap);
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    fillRR(ctx, x, cardY, cardW, cardH, 14); ctx.fill();
+    ctx.strokeStyle = 'rgba(201,169,79,0.7)'; ctx.lineWidth = 2;
+    fillRR(ctx, x, cardY, cardW, cardH, 14); ctx.stroke();
+
+    ctx.fillStyle = '#8fa3cc';
+    ctx.font = `12px ${SANS}`;
+    ctx.fillText(entry.label, x + cardW / 2, cardY + 28);
+
+    ctx.font = `54px ${SANS}`;
+    ctx.fillText(entry.card.emoji, x + cardW / 2, cardY + 96);
+
+    ctx.fillStyle = '#f1e6c8';
+    ctx.font = `bold 18px ${SERIF}`;
+    wrapCenteredText(ctx, entry.card.name, x + cardW / 2, cardY + 150, cardW - 24, 24);
+
+    ctx.fillStyle = '#c9a94f';
+    ctx.font = `bold 13px ${SANS}`;
+    ctx.fillText(entry.reversed ? '逆位置' : '正位置', x + cardW / 2, cardY + cardH - 20);
+  });
+
+  const present = getPresentEntry();
+  const lesson = present.card.lessons[present.lessonIndex];
+  const boxW = 1020, boxH = 150;
+  const boxX = (W - boxW) / 2;
+  const boxY = cardY + cardH + 34;
+  ctx.fillStyle = 'rgba(201,169,79,0.10)';
+  fillRR(ctx, boxX, boxY, boxW, boxH, 18); ctx.fill();
+  ctx.strokeStyle = 'rgba(201,169,79,0.6)'; ctx.lineWidth = 1.5;
+  fillRR(ctx, boxX, boxY, boxW, boxH, 18); ctx.stroke();
+
+  ctx.fillStyle = '#c9a94f';
+  ctx.font = `13px ${SANS}`;
+  ctx.fillText('今 宵 の 戒 め', W / 2, boxY + 34);
+
+  ctx.fillStyle = '#f1e6c8';
+  ctx.font = `bold 28px ${SERIF}`;
+  wrapCenteredText(ctx, lesson, W / 2, boxY + 90, boxW - 70, 38);
+
+  ctx.fillStyle = '#3f4d6b';
+  ctx.font = `13px ${SANS}`;
+  ctx.fillText('#トレードタロット #FX #トレード', W / 2, H - 22);
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png');
+  });
+};
+
+$('#downloadBtn').addEventListener('click', async () => {
+  const btn = $('#downloadBtn');
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '生成中...';
+  try {
+    const blob = await generateResultCard();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `trade-tarot-${todayDateStr()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('画像を保存しました');
+  } catch (e) {
+    showToast('画像の生成に失敗しました');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
 });
 
 $('#copyBtn').addEventListener('click', async ()=>{
