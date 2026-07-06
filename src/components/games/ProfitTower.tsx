@@ -270,6 +270,50 @@ export const ProfitTower = () => {
           🕯️
           陽線ブロックをタップ／スペースで落として積み上げ、資金を複利で増やすミニゲーム。ズレるほど次の土台が狭くなり、重なりがなくなるとタワーは崩壊（未確定の利益だけが消滅、確定済みの資金は失われません）。パーフェクトタイミングは土台の幅を回復させ、連続で決めるほど複利率が上乗せされます。5段ごとのチェックポイントで利確すれば、そこまでの資金が確定します。6段目以降は陰線ブロックや重要指標発表、スプレッド帯といった「邪魔者」もランダムに登場します。トレーニング目的の仮想資金です。
         </p>
+
+        <details className="mt-3 rounded-lg border border-white/10 bg-white/[0.035]">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 text-xs font-semibold text-white">
+            <span>⚠️ 邪魔者ガイド（6段目以降にランダム出現）</span>
+            <span className="faq-icon grid h-6 w-6 shrink-0 place-items-center rounded-full bg-amber-300/10 text-amber-200 ring-1 ring-amber-300/20">
+              +
+            </span>
+          </summary>
+          <div className="faq-body border-t border-white/10">
+            <div className="faq-body-inner">
+              <ul className="space-y-3 px-4 py-4 text-xs leading-5 text-slate-400">
+                <li className="flex items-start gap-3">
+                  <span className="mt-0.5 h-4 w-6 shrink-0 rounded bg-rose-400" />
+                  <span>
+                    <span className="font-bold text-rose-300">陰線ブロック</span>
+                    ：ちゃんと着地させても複利は増えず、連続Perfectも0にリセットされます。
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="mt-0.5 shrink-0 text-sm">⚡</span>
+                  <span>
+                    <span className="font-bold text-amber-300">フラッシュ経済指標</span>
+                    ：警告が出たその1回だけ、ブロックの移動速度が跳ね上がります。
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span
+                    className="mt-0.5 h-4 w-6 shrink-0 rounded"
+                    style={{
+                      backgroundImage:
+                        'repeating-linear-gradient(45deg, rgba(244,63,94,0.55) 0 4px, rgba(244,63,94,0.15) 4px 8px)',
+                    }}
+                  />
+                  <span>
+                    <span className="font-bold text-rose-300">
+                      スプレッド帯（デッドゾーン）
+                    </span>
+                    ：縞模様の部分は重なり判定から除外されます。そこだけに乗せても外れ扱いです。
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </details>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1.4fr_0.6fr]">
