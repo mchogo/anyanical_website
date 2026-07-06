@@ -122,6 +122,7 @@ const toolPageIds: ToolPageId[] = [
   'gap-prediction',
   'highlow-sprint',
   'candle-swipe',
+  'trade-tarot',
 ];
 
 const categoryPageIds: CategoryPageId[] = ['market', 'games', 'ea-copytrade', 'premium'];

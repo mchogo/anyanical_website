@@ -37,7 +37,8 @@ export type ToolPageId =
   | 'daily-mission'
   | 'gap-prediction'
   | 'highlow-sprint'
-  | 'candle-swipe';
+  | 'candle-swipe'
+  | 'trade-tarot';
 
 type ToolPageProps = {
   pageId: ToolPageId;
@@ -157,6 +158,12 @@ const toolPages: Array<{
       '実際の過去チャートの続きを右（上がる）/ 左（下がる）スワイプで即断するトレーニングゲームです。',
     href: '#/tools/candle-swipe',
   },
+  {
+    id: 'trade-tarot',
+    title: 'トレードタロット',
+    description: '相場の迷いをカードに尋ねる、夜の占い館。トレーダー版大アルカナ22枚があなたに寄り添います。',
+    href: '#/tools/trade-tarot',
+  },
 ];
 
 const renderTool = (
@@ -204,8 +211,22 @@ const renderTool = (
       return <HighLowSprint prices={prices} />;
     case 'candle-swipe':
       return <CandleSwipe />;
+    case 'trade-tarot':
+      return <TradeTarotTool />;
   }
 };
+
+const TradeTarotTool = () => (
+  <div className="overflow-hidden rounded-lg border border-white/10 bg-slate-950">
+    <iframe
+      src="/trade-tarot/"
+      title="トレードタロット"
+      className="w-full border-0"
+      style={{ height: '900px' }}
+      loading="lazy"
+    />
+  </div>
+);
 
 const nextActions: Record<
   ToolPageId,
@@ -406,6 +427,18 @@ const nextActions: Record<
       title: 'タイプ診断',
       body: 'あなたのトレードスタイルを16タイプから診断します。',
       href: '#/tools/trader-quiz',
+    },
+  ],
+  'trade-tarot': [
+    {
+      title: 'タイプ診断',
+      body: 'あなたのトレードスタイルを16タイプから診断します。',
+      href: '#/tools/trader-quiz',
+    },
+    {
+      title: '損益カレンダーへ',
+      body: '今宵の戒めを胸に、日々の記録をつけてみましょう。',
+      href: '#/tools/trade-journal',
     },
   ],
 };

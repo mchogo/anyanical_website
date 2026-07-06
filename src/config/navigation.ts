@@ -67,6 +67,10 @@ export const INTERNAL_NAV_LINKS = [
     label: 'スワイプ道場',
     href: '#/tools/candle-swipe',
   },
+  {
+    label: 'トレードタロット',
+    href: '#/tools/trade-tarot',
+  },
 ] as const;
 
 export const NAV_LINK_GROUPS = [
@@ -96,7 +100,7 @@ export const NAV_LINK_GROUPS = [
   {
     label: 'ゲーム',
     href: '#/games',
-    description: '予想、診断、ハイロー、スワイプ',
+    description: '予想、診断、ハイロー、スワイプ、占い',
     links: [
       {
         label: 'ギャップ予想',
@@ -113,6 +117,10 @@ export const NAV_LINK_GROUPS = [
       {
         label: 'スワイプ道場',
         href: '#/tools/candle-swipe',
+      },
+      {
+        label: 'トレードタロット',
+        href: '#/tools/trade-tarot',
       },
     ],
   },

@@ -103,6 +103,10 @@ export const ROUTE_META: Record<string, PageMeta> = {
     t('ローソク足スワイプ道場'),
     '実際の過去チャートの続きを右・左スワイプで即断するトレーニングゲーム。連続正解でハイスコアを狙えます。',
   ),
+  'tools/trade-tarot': s(
+    t('トレードタロット'),
+    '相場の迷いをカードに尋ねる、夜の占い館。トレーダー版大アルカナ22枚があなたに寄り添います。',
+  ),
 };
 
 export const DEFAULT_META: PageMeta = ROUTE_META[''];
