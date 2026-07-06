@@ -1498,10 +1498,29 @@ $('#downloadBtn').addEventListener('click', async () => {
   btn.textContent = '生成中...';
   try {
     const blob = await generateResultCard();
+    const filename = `trade-tarot-${todayDateStr()}.png`;
+
+    // スマホ（タッチ主体の端末）では、ファイル保存ではなくAirDrop/写真アプリ/LINE等
+    // に渡せるネイティブの共有シートを優先する。
+    const isTouchPrimary = navigator.maxTouchPoints > 1;
+    if (isTouchPrimary && navigator.canShare && navigator.share) {
+      const file = new File([blob], filename, { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file] });
+          showToast('画像を共有しました');
+          return;
+        } catch (e) {
+          if (e && e.name === 'AbortError') return; // ユーザーがキャンセルした場合は何もしない
+          // それ以外の失敗はダウンロードにフォールバック
+        }
+      }
+    }
+
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `trade-tarot-${todayDateStr()}.png`;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
