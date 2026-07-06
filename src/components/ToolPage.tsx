@@ -440,6 +440,11 @@ const nextActions: Record<
       body: '今宵の戒めを胸に、日々の記録をつけてみましょう。',
       href: '#/tools/trade-journal',
     },
+    {
+      title: 'プレミアムのご案内',
+      body: '毎日の先出し考察や注目ラインも気になる方は、こちらもどうぞ。',
+      href: '#/tools/participation',
+    },
   ],
 };
 

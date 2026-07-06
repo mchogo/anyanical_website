@@ -545,6 +545,35 @@ export const HomePage = ({
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
+        <div className="overflow-hidden rounded-lg border border-indigo-300/20 bg-slate-900/90">
+          <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="p-5">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-200">
+                Trade Tarot
+              </p>
+              <h2 className="mt-2 text-2xl font-black text-white">
+                今宵は、何を占いましょう
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-300">
+                相場の迷いをカードに尋ねる、夜の占い館。トレーダー版の大アルカナ・小アルカナ全78枚が、今日のあなたに寄り添います。
+              </p>
+              <a
+                href="#/tools/trade-tarot"
+                className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg bg-indigo-400 px-5 text-sm font-black text-slate-950 transition hover:bg-indigo-300"
+              >
+                🔮 カードに尋ねる
+              </a>
+            </div>
+            <div className="hidden items-center justify-center border-l border-white/10 bg-gradient-to-br from-indigo-950 via-slate-950 to-slate-950 p-5 lg:flex">
+              <p className="text-7xl" aria-hidden="true">
+                🔮
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
         <div className="overflow-hidden rounded-lg border border-amber-300/20 bg-slate-900/90">
           <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
             <div className="border-b border-white/10 bg-amber-300/10 p-5 lg:border-b-0 lg:border-r">
