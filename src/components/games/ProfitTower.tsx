@@ -5,16 +5,23 @@ import { useGameScores } from '../../hooks/useGameScores';
 
 // 利確タワー: 陽線ブロックをタップで積み上げ、前段との重なり幅が
 // 次段の土台になるStack系ミニゲーム。重なりがゼロになると崩壊し、
-// 未確定の含み益は消滅する。5段ごとのチェックポイントで利確可能。
+// 未確定の含み益だけが消滅する（確定資金＝元本は失われない）。
+// パーフェクトタイミングは土台の幅を回復させ、連続Perfectほど複利率が上乗せされる。
 
 const STAGE_WIDTH_PX = 280;
 const ROW_HEIGHT_PX = 28;
 // オーバーレイ(開始/チェックポイント/結果)の文言が入り切る高さを確保するため8段分を確保
 const VISIBLE_FLOORS = 8;
-const INITIAL_CAPITAL = 10000;
+// 1個目のブロックはステージ全幅より狭くし、左右にちゃんと往復移動して見えるようにする
+const INITIAL_BLOCK_WIDTH_PX = 120;
+const INITIAL_CAPITAL = 100000;
 const MAX_RATE = 0.15;
 const MIN_OVERLAP_RATIO = 0.06;
 const CHECKPOINT_INTERVAL = 5;
+const PERFECT_RATIO_THRESHOLD = 0.94;
+const RECOVERY_STEP_PX = 18;
+const COMBO_BONUS_STEP = 0.02;
+const COMBO_BONUS_CAP = 0.1;
 
 type Phase = 'idle' | 'playing' | 'checkpoint' | 'gameover' | 'cashedOut';
 type Rank = 'perfect' | 'good' | 'barely';
@@ -38,9 +45,10 @@ export const ProfitTower = () => {
   const [phase, setPhase] = useState<Phase>('idle');
   const [floor, setFloor] = useState(0);
   const [capital, setCapital] = useState(INITIAL_CAPITAL);
-  const [lockedCapital, setLockedCapital] = useState(0);
-  const [baseLeft, setBaseLeft] = useState(0);
-  const [baseWidth, setBaseWidth] = useState(STAGE_WIDTH_PX);
+  const [lockedCapital, setLockedCapital] = useState(INITIAL_CAPITAL);
+  const [comboPerfect, setComboPerfect] = useState(0);
+  const [baseLeft, setBaseLeft] = useState((STAGE_WIDTH_PX - INITIAL_BLOCK_WIDTH_PX) / 2);
+  const [baseWidth, setBaseWidth] = useState(INITIAL_BLOCK_WIDTH_PX);
   const [blocks, setBlocks] = useState<PlacedBlock[]>([]);
   const [lastRank, setLastRank] = useState<Rank | null>(null);
 
@@ -48,7 +56,7 @@ export const ProfitTower = () => {
   const movingBlockRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if ((phase === 'gameover' || phase === 'cashedOut') && canSave && lockedCapital > 0) {
+    if ((phase === 'gameover' || phase === 'cashedOut') && canSave) {
       void submitScore(Math.round(lockedCapital), floor, { rank: lastRank });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -58,10 +66,11 @@ export const ProfitTower = () => {
     setPhase('playing');
     setFloor(0);
     setCapital(INITIAL_CAPITAL);
-    setLockedCapital(0);
-    setBaseLeft(0);
-    setBaseWidth(STAGE_WIDTH_PX);
-    setBlocks([{ floor: 0, left: 0, width: STAGE_WIDTH_PX }]);
+    setLockedCapital(INITIAL_CAPITAL);
+    setComboPerfect(0);
+    setBaseLeft((STAGE_WIDTH_PX - INITIAL_BLOCK_WIDTH_PX) / 2);
+    setBaseWidth(INITIAL_BLOCK_WIDTH_PX);
+    setBlocks([]);
     setLastRank(null);
   };
 
@@ -82,24 +91,43 @@ export const ProfitTower = () => {
     const overlapRatio = baseWidth > 0 ? overlapWidth / baseWidth : 0;
 
     if (overlapWidth <= 0 || overlapRatio < MIN_OVERLAP_RATIO) {
+      setComboPerfect(0);
       setPhase('gameover');
       return;
     }
 
-    const rank: Rank =
-      overlapRatio > 0.92 ? 'perfect' : overlapRatio > 0.6 ? 'good' : 'barely';
-    const rate = MAX_RATE * overlapRatio;
+    const isPerfect = overlapRatio >= PERFECT_RATIO_THRESHOLD;
+    const rank: Rank = isPerfect ? 'perfect' : overlapRatio > 0.6 ? 'good' : 'barely';
+    const nextCombo = isPerfect ? comboPerfect + 1 : 0;
+    const comboBonus = isPerfect
+      ? Math.min(nextCombo * COMBO_BONUS_STEP, COMBO_BONUS_CAP)
+      : 0;
+    const rate = MAX_RATE * overlapRatio + comboBonus;
     const nextFloor = floor + 1;
+
+    // パーフェクトタイミングは土台の幅を回復させる（連続で決めるほど立て直しやすくなる）
+    let nextBaseWidth = overlapWidth;
+    let nextBaseLeft = overlapLeft;
+    if (isPerfect) {
+      const grown = Math.min(STAGE_WIDTH_PX, baseWidth + RECOVERY_STEP_PX);
+      const growDelta = grown - overlapWidth;
+      nextBaseWidth = grown;
+      nextBaseLeft = Math.max(
+        0,
+        Math.min(overlapLeft - growDelta / 2, STAGE_WIDTH_PX - grown),
+      );
+    }
 
     setBlocks((prev) => [
       ...prev,
-      { floor: nextFloor, left: overlapLeft, width: overlapWidth },
+      { floor: nextFloor, left: nextBaseLeft, width: nextBaseWidth },
     ]);
-    setBaseLeft(overlapLeft);
-    setBaseWidth(overlapWidth);
+    setBaseLeft(nextBaseLeft);
+    setBaseWidth(nextBaseWidth);
     setCapital((prev) => prev * (1 + rate));
     setFloor(nextFloor);
     setLastRank(rank);
+    setComboPerfect(nextCombo);
     setPhase(nextFloor % CHECKPOINT_INTERVAL === 0 ? 'checkpoint' : 'playing');
   };
 
@@ -112,6 +140,7 @@ export const ProfitTower = () => {
 
   const durationMs = Math.max(900, 2600 - floor * 70);
   const cameraShift = Math.max(0, floor + 1 - VISIBLE_FLOORS) * ROW_HEIGHT_PX;
+  const unconfirmedProfit = capital - lockedCapital;
 
   if (!auth.isAuthenticated) {
     if (!auth.isConfigured) return null;
@@ -139,27 +168,42 @@ export const ProfitTower = () => {
         <p className="text-sm font-semibold text-amber-300">Profit Stack Tower</p>
         <h2 className="mt-1 text-2xl font-bold text-white">利確タワー</h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-          タイミングよくブロックをタップして積み上げ、資金を複利で増やすミニゲーム。ズレるほど次の土台が狭くなり、重なりがなくなるとタワーは崩壊（未確定の利益は消滅）します。5段ごとのチェックポイントで利確すれば、そこまでの資金が確定します。トレーニング目的の仮想資金です。
+          タイミングよくブロックをタップして積み上げ、資金を複利で増やすミニゲーム。ズレるほど次の土台が狭くなり、重なりがなくなるとタワーは崩壊（未確定の利益だけが消滅、確定済みの資金は失われません）。パーフェクトタイミングは土台の幅を回復させ、連続で決めるほど複利率が上乗せされます。5段ごとのチェックポイントで利確すれば、そこまでの資金が確定します。トレーニング目的の仮想資金です。
         </p>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="relative rounded-lg border border-amber-300/20 bg-amber-300/[0.06] p-5">
-          <div className="flex items-center justify-between text-xs text-slate-500">
-            <p>
-              {floor}段目
-              {lastRank && (
-                <span className="ml-2 font-bold text-amber-300">
-                  {RANK_LABEL[lastRank]}
-                </span>
-              )}
-            </p>
-            <p>
-              資金 <span className="font-bold text-amber-300">{yen(capital)}円</span>
-            </p>
+          <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
+            <div className="rounded-lg bg-white/[0.03] px-2 py-2">
+              <p className="text-[10px] text-slate-500">確定資金</p>
+              <p className="mt-0.5 text-sm font-bold text-white">
+                {yen(lockedCapital)}円
+              </p>
+            </div>
+            <div className="rounded-lg bg-white/[0.03] px-2 py-2">
+              <p className="text-[10px] text-slate-500">未確定利益</p>
+              <p className="mt-0.5 text-sm font-bold text-emerald-300">
+                +{yen(unconfirmedProfit)}円
+              </p>
+            </div>
+            <div className="rounded-lg bg-white/[0.03] px-2 py-2">
+              <p className="text-[10px] text-slate-500">段数</p>
+              <p className="mt-0.5 text-sm font-bold text-white">{floor}</p>
+            </div>
+            <div className="rounded-lg bg-white/[0.03] px-2 py-2">
+              <p className="text-[10px] text-slate-500">連続Perfect</p>
+              <p className="mt-0.5 text-sm font-bold text-amber-300">{comboPerfect}</p>
+            </div>
           </div>
 
-          <div className="relative mx-auto mt-4" style={{ width: STAGE_WIDTH_PX }}>
+          {lastRank && (
+            <p className="mt-2 text-center text-xs font-bold text-amber-300">
+              {RANK_LABEL[lastRank]}
+            </p>
+          )}
+
+          <div className="relative mx-auto mt-3" style={{ width: STAGE_WIDTH_PX }}>
             <div
               ref={stageRef}
               onClick={handleDrop}
@@ -179,7 +223,7 @@ export const ProfitTower = () => {
                     className="absolute rounded-md bg-amber-300/80"
                     style={{
                       left: block.left,
-                      bottom: block.floor * ROW_HEIGHT_PX,
+                      bottom: (block.floor - 1) * ROW_HEIGHT_PX,
                       width: block.width,
                       height: ROW_HEIGHT_PX - 3,
                     }}
@@ -193,7 +237,7 @@ export const ProfitTower = () => {
                     style={
                       {
                         left: 0,
-                        bottom: (floor + 1) * ROW_HEIGHT_PX,
+                        bottom: floor * ROW_HEIGHT_PX,
                         width: baseWidth,
                         height: ROW_HEIGHT_PX - 3,
                         '--tower-travel': `${STAGE_WIDTH_PX - baseWidth}px`,
@@ -235,20 +279,23 @@ export const ProfitTower = () => {
                     {yen(capital)}
                     <span className="ml-1 text-sm text-slate-500">円</span>
                   </p>
+                  <p className="mt-1 text-xs text-emerald-300">
+                    未確定利益 +{yen(unconfirmedProfit)}円を確定できます
+                  </p>
                   <div className="mt-4 flex justify-center gap-3">
                     <button
                       type="button"
                       onClick={cashOut}
                       className="btn-press min-h-10 rounded-full bg-emerald-400/90 px-4 text-sm font-bold text-slate-950 transition hover:bg-emerald-300"
                     >
-                      利確する
+                      💰 利確して降りる
                     </button>
                     <button
                       type="button"
                       onClick={continueClimbing}
                       className="btn-press min-h-10 rounded-full bg-white/[0.06] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
                     >
-                      続ける
+                      ▶ 腕試しを続ける
                     </button>
                   </div>
                 </div>
@@ -264,8 +311,13 @@ export const ProfitTower = () => {
                   </h3>
                   <p className="mt-2 text-xs text-slate-400">到達{floor}段</p>
                   <p className="mt-1 text-2xl font-bold text-amber-300">
-                    {yen(lockedCapital)}
+                    最終資金 {yen(lockedCapital)}
                     <span className="ml-1 text-sm text-slate-500">円</span>
+                  </p>
+                  <p className="mx-auto mt-3 max-w-[220px] text-[11px] leading-5 text-slate-500">
+                    {phase === 'cashedOut'
+                      ? '欲張らず利確できました。この「利確の勇気」を実際のトレードでも意識してみましょう。'
+                      : '未確定の利益は消えてしまいました。次はどこで利確するか、事前に決めておきましょう。'}
                   </p>
                   <button
                     type="button"
@@ -298,7 +350,7 @@ export const ProfitTower = () => {
             </p>
             <div className="mt-3 grid grid-cols-2 gap-3 text-center">
               <div className="rounded-lg bg-white/[0.03] p-3">
-                <p className="text-[11px] text-slate-500">ベスト確定資金</p>
+                <p className="text-[11px] text-slate-500">ベスト最終資金</p>
                 <p className="mt-1 text-xl font-bold text-amber-300">
                   {myScores.bestScore.toLocaleString('ja-JP')}
                 </p>
