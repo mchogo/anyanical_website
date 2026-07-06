@@ -331,7 +331,7 @@ export const App = () => {
       {canGoBack && !isHomeRoute && !showMissionReturn && (
         <button
           onClick={goBack}
-          className="fixed bottom-20 left-1/2 z-[60] inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full bg-slate-700 px-5 text-sm font-black text-white shadow-[0_16px_50px_rgba(0,0,0,0.4)] transition hover:bg-slate-600 animate-slide-up sm:bottom-4"
+          className="fixed bottom-4 left-4 z-[60] inline-flex min-h-11 items-center justify-center rounded-full bg-slate-700 px-5 text-sm font-black text-white shadow-[0_16px_50px_rgba(0,0,0,0.4)] transition hover:bg-slate-600 animate-slide-up"
         >
           ← 前のページ
         </button>
@@ -343,7 +343,7 @@ export const App = () => {
             window.sessionStorage.removeItem(MISSION_RETURN_STORAGE_KEY);
             setShowMissionReturn(false);
           }}
-          className="fixed bottom-20 left-1/2 z-[60] inline-flex min-h-11 -translate-x-1/2 items-center justify-center rounded-full bg-cyan-300 px-5 text-sm font-black text-slate-950 shadow-[0_16px_50px_rgba(34,211,238,0.22)] transition hover:bg-cyan-200 sm:bottom-4"
+          className="fixed bottom-4 left-4 z-[60] inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 text-sm font-black text-slate-950 shadow-[0_16px_50px_rgba(34,211,238,0.22)] transition hover:bg-cyan-200"
         >
           ミッションに戻る
         </a>
