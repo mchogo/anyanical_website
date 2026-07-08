@@ -533,34 +533,41 @@
 </section>
 
 <!-- ============ 11. パターン③ ============ -->
-<section class="slide" data-nar="パターン③。一番難しいですが、一番RRが良いパターンです。監視足がまだ調整中で、しかもパスが高安切り下げになっている、つまり修正している時。この場合は、執行足で、安値の切り上げだけでなく、高安の切り上げを待つ必要があります。まず高値が実体で抜けて、高値切り上げが確定。次に実体抜けの足で、安値切り上げも確定。この時点で初めて、エントリー可能になります。この形は逆三尊にもなりやすく、ダウ転換組、チャートパターン組、ICT、SMC組など、様々な理論のエントリーが重なるため、優位性があります。">
+<section class="slide" data-nar="パターン③。一番難しいですが、一番RRが良いパターンです。監視足がまだ調整中で、しかもパスが高安切り下げになっている、つまり修正している時。この場合は、執行足で、安値の切り上げだけでなく、高安の切り上げを待つ必要があります。まず高値が実体で抜けて、高値切り上げが確定。次に実体抜けの足で、安値切り上げも確定。ただし、ここですぐにはエントリーしません。直前にブレイクした高値、つまり抵抗まで、価格が戻ってくるのを待ちます。抵抗まで戻ってきて押し目が入ったのを確認できたら、そこで初めてエントリー可能になります。この形は逆三尊にもなりやすく、ダウ転換組、チャートパターン組、ICT、SMC組など、様々な理論のエントリーが重なるため、優位性があります。">
   <div class="eyebrow">10 / ENTRY PATTERN</div>
   <h2>パターン③ — 監視足が「修正」している時（最難・最高RR）</h2>
-  <p class="lead">監視足パスが高安切り下げ中 → 執行足で<b style="color:var(--path)">高安の切り上げ</b>（両方）を待つ。</p>
+  <p class="lead">監視足パスが高安切り下げ中 → 執行足で<b style="color:var(--path)">高安の切り上げ</b>（両方）を待つ → さらに<b style="color:var(--path)">抵抗まで戻ってくる</b>のを待ってからエントリー。</p>
   <div class="body">
     <div class="chart">
       <svg viewBox="0 0 720 360">
         <polyline class="pathline red" style="--pd:.3s" points="60,80 150,220 230,140 320,270"/>
         <text class="svgsub fadeel" style="--d:1.2s" x="80" y="300" fill="var(--dn)">監視足：高安切り下げ＝修正中</text>
-        <polyline class="pathline white" style="--pd:1.8s" points="320,270 400,160 450,215 530,110"/>
+        <polyline class="pathline white" style="--pd:1.8s" points="320,270 390,130 440,205"/>
         <g class="flash" style="--d:2.8s">
-          <line class="dash" x1="330" y1="160" x2="560" y2="160" stroke="var(--path)" stroke-width="1.5"/>
-          <text class="svgsub" x="420" y="152" fill="var(--path)">① 高値切り上げ確定</text>
+          <line class="dash" x1="330" y1="160" x2="650" y2="160" stroke="var(--path)" stroke-width="1.5"/>
+          <text class="svgsub" x="410" y="152" fill="var(--path)">① 高値切り上げ確定（＝抵抗ライン）</text>
         </g>
         <g class="flash" style="--d:3.5s">
-          <circle cx="450" cy="215" r="7" fill="var(--up)"/>
-          <text class="svgsub" x="435" y="245" fill="var(--up)">② 安値切り上げ確定</text>
+          <circle cx="440" cy="205" r="7" fill="var(--up)"/>
+          <text class="svgsub" x="425" y="235" fill="var(--up)">② 安値切り上げ確定</text>
         </g>
-        <g class="flash" style="--d:4.2s">
-          <text class="svglabel" x="545" y="105" fill="var(--up)">⇒ ここで初めてIN</text>
+        <polyline class="pathline" style="--pd:3.4s" points="440,205 500,140 545,172"/>
+        <g class="flash" style="--d:4.8s">
+          <circle cx="545" cy="172" r="7" fill="var(--path)"/>
+          <text class="svgsub" x="452" y="200" fill="var(--path)">③ 抵抗まで戻るのを待つ（押し目）</text>
+        </g>
+        <polyline class="pathline green" style="--pd:5.0s" points="545,172 640,80"/>
+        <g class="flash" style="--d:6.0s">
+          <text class="svglabel" x="440" y="60" fill="var(--up)">⇒ 押し目確認後にIN</text>
         </g>
       </svg>
     </div>
     <div class="side">
       <div class="badge" style="--d:1.0s"><div class="num">1</div><p>執行足で<b>高値の切り上げ</b>を確認（②と違い高値側も必須）</p></div>
-      <div class="badge" style="--d:1.8s"><div class="num">2</div><p>実体抜けの足で<b>安値の切り上げ</b>も確定 → エントリー可</p></div>
-      <div class="note" style="--d:2.8s">SLは前の安値の下。TPは他パターンと同様</div>
-      <div class="note up" style="--d:3.6s">逆三尊・ダウ転換・ICTの2022モデル…<b>各理論の買いが重なる形</b>だから優位。抵抗と組み合わせ＋検証を重ねる</div>
+      <div class="badge" style="--d:1.8s"><div class="num">2</div><p>実体抜けの足で<b>安値の切り上げ</b>も確定 → 構造転換が成立</p></div>
+      <div class="badge" style="--d:2.8s"><div class="num">3</div><p>焦らず<b>抵抗（直前にブレイクした高値）まで戻ってくる</b>押し目を待つ</p></div>
+      <div class="note" style="--d:3.8s">押し目が入ったのを確認できて、初めてエントリー。SLは前の安値の下。TPは他パターンと同様</div>
+      <div class="note up" style="--d:4.6s">逆三尊・ダウ転換・ICTの2022モデル…<b>各理論の買いが重なる形</b>だから優位。抵抗と組み合わせ＋検証を重ねる</div>
     </div>
   </div>
 </section>
