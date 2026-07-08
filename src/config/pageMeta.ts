@@ -115,6 +115,10 @@ export const ROUTE_META: Record<string, PageMeta> = {
     t('トレードタロット'),
     '相場の迷いをカードに尋ねる、夜の占い館。トレーダー版大アルカナ22枚があなたに寄り添います。',
   ),
+  'tools/anya-method-slides': s(
+    t('アニャニカル解説'),
+    '環境認識からエントリーパターン①〜③までを音声付きスライドで振り返る学習用まとめ。本編はプレミアム限定です。',
+  ),
 };
 
 export const DEFAULT_META: PageMeta = ROUTE_META[''];

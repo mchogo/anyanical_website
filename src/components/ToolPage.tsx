@@ -6,7 +6,12 @@ import {
   GapWatchTool,
 } from './RelatedTools';
 import { useFavoritesContext } from '../hooks/useFavorites';
-import { DailyMissionTool, GapPredictionTool, MemberDashboard } from './MemberEngagement';
+import {
+  DailyMissionTool,
+  GapPredictionTool,
+  MemberDashboard,
+  PremiumLockMark,
+} from './MemberEngagement';
 import {
   CommunityGuidePage,
   CopyTradeGuidePage,
@@ -42,7 +47,8 @@ export type ToolPageId =
   | 'candle-swipe'
   | 'profit-tower'
   | 'game-ranking'
-  | 'trade-tarot';
+  | 'trade-tarot'
+  | 'anya-method-slides';
 
 type ToolPageProps = {
   pageId: ToolPageId;
@@ -183,6 +189,13 @@ const toolPages: Array<{
       '相場の迷いをカードに尋ねる、夜の占い館。トレーダー版大アルカナ22枚があなたに寄り添います。',
     href: '#/tools/trade-tarot',
   },
+  {
+    id: 'anya-method-slides',
+    title: 'アニャニカル解説',
+    description:
+      '環境認識からエントリーパターン①〜③までを音声付きスライドで振り返る学習用まとめ。本編はプレミアム限定です。',
+    href: '#/tools/anya-method-slides',
+  },
 ];
 
 const renderTool = (
@@ -190,6 +203,8 @@ const renderTool = (
   prices: Record<string, MarketPrice>,
   priceHistory: Record<string, PriceHistoryPoint[]>,
   isWeekendMode: boolean,
+  canAccessPremium: boolean,
+  isAuthenticated: boolean,
 ) => {
   switch (pageId) {
     case 'currency-strength':
@@ -236,6 +251,13 @@ const renderTool = (
       return <GameRankingPage />;
     case 'trade-tarot':
       return <TradeTarotTool />;
+    case 'anya-method-slides':
+      return (
+        <AnyaMethodSlidesTool
+          canAccessPremium={canAccessPremium}
+          isAuthenticated={isAuthenticated}
+        />
+      );
   }
 };
 
@@ -250,6 +272,66 @@ const TradeTarotTool = () => (
     />
   </div>
 );
+
+const AnyaMethodSlidesTool = ({
+  canAccessPremium,
+  isAuthenticated,
+}: {
+  canAccessPremium: boolean;
+  isAuthenticated: boolean;
+}) => {
+  if (canAccessPremium) {
+    return (
+      <div className="overflow-hidden rounded-lg border border-white/10 bg-slate-950">
+        <iframe
+          src="/anya-method-slides/"
+          title="アニャニカル解説"
+          className="w-full border-0"
+          style={{ height: '640px' }}
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative overflow-hidden rounded-lg border border-amber-300/20 bg-slate-950 p-6">
+      <PremiumLockMark className="absolute right-5 top-5 h-9 w-9" />
+      <p className="text-xs font-semibold tracking-[0.22em] text-amber-200">
+        ANYANICAL METHOD — STUDY NOTES
+      </p>
+      <h3 className="mt-2 pr-12 text-2xl font-bold text-white">
+        アニャニカル手法 要点整理スライド
+      </h3>
+      <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">
+        環境認識 → 調整待ち →
+        エントリーパターン①〜③。「どこまで待てばいいのか」を音声付きスライドで振り返ります。
+      </p>
+      <p className="mt-5 text-sm font-semibold text-amber-100">
+        続きはプレミアム限定です
+      </p>
+      <p className="mt-2 text-sm leading-6 text-slate-400">
+        本編スライド(音声解説付き)はDiscordプレミアム会員のみ視聴できます。
+      </p>
+      <div className="mt-5 flex flex-wrap gap-2">
+        <a
+          href="#/tools/participation"
+          className="inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
+        >
+          プレミアム内容を見る
+        </a>
+        {!isAuthenticated && (
+          <a
+            href="#/login"
+            className="inline-flex min-h-10 items-center justify-center rounded-full bg-indigo-400 px-4 text-sm font-bold text-white transition hover:bg-indigo-300"
+          >
+            Discordログイン
+          </a>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const nextActions: Record<
   ToolPageId,
@@ -493,6 +575,18 @@ const nextActions: Record<
       href: '#/tools/participation',
     },
   ],
+  'anya-method-slides': [
+    {
+      title: '戦略ページへ',
+      body: 'プレミアム、Discord、半裁量EAの活用方針を確認します。',
+      href: '#/tools/strategy',
+    },
+    {
+      title: 'プレミアムを見る',
+      body: 'note加入、申請フォーム、Discord権限付与の流れを確認します。',
+      href: '#/tools/participation',
+    },
+  ],
 };
 
 const FavUpsellOverlay = ({
@@ -610,7 +704,14 @@ export const ToolPage = ({
       </section>
 
       <section className="tool-section mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
-        {renderTool(pageId, prices, priceHistory, isWeekendMode)}
+        {renderTool(
+          pageId,
+          prices,
+          priceHistory,
+          isWeekendMode,
+          canAccessPremium,
+          isAuthenticated,
+        )}
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">

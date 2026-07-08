@@ -132,6 +132,7 @@ const toolPageIds: ToolPageId[] = [
   'profit-tower',
   'game-ranking',
   'trade-tarot',
+  'anya-method-slides',
 ];
 
 const categoryPageIds: CategoryPageId[] = ['market', 'games', 'ea-copytrade', 'premium'];

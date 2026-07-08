@@ -79,6 +79,10 @@ export const INTERNAL_NAV_LINKS = [
     label: 'トレードタロット',
     href: '#/tools/trade-tarot',
   },
+  {
+    label: 'アニャニカル解説',
+    href: '#/tools/anya-method-slides',
+  },
 ] as const;
 
 export const NAV_LINK_GROUPS = [
@@ -187,6 +191,10 @@ export const NAV_LINK_GROUPS = [
       {
         label: '損益カレンダー',
         href: '#/tools/trade-journal',
+      },
+      {
+        label: 'アニャニカル解説',
+        href: '#/tools/anya-method-slides',
       },
     ],
   },

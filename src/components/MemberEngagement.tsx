@@ -101,7 +101,7 @@ const premiumPreviewLinks = [
   },
 ];
 
-const PremiumLockMark = ({ className = '' }: { className?: string }) => (
+export const PremiumLockMark = ({ className = '' }: { className?: string }) => (
   <span
     aria-hidden="true"
     className={`grid place-items-center rounded-full border border-amber-100/40 bg-amber-200/15 shadow-[0_0_24px_rgba(251,191,36,0.16)] ${className}`}
