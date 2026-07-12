@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 
-import { EXTERNAL_LINKS, INTERNAL_NAV_LINKS, NAV_LINK_GROUPS } from '../config/navigation';
+import {
+  EXTERNAL_LINKS,
+  INTERNAL_NAV_LINKS,
+  NAV_LINK_GROUPS,
+} from '../config/navigation';
 import type { useDiscordAuth } from '../hooks/useDiscordAuth';
 import { useFavoritesContext } from '../hooks/useFavorites';
 
@@ -39,7 +43,13 @@ const isActiveGroup = (
   );
 };
 
-const FavUpsellOverlay = ({ onClose, isAuthenticated }: { onClose: () => void; isAuthenticated: boolean }) => (
+const FavUpsellOverlay = ({
+  onClose,
+  isAuthenticated,
+}: {
+  onClose: () => void;
+  isAuthenticated: boolean;
+}) => (
   <div
     className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm animate-fade-in"
     onClick={onClose}
@@ -49,7 +59,9 @@ const FavUpsellOverlay = ({ onClose, isAuthenticated }: { onClose: () => void; i
       onClick={(e) => e.stopPropagation()}
     >
       <p className="text-sm font-semibold text-amber-100">Premium feature</p>
-      <h3 className="mt-1 text-xl font-bold text-white">お気に入りはプレミアム限定です</h3>
+      <h3 className="mt-1 text-xl font-bold text-white">
+        お気に入りはプレミアム限定です
+      </h3>
       <p className="mt-3 text-sm leading-6 text-slate-400">
         よく使うページを登録してナビバーからすぐアクセスできます。プレミアム会員向け機能です。
       </p>
@@ -96,7 +108,12 @@ const FavoritesDropdown = ({ onNavigate }: { onNavigate?: () => void }) => {
         >
           ☆ お気に入り
         </button>
-        {showUpsell && <FavUpsellOverlay onClose={() => setShowUpsell(false)} isAuthenticated={isAuthenticated} />}
+        {showUpsell && (
+          <FavUpsellOverlay
+            onClose={() => setShowUpsell(false)}
+            isAuthenticated={isAuthenticated}
+          />
+        )}
       </>
     );
   }
@@ -168,7 +185,12 @@ const MobileFavoritesSection = ({ onNavigate }: { onNavigate?: () => void }) => 
         >
           ☆ お気に入り
         </button>
-        {showUpsell && <FavUpsellOverlay onClose={() => setShowUpsell(false)} isAuthenticated={isAuthenticated} />}
+        {showUpsell && (
+          <FavUpsellOverlay
+            onClose={() => setShowUpsell(false)}
+            isAuthenticated={isAuthenticated}
+          />
+        )}
       </>
     );
   }
@@ -186,10 +208,15 @@ const MobileFavoritesSection = ({ onNavigate }: { onNavigate?: () => void }) => 
   }
 
   return (
-    <details className="col-span-2 rounded-lg border border-amber-300/20 bg-amber-300/5 p-3" open>
+    <details
+      className="col-span-2 rounded-lg border border-amber-300/20 bg-amber-300/5 p-3"
+      open
+    >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-amber-200">
         <span>★ お気に入り</span>
-        <span className="grid h-6 w-6 place-items-center rounded-full bg-amber-300/10 text-xs text-amber-200 ring-1 ring-amber-300/20">▼</span>
+        <span className="grid h-6 w-6 place-items-center rounded-full bg-amber-300/10 text-xs text-amber-200 ring-1 ring-amber-300/20">
+          ▼
+        </span>
       </summary>
       <div className="mt-3 grid grid-cols-1 min-[360px]:grid-cols-2 gap-2">
         {favorites.map((route) => (
@@ -520,6 +547,31 @@ export const FloatingNav = ({ currentRoute, auth }: FloatingNavContainerProps) =
     else setIsOpen(true);
   };
 
+  // Lock background scroll while the mobile menu is visible so touch
+  // gestures inside it don't get stolen by the page behind it (iOS Safari
+  // in particular fights nested scroll containers otherwise).
+  useEffect(() => {
+    const isMenuVisible = isOpen || menuClosing;
+    if (!isMenuVisible) return;
+
+    const scrollY = window.scrollY;
+    const { style } = document.body;
+    style.position = 'fixed';
+    style.top = `-${scrollY}px`;
+    style.left = '0';
+    style.right = '0';
+    style.overflow = 'hidden';
+
+    return () => {
+      style.position = '';
+      style.top = '';
+      style.left = '';
+      style.right = '';
+      style.overflow = '';
+      window.scrollTo(0, scrollY);
+    };
+  }, [isOpen, menuClosing]);
+
   useEffect(() => {
     const onDismissed = () => setShowNotifDot(true);
     const onReset = () => setShowNotifDot(false);
@@ -600,7 +652,8 @@ export const FloatingNav = ({ currentRoute, auth }: FloatingNavContainerProps) =
       {(isOpen || menuClosing) && (
         <div
           id="mobile-primary-nav"
-          className={`mx-auto mt-3 grid max-h-[calc(100vh-4.5rem)] max-w-7xl grid-cols-2 gap-2 overflow-y-auto border-t border-white/10 pt-3 md:hidden ${menuClosing ? 'animate-slide-down' : 'animate-slide-up'}`}
+          style={{ WebkitOverflowScrolling: 'touch' }}
+          className={`mx-auto mt-3 grid max-h-[calc(100dvh-4.5rem)] max-w-7xl grid-cols-2 gap-2 overflow-y-auto overscroll-contain border-t border-white/10 pt-3 md:hidden ${menuClosing ? 'animate-slide-down' : 'animate-slide-up'}`}
         >
           <MobileNavLinks
             currentRoute={currentRoute}
