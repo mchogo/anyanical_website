@@ -954,6 +954,10 @@ export const CopyTradeGuidePage = () => (
           </p>
         </div>
 
+        <div className="mt-3 rounded-lg border border-amber-300/20 bg-amber-300/10 p-3 text-sm leading-6 text-amber-100">
+          口座開設時の紹介者コード欄は空欄でも問題ありませんが、「30561431」の入力にご協力いただけると助かります。
+        </div>
+
         <div className="mt-4 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
           {copyTradeRecommendedSettings.map((setting) => (
             <article
