@@ -78,7 +78,7 @@ const relatedTools = [
   },
   {
     title: 'HFMコピートレード',
-    description: 'Anya Gold Cent / Anya Gold のストラテジー情報',
+    description: 'Anya Gold Cent / Anya Gold / Anya Wemof Gold のストラテジー情報',
     href: '#/tools/copytrade',
   },
   {
@@ -228,7 +228,7 @@ export const ExplainerSections = () => (
 
         <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
           <p className="text-sm leading-6 text-slate-400">
-            Anya Gold Cent / Anya Gold
+            Anya Gold Cent / Anya Gold / Anya Wemof Gold
             のストラテジー情報、資金目安、注意点はコピトレ専用ページに分けています。資金量と損失リスクを確認してから検討してください。
           </p>
           <a

@@ -5,7 +5,11 @@ import recommendedSettingScreen from '../assets/copytrade/recommended-setting-sc
 import cancelCountProof from '../assets/proof/cancel-count.png';
 import memberCountProof from '../assets/proof/member-count.png';
 import { EXTERNAL_LINKS } from '../config/navigation';
-import { getJstYearMonth, usePnLShowcase, type ShowcaseAccount } from '../hooks/usePnLShowcase';
+import {
+  getJstYearMonth,
+  usePnLShowcase,
+  type ShowcaseAccount,
+} from '../hooks/usePnLShowcase';
 import { calcStats, generatePnLCard } from '../utils/pnlCard';
 
 const CountUp = ({
@@ -141,7 +145,7 @@ const strategyOfferCards = [
   {
     title: 'HFMコピートレード',
     badge: 'Copy trade',
-    body: 'Anya Gold Cent / Anya Gold のストラテジー情報を確認できます。資金量とロット比率を理解したうえで検討してください。',
+    body: 'Anya Gold Cent / Anya Gold / Anya Wemof Gold のストラテジー情報を確認できます。資金量とロット比率を理解したうえで検討してください。',
     href: '#/tools/copytrade',
     label: 'コピトレを見る',
   },
@@ -415,13 +419,25 @@ const copyTradeStrategies = [
     href: 'https://my.hfm.com/jp/copy-trading/provider-details?provider=147038068',
     label: '公開ページを見る',
   },
+  {
+    title: 'Anya Wemof Gold',
+    subtitle: '公開中 / セント口座ストラテジー',
+    body: 'Wemofの強さを実感したい方向け。ID: 153200466 / 0.01ロット / 10000セント',
+    href: 'https://my.hfm.com/jp/copy-trading/provider-details?provider=153200466',
+    label: '公開ページを見る',
+  },
 ];
 
 const copyTradeNoticeItems = [
   {
     title: '公開中のストラテジー',
     badge: 'Public',
-    body: 'Anya Gold Cent と Anya Gold をHFM側で公開しています。上のストラテジーカードから各公開ページを確認してください。',
+    body: 'Anya Gold Cent、Anya Gold、Anya Wemof Gold をHFM側で公開しています。上のストラテジーカードから各公開ページを確認してください。',
+  },
+  {
+    title: '口座開設時の紹介者コード',
+    badge: 'Signup',
+    body: 'HFMで新規に口座開設する場合、紹介者コード欄は空欄でも問題ありませんが、「30561431」の入力にご協力いただけると助かります。',
   },
   {
     title: '取引ロジック',
@@ -431,7 +447,12 @@ const copyTradeNoticeItems = [
   {
     title: 'TradingView複合シグナル',
     badge: 'Signal',
-    body: 'TradingView上の複数ストラテジーを複合的に組み合わせ、最適なエントリーシグナルを飛ばして発注しています。',
+    body: 'Anya Gold Cent / Anya Gold は、TradingView上の複数ストラテジーを複合的に組み合わせ、最適なエントリーシグナルを飛ばして発注しています。',
+  },
+  {
+    title: 'Wemofロジック',
+    badge: 'Logic',
+    body: 'Anya Wemof Goldは、SNSで話題の「わっきゃい氏」が考案したロジック(Wemof)をベースに、半裁量EAで運用に落とし込んだストラテジーです。',
   },
   {
     title: '資金管理・出金ルール',
@@ -846,7 +867,7 @@ export const CopyTradeGuidePage = () => (
       <p className="text-sm font-semibold text-emerald-200">HFM Copy trade</p>
       <h2 className="mt-2 text-2xl font-bold text-white">HFMコピートレード</h2>
       <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-300">
-        HFM側で公開している Anya Gold Cent / Anya Gold
+        HFM側で公開している Anya Gold Cent / Anya Gold / Anya Wemof Gold
         のストラテジー情報をまとめています。
         週利10〜20%をひとつの目安としていますが、相場状況により結果は変動します。資金量、ロット比率、損失リスクを理解したうえで検討してください。
       </p>
@@ -863,7 +884,7 @@ export const CopyTradeGuidePage = () => (
         </p>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
         {copyTradeStrategies.map((strategy) => (
           <article
             key={strategy.href}

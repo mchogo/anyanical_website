@@ -117,7 +117,8 @@ const categoryPages: Record<CategoryPageId, CategoryData> = {
       },
       {
         title: 'コピトレ',
-        description: 'Anya Gold Cent / Anya Gold のHFMストラテジー情報を確認します。',
+        description:
+          'Anya Gold Cent / Anya Gold / Anya Wemof Gold のHFMストラテジー情報を確認します。',
         href: '#/tools/copytrade',
       },
       {

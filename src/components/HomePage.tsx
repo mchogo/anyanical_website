@@ -63,7 +63,7 @@ const toolRoutes = [
   },
   {
     title: 'コピトレ',
-    body: 'HFMのAnya Gold Cent / Anya Gold ストラテジー情報を確認します。',
+    body: 'HFMのAnya Gold Cent / Anya Gold / Anya Wemof Gold ストラテジー情報を確認します。',
     href: '#/tools/copytrade',
   },
   {

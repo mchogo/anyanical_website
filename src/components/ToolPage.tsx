@@ -97,7 +97,7 @@ const toolPages: Array<{
   {
     id: 'copytrade',
     title: 'HFMコピトレ',
-    description: 'Anya Gold Cent / Anya Gold のストラテジー情報',
+    description: 'Anya Gold Cent / Anya Gold / Anya Wemof Gold のストラテジー情報',
     href: '#/tools/copytrade',
   },
   {
@@ -398,7 +398,7 @@ const nextActions: Record<
     },
     {
       title: 'HFMコピトレ',
-      body: 'Anya Gold Cent / Anya Gold のストラテジー情報を確認します。',
+      body: 'Anya Gold Cent / Anya Gold / Anya Wemof Gold のストラテジー情報を確認します。',
       href: '#/tools/copytrade',
     },
   ],
