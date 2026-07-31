@@ -408,7 +408,7 @@ const copyTradeStrategies = [
   {
     title: 'Anya Gold Cent',
     subtitle: '公開中 / セント口座ストラテジー',
-    body: '小さめの資金単位で始めたい人向け。ID: 153191918 / 0.01ロット / 2000セント',
+    body: '小さめの資金単位で始めたい人向け。ID: 153191918 / 最低0.01ロットから。運用者は20,000セント・0.1ロットの比率で運用しています',
     href: 'https://my.hfm.com/jp/copy-trading/provider-details?provider=153191918',
     label: '公開ページを見る',
   },
@@ -422,7 +422,7 @@ const copyTradeStrategies = [
   {
     title: 'Anya Wemof Gold',
     subtitle: '公開中 / セント口座ストラテジー',
-    body: 'Wemofの強さを実感したい方向け。ID: 153200466 / 0.01ロット / 10000セント',
+    body: 'Wemofの強さを実感したい方向け。ID: 153200466 / 最低0.01ロットから。運用者は1000ドル(10万セント)・0.1ロットの比率で運用しています',
     href: 'https://my.hfm.com/jp/copy-trading/provider-details?provider=153200466',
     label: '公開ページを見る',
   },
