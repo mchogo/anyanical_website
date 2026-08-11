@@ -663,9 +663,11 @@ export const StrategyGuidePage = () => (
 );
 
 const PnLShowcaseCard = () => {
-  const initial = getJstYearMonth();
-  const [year, setYear] = useState(initial.year);
-  const [month, setMonth] = useState(initial.month);
+  // null = "let the server pick the oldest month with recorded data" for the
+  // initial load; pinned to concrete values once that first response arrives
+  // so prevMonth/nextMonth have a base to navigate from.
+  const [year, setYear] = useState<number | null>(null);
+  const [month, setMonth] = useState<number | null>(null);
   const [activeIdx, setActiveIdx] = useState(0);
   // The nav direction is read inside the generation effect below to decide
   // the swap animation, but must NOT be component state: if it were, clicking
@@ -684,6 +686,16 @@ const PnLShowcaseCard = () => {
   useEffect(() => {
     if (state.phase === 'ready') setLastAccounts(state.data.accounts);
   }, [state]);
+
+  // Pin year/month to the server-chosen initial month once it's known, so
+  // subsequent renders (and nav) have concrete values to work from. Only
+  // fires once: after this, year is never null again.
+  useEffect(() => {
+    if (state.phase === 'ready' && year === null) {
+      setYear(state.data.year);
+      setMonth(state.data.month);
+    }
+  }, [state, year]);
 
   const accounts = state.phase === 'ready' ? state.data.accounts : lastAccounts;
   const clampedIdx = Math.min(activeIdx, Math.max(accounts.length - 1, 0));
@@ -751,28 +763,28 @@ const PnLShowcaseCard = () => {
     const now = getJstYearMonth();
     return now.year * 12 + now.month;
   })();
-  const curYm = year * 12 + month;
-  const canGoPrev = nowYm - curYm < 12;
-  const canGoNext = curYm < nowYm;
+  const curYm = year !== null && month !== null ? year * 12 + month : null;
+  const canGoPrev = curYm !== null && nowYm - curYm < 12;
+  const canGoNext = curYm !== null && curYm < nowYm;
 
   const prevMonth = () => {
-    if (!canGoPrev) return;
+    if (!canGoPrev || year === null || month === null) return;
     navDirRef.current = 'right';
     if (month === 0) {
-      setYear((y) => y - 1);
+      setYear(year - 1);
       setMonth(11);
     } else {
-      setMonth((m) => m - 1);
+      setMonth(month - 1);
     }
   };
   const nextMonth = () => {
-    if (!canGoNext) return;
+    if (!canGoNext || year === null || month === null) return;
     navDirRef.current = 'left';
     if (month === 11) {
-      setYear((y) => y + 1);
+      setYear(year + 1);
       setMonth(0);
     } else {
-      setMonth((m) => m + 1);
+      setMonth(month + 1);
     }
   };
   const selectTab = (i: number) => {
@@ -808,7 +820,7 @@ const PnLShowcaseCard = () => {
             ←
           </button>
           <p className="min-w-[6.5rem] text-center text-sm font-bold text-white">
-            {year}年{month + 1}月
+            {year !== null && month !== null ? `${year}年${month + 1}月` : ''}
           </p>
           <button
             onClick={nextMonth}

@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 
 const DISCORD_INVITE_URL = 'https://discord.gg/G6xWszr9CZ';
+const ANYA_AI_GUIDE_URL = '#/anya-ai';
+const ANYA_AI_RELEASE_URL =
+  'https://discord.com/channels/1152131321297129534/1534936700458106920/1534942794811052103';
 
 type AnswerEntry = {
   title: string;
@@ -12,6 +15,24 @@ type AnswerEntry = {
 };
 
 const answerEntries: AnswerEntry[] = [
+  {
+    title: '「あにゃAI」テスト版公開のお知らせ',
+    shortLabel: 'あにゃAI テスト版公開中',
+    answer:
+      'アニャニカル覗き部屋メンバー限定「あにゃAI」のテスト版を公開しました。会員教材への質問、チャート画像の分析補助、学習順序の整理、トレードの振り返りに利用できます。詳しい利用方法と注意事項はDiscordの公開案内をご確認ください。',
+    href: ANYA_AI_RELEASE_URL,
+    cta: 'Discordの公開案内を見る',
+    keywords: ['あにゃai', '公開', 'テスト版', 'discord', 'チャート分析', '会員ai'],
+  },
+  {
+    title: '会員教材を検索する「あにゃAI」',
+    shortLabel: '会員向けあにゃAI',
+    answer:
+      'Discord会員認証後に、アニャニカル覗き部屋の会員限定教材を検索しながら質問できるChatGPTです。現在はテスト版として公開しており、教材への質問やチャート分析の補助に利用できます。',
+    href: ANYA_AI_GUIDE_URL,
+    cta: '使い方と注意事項を見る',
+    keywords: ['あにゃai', 'anya ai', 'gpt', 'chatgpt', '教材', '会員認証', '質問'],
+  },
   {
     title: 'プレミアムで見られる内容',
     shortLabel: 'プレミアムの内容',
@@ -154,7 +175,18 @@ const answerEntries: AnswerEntry[] = [
       '12問に答えるとあなたのトレードスタイルを4つの軸（判断スタイル・時間軸・リスク管理・売買方針）で分析し、16タイプから最も近いタイプを診断します。強み・弱み・おすすめスタイルも確認できます。',
     href: '#/tools/trader-quiz',
     cta: 'タイプ診断を受ける',
-    keywords: ['タイプ', '診断', 'mbti', '性格', 'スタイル', '16', '分析型', '感覚型', 'スキャル', 'スイング'],
+    keywords: [
+      'タイプ',
+      '診断',
+      'mbti',
+      '性格',
+      'スタイル',
+      '16',
+      '分析型',
+      '感覚型',
+      'スキャル',
+      'スイング',
+    ],
   },
   {
     title: 'トレード日誌（損益カレンダー）について',
@@ -163,7 +195,16 @@ const answerEntries: AnswerEntry[] = [
       'プレミアム向けの損益管理ツールです。Discordログイン後に複数口座を登録し、日ごとの損益をカレンダー形式で記録できます。データはクラウドに保存されデバイス間で共有できます。',
     href: '#/tools/trade-journal',
     cta: 'トレード日誌を開く',
-    keywords: ['日誌', '損益', 'カレンダー', '記録', '口座', 'トレード記録', 'ログ', '管理'],
+    keywords: [
+      '日誌',
+      '損益',
+      'カレンダー',
+      '記録',
+      '口座',
+      'トレード記録',
+      'ログ',
+      '管理',
+    ],
   },
   {
     title: '通貨強弱ツールの使い方',
@@ -172,7 +213,18 @@ const answerEntries: AnswerEntry[] = [
       '通貨強弱ツールでは、主要8通貨の相対的な強弱をリアルタイムで確認できます。強い通貨を買い、弱い通貨を売る方向性の参考に使います。ゴールド（XAU）の強弱も確認できます。',
     href: '#/tools/currency-strength',
     cta: '通貨強弱を見る',
-    keywords: ['通貨強弱', '強弱', '通貨', 'usd', 'eur', 'jpy', 'gbp', 'aud', 'xau', 'ゴールド'],
+    keywords: [
+      '通貨強弱',
+      '強弱',
+      '通貨',
+      'usd',
+      'eur',
+      'jpy',
+      'gbp',
+      'aud',
+      'xau',
+      'ゴールド',
+    ],
   },
   {
     title: '経済指標カレンダーの使い方',
@@ -181,7 +233,16 @@ const answerEntries: AnswerEntry[] = [
       '経済指標ツールでは今週・来週の重要指標を東京時間で確認できます。★3の重要指標は前後に大きな動きが出やすいため、EA稼働やポジション保有に注意が必要です。',
     href: '#/tools/economic-calendar',
     cta: '指標カレンダーを見る',
-    keywords: ['指標', 'カレンダー', '経済', 'cpi', '雇用統計', 'fomc', '政策金利', 'イベント'],
+    keywords: [
+      '指標',
+      'カレンダー',
+      '経済',
+      'cpi',
+      '雇用統計',
+      'fomc',
+      '政策金利',
+      'イベント',
+    ],
   },
   {
     title: '窓開け監視ツールについて',
@@ -217,7 +278,14 @@ const answerEntries: AnswerEntry[] = [
       'サイト右上またはログインページからDiscordでログインできます。ログインするとトレード日誌などのプレミアムツールが使えます。取得する情報はDiscordのユーザー名とアイコンのみです。',
     href: '#/login',
     cta: 'ログインページへ',
-    keywords: ['ログイン', 'discord', '認証', 'サインイン', 'アカウント', 'ログインできない'],
+    keywords: [
+      'ログイン',
+      'discord',
+      '認証',
+      'サインイン',
+      'アカウント',
+      'ログインできない',
+    ],
   },
   {
     title: '週末ギャップ予想について',
@@ -283,7 +351,7 @@ const scoreEntry = (query: string, entry: AnswerEntry) => {
     `${entry.title} ${entry.answer} ${entry.keywords.join(' ')}`,
   );
   const terms = normalize(query)
-    .split(/[\s　]+/)
+    .split(/[\s\u3000]+/)
     .filter(Boolean);
 
   return terms.reduce((score, term) => score + (haystack.includes(term) ? 1 : 0), 0);
@@ -342,11 +410,7 @@ export const AnyaAiAssistant = () => {
   return (
     <>
       {isOpen && (
-        <div
-          className="fixed inset-0 z-[39]"
-          onClick={close}
-          aria-hidden="true"
-        />
+        <div className="fixed inset-0 z-[39]" onClick={close} aria-hidden="true" />
       )}
       <aside className="fixed bottom-4 right-4 z-40 w-[min(calc(100vw-2rem),22rem)]">
         {isOpen ? (
@@ -371,6 +435,26 @@ export const AnyaAiAssistant = () => {
 
             {/* Scrollable body */}
             <div className="flex-1 overflow-y-auto p-4">
+              {!selectedEntry && (
+                <a
+                  href={ANYA_AI_GUIDE_URL}
+                  onClick={close}
+                  className="mb-4 block rounded-lg border border-amber-300/25 bg-amber-300/10 p-4 transition hover:border-amber-300/40 hover:bg-amber-300/15"
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-200">
+                    Member AI
+                  </p>
+                  <p className="mt-1 text-sm font-black text-white">
+                    会員教材に質問できる「あにゃAI」はこちら
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-400">
+                    この小窓はサイト案内用です。教材検索・チャート相談は会員向けChatGPTをご利用ください。
+                  </p>
+                  <span className="mt-2 inline-block text-xs font-bold text-amber-200">
+                    使い方と注意事項を見る →
+                  </span>
+                </a>
+              )}
               {selectedEntry ? (
                 <div className="space-y-3">
                   <button
@@ -398,7 +482,9 @@ export const AnyaAiAssistant = () => {
                       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200">
                         Answer
                       </p>
-                      <h3 className="mt-2 text-sm font-bold text-white">{selectedEntry.title}</h3>
+                      <h3 className="mt-2 text-sm font-bold text-white">
+                        {selectedEntry.title}
+                      </h3>
                       <p className="mt-2 text-sm leading-6 text-slate-400">
                         {selectedEntry.answer}
                       </p>
@@ -447,7 +533,9 @@ export const AnyaAiAssistant = () => {
                       ))
                     ) : (
                       <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
-                        <h3 className="text-sm font-bold text-white">見つかりませんでした</h3>
+                        <h3 className="text-sm font-bold text-white">
+                          見つかりませんでした
+                        </h3>
                         <p className="mt-2 text-sm leading-6 text-slate-400">
                           DiscordでDMまたは質問スペースから聞いてください。
                         </p>
@@ -467,9 +555,18 @@ export const AnyaAiAssistant = () => {
             </div>
 
             {/* Footer */}
-            <p className="shrink-0 border-t border-white/10 px-4 py-2 text-[10px] leading-tight text-slate-600">
-              回答は参考情報です。最新状況はDiscordで確認を。
-            </p>
+            <div className="shrink-0 border-t border-white/10 px-4 py-2">
+              <a
+                href={ANYA_AI_GUIDE_URL}
+                onClick={close}
+                className="text-[10px] font-bold leading-tight text-amber-200 hover:text-amber-100"
+              >
+                会員向けあにゃAIを開く →
+              </a>
+              <p className="mt-1 text-[10px] leading-tight text-slate-600">
+                回答は参考情報です。最新状況はDiscordで確認を。
+              </p>
+            </div>
           </div>
         ) : (
           <button

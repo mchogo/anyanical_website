@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="index,follow" />
+    <meta
+      name="description"
+      content="Anyanical GPTおよびアニャニカル覗き部屋のプライバシーポリシー"
+    />
+    <title>プライバシーポリシー | アニャニカル覗き部屋</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+        background: #020617;
+        color: #e2e8f0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(
+            circle at top right,
+            rgba(34, 211, 238, 0.12),
+            transparent 34rem
+          ),
+          linear-gradient(180deg, #0f172a 0, #020617 32rem);
+      }
+
+      main {
+        width: min(880px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 64px 0 80px;
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        color: #67e8f9;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        color: #f8fafc;
+        font-size: clamp(2rem, 6vw, 3.4rem);
+        line-height: 1.15;
+      }
+
+      .lead {
+        margin: 20px 0 0;
+        color: #cbd5e1;
+        line-height: 1.9;
+      }
+
+      article {
+        margin-top: 36px;
+        padding: clamp(24px, 5vw, 48px);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 24px;
+        background: rgba(15, 23, 42, 0.88);
+        box-shadow: 0 28px 80px rgba(0, 0, 0, 0.32);
+      }
+
+      section + section {
+        margin-top: 36px;
+        padding-top: 32px;
+        border-top: 1px solid rgba(148, 163, 184, 0.16);
+      }
+
+      h2 {
+        margin: 0 0 14px;
+        color: #f8fafc;
+        font-size: 1.18rem;
+      }
+
+      p,
+      li {
+        color: #cbd5e1;
+        line-height: 1.9;
+      }
+
+      ul {
+        margin: 12px 0 0;
+        padding-left: 1.3rem;
+      }
+
+      a {
+        color: #67e8f9;
+        overflow-wrap: anywhere;
+      }
+
+      .note {
+        padding: 16px 18px;
+        border-left: 3px solid #22d3ee;
+        border-radius: 0 12px 12px 0;
+        background: rgba(8, 145, 178, 0.1);
+      }
+
+      footer {
+        margin-top: 28px;
+        color: #64748b;
+        font-size: 0.86rem;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">Anyanical Privacy</p>
+      <h1>プライバシーポリシー</h1>
+      <p class="lead">
+        アニャニカル運営（以下「運営者」）は、「Anyanical
+        GPT」および「アニャニカル覗き部屋」（以下、総称して「本サービス」）における利用者情報を、以下の方針に基づいて取り扱います。
+      </p>
+
+      <article>
+        <section>
+          <h2>1. 取得または処理する情報</h2>
+          <p>
+            本サービスは、Discord
+            OAuth認証および会員資格の確認に必要な範囲で、次の情報を取得または処理します。
+          </p>
+          <ul>
+            <li>DiscordのユーザーID</li>
+            <li>対象Discordサーバーへの参加状態</li>
+            <li>対象Discordサーバーで付与されているロール情報</li>
+            <li>認証結果（会員限定機能の利用可否）</li>
+            <li>認証セッションの管理に必要な発行・更新・有効期限情報</li>
+          </ul>
+          <p class="note">
+            Discordのパスワードは取得しません。Discord
+            OAuthのアクセストークンおよびリフレッシュトークンは認証処理のために中継されますが、本サービスのデータベースには保存しません。
+          </p>
+        </section>
+
+        <section>
+          <h2>2. 利用目的</h2>
+          <ul>
+            <li>利用者本人のDiscordアカウントを確認するため</li>
+            <li>対象サーバーへの参加状態と必要な会員ロールを確認するため</li>
+            <li>会員限定教材、検索機能および関連機能へのアクセスを制御するため</li>
+            <li>不正利用の防止、障害調査および本サービスの安全な運営のため</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>3. 保存する情報と保存期間</h2>
+          <p>
+            GPT
+            Actionの認証では、運営者が発行した一時セッショントークンのハッシュ値、DiscordユーザーID、アクセス可否、有効期限および更新日時を保存します。一時セッションの有効期間は原則10分です。期限切れ情報は運用上必要な短期間を経て削除されます。
+          </p>
+          <p>
+            会員限定教材への検索文および検索結果は、本サービスのデータベースには保存しません。ただし、OpenAI、Discordおよびインフラ提供者が、それぞれの規約・プライバシーポリシーに基づいて通信情報等を処理する場合があります。
+          </p>
+        </section>
+
+        <section>
+          <h2>4. 外部サービスの利用</h2>
+          <p>本サービスは、機能提供のために次の外部サービスを利用します。</p>
+          <ul>
+            <li>Discord：アカウント認証、サーバー参加状態およびロールの確認</li>
+            <li>OpenAI：Custom GPTおよびGPT Actionの提供</li>
+            <li>Cloudflare：Webサイト、APIおよびデータベース基盤の提供</li>
+          </ul>
+          <p>
+            各サービスにおける情報の取り扱いには、各事業者の規約およびプライバシーポリシーが適用されます。
+          </p>
+        </section>
+
+        <section>
+          <h2>5. 第三者提供</h2>
+          <p>
+            法令に基づく場合、利用者本人の同意がある場合、または本サービスの提供に必要な委託先へ必要最小限の情報を取り扱わせる場合を除き、取得した情報を第三者へ販売または提供しません。
+          </p>
+        </section>
+
+        <section>
+          <h2>6. 安全管理</h2>
+          <p>
+            運営者は、アクセス制限、保存情報の最小化、トークンのハッシュ化、短い有効期限の設定など、情報の漏えい、改ざん、不正アクセスを防ぐために合理的な安全管理措置を講じます。
+          </p>
+        </section>
+
+        <section>
+          <h2>7. 利用者による認証解除</h2>
+          <p>
+            利用者は、ChatGPT側の接続設定またはDiscordの「連携済みアプリ」から本サービスとの接続を解除できます。保存情報について確認または削除を希望する場合は、下記窓口へお問い合わせください。本人確認のうえ、法令および運用上可能な範囲で対応します。
+          </p>
+        </section>
+
+        <section>
+          <h2>8. お問い合わせ</h2>
+          <p>
+            本ポリシーおよび利用者情報に関するお問い合わせは、
+            <a href="https://discord.gg/G6xWszr9CZ" rel="noreferrer"
+              >公式Discordサーバー</a
+            >
+            の運営窓口までご連絡ください。認証トークン、Cookie、パスワードなどの機密情報は送信しないでください。
+          </p>
+        </section>
+
+        <section>
+          <h2>9. 改定</h2>
+          <p>
+            本ポリシーは、法令、外部サービスまたは本サービスの変更に応じて改定することがあります。重要な変更がある場合は、本ページその他の適切な方法でお知らせします。
+          </p>
+        </section>
+      </article>
+
+      <footer>制定日：2026年8月6日　運営者：アニャニカル運営</footer>
+    </main>
+  </body>
+</html>

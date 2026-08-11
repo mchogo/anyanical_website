@@ -10,6 +10,7 @@ import { ChartSection } from './components/ChartSection';
 import { Disclaimer } from './components/Disclaimer';
 import { ExplainerSections } from './components/ExplainerSections';
 import { AnyaAiAssistant } from './components/AnyaAiAssistant';
+import { AnyaAiGuidePage } from './components/AnyaAiGuidePage';
 import { AlertToasts } from './components/AlertToasts';
 import { CategoryPage, type CategoryPageId } from './components/CategoryPage';
 import { FloatingNav } from './components/FloatingNav';
@@ -193,6 +194,7 @@ export const App = () => {
   const isSpaceXRoute = route === 'spacex';
   const isLoginRoute = route === 'login';
   const isAdminRoute = route === 'admin';
+  const isAnyaAiRoute = route === 'anya-ai';
   const isDiscordCallbackRoute = isDiscordOAuthRedirect(route);
 
   useEffect(() => {
@@ -281,6 +283,8 @@ export const App = () => {
             <AdminPage auth={discordAuth} />
           ) : isLoginRoute || isDiscordCallbackRoute ? (
             <LoginPage auth={discordAuth} isCallbackRoute={isDiscordCallbackRoute} />
+          ) : isAnyaAiRoute ? (
+            <AnyaAiGuidePage />
           ) : isSpaceXRoute ? (
             <SpaceXCountdownPage
               prices={prices}

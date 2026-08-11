@@ -51,9 +51,16 @@ const getDiscordClientId = () => import.meta.env.VITE_DISCORD_CLIENT_ID ?? '';
 
 const getDiscordGuildId = () => import.meta.env.VITE_DISCORD_GUILD_ID ?? '';
 
-const getDiscordRedirectUri = () =>
-  import.meta.env.VITE_DISCORD_REDIRECT_URI ??
-  `${window.location.origin}${window.location.pathname}`;
+const getDiscordRedirectUri = () => {
+  const configuredUri = import.meta.env.VITE_DISCORD_REDIRECT_URI;
+  const isLocalUri = configuredUri
+    ? /^https?:\/\/(?:127\.0\.0\.1|localhost)(?::|\/|$)/i.test(configuredUri)
+    : false;
+
+  // ローカル用.envを誤って本番ビルドへ含めても、公開サイトからlocalhostへ戻さない。
+  if (configuredUri && (import.meta.env.DEV || !isLocalUri)) return configuredUri;
+  return `${window.location.origin}${window.location.pathname}`;
+};
 
 const parseRoleIds = (value: string | undefined) =>
   (value ?? '')

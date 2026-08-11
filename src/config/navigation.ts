@@ -83,6 +83,10 @@ export const INTERNAL_NAV_LINKS = [
     label: 'アニャニカル解説',
     href: '#/tools/anya-method-slides',
   },
+  {
+    label: 'あにゃAI',
+    href: '#/anya-ai',
+  },
 ] as const;
 
 export const NAV_LINK_GROUPS = [
@@ -172,6 +176,10 @@ export const NAV_LINK_GROUPS = [
     href: '#/premium',
     description: '会員機能、参加案内、日誌',
     links: [
+      {
+        label: 'あにゃAI',
+        href: '#/anya-ai',
+      },
       {
         label: 'マイページ',
         href: '#/tools/member-dashboard',

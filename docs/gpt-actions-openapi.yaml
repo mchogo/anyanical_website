@@ -1,0 +1,178 @@
+openapi: 3.1.0
+info:
+  title: Anyanical Member Knowledge API
+  version: 1.0.0
+  description: >-
+    Discordの会員ロールを確認し、認証済み会員にだけAnyanical教材の
+    整理済み断片を返すCustom GPT専用APIです。
+servers:
+  - url: https://anyanical.com
+paths:
+  /api/gpt/access:
+    get:
+      operationId: checkGptAccess
+      x-openai-isConsequential: false
+      summary: Discord会員認証を開始または再確認する
+      description: >-
+        新しい会話の最初に必ず実行します。未認証ならChatGPTにOAuth接続ボタンを表示させ、
+        認証ボタンが一度無視された場合も次の呼び出しで認証を再開します。
+        Discordの対象サーバー所属と許可ロールを確認します。
+      security:
+        - discordOAuth: [identify, guilds.members.read]
+      responses:
+        '200':
+          description: 会員資格あり
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessGranted'
+        '401':
+          $ref: '#/components/responses/OAuthRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /api/gpt/knowledge/search:
+    post:
+      operationId: searchAnyanicalKnowledge
+      x-openai-isConsequential: false
+      summary: 会員限定のAnyanical教材を検索する
+      description: >-
+        Discord会員資格を毎回確認した後、質問に関連する整理済み教材断片を返します。
+        Anyanical固有の質問へ回答する前に使用してください。
+      security:
+        - discordOAuth: [identify, guilds.members.read]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: 検索成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: queryまたはlimitが不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/OAuthRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+components:
+  securitySchemes:
+    discordOAuth:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://anyanical.com/api/gpt/oauth/v1/authorize
+          tokenUrl: https://anyanical.com/api/gpt/oauth/v1/token
+          scopes:
+            identify: Discordアカウントを識別する
+            guilds.members.read: 対象Discordサーバーの本人のロールを確認する
+  schemas:
+    AccessGranted:
+      type: object
+      additionalProperties: false
+      required: [allowed, membership]
+      properties:
+        allowed:
+          type: boolean
+          const: true
+        membership:
+          type: string
+          const: premium
+    SearchRequest:
+      type: object
+      additionalProperties: false
+      required: [query]
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: ユーザーの質問または検索したいAnyanical概念
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 8
+          default: 5
+    SearchResult:
+      type: object
+      additionalProperties: false
+      required: [sourceId, sourceTitle, title, content]
+      properties:
+        sourceId:
+          type: string
+          description: 回答末尾へ出典IDとして表示する内部識別子
+        sourceTitle:
+          type: string
+          description: 回答末尾へ関連教材として表示する利用者向け教材名
+        title:
+          type: string
+        content:
+          type: string
+          description: 原文ではなく、回答作成に使う整理済み教材断片
+    SearchResponse:
+      type: object
+      additionalProperties: false
+      required: [results, query, resultCount]
+      properties:
+        results:
+          type: array
+          maxItems: 8
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        query:
+          type: string
+          description: 実際に検索した質問
+        resultCount:
+          type: integer
+          minimum: 0
+          maximum: 8
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        authStage:
+          type: string
+        retryable:
+          type: boolean
+        nextStep:
+          type: string
+          description: ユーザーへ案内する具体的な次の操作
+        supportUrl:
+          type: string
+          format: uri
+          description: サーバー参加または運営問い合わせに使うDiscord URL
+  responses:
+    OAuthRequired:
+      description: Discordとの接続または再接続が必要
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    AccessDenied:
+      description: 対象サーバー未参加または許可ロールなし
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ServiceUnavailable:
+      description: Discordまたは認証設定を一時的に確認できない
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

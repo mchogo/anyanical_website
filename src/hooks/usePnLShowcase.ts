@@ -34,14 +34,22 @@ export const getJstYearMonth = (): { year: number; month: number } => {
   return { year: Number(yearStr), month: Number(monthStr) - 1 };
 };
 
-export const usePnLShowcase = (year: number, month: number): ShowcaseState => {
+// year/month === null requests the server's default month (the oldest month
+// with recorded data) instead of a specific one — used for the initial load.
+export const usePnLShowcase = (
+  year: number | null,
+  month: number | null,
+): ShowcaseState => {
   const [state, setState] = useState<ShowcaseState>({ phase: 'loading' });
 
   useEffect(() => {
     let cancelled = false;
     setState({ phase: 'loading' });
-    const params = new URLSearchParams({ year: String(year), month: String(month) });
-    fetch(`/api/pnl/showcase?${params}`)
+    const params =
+      year !== null && month !== null
+        ? `?${new URLSearchParams({ year: String(year), month: String(month) })}`
+        : '';
+    fetch(`/api/pnl/showcase${params}`)
       .then((res) => {
         if (res.status === 404 || res.status === 400) return null;
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -49,7 +57,11 @@ export const usePnLShowcase = (year: number, month: number): ShowcaseState => {
       })
       .then((data) => {
         if (cancelled) return;
-        setState(data && data.accounts.length > 0 ? { phase: 'ready', data } : { phase: 'empty' });
+        setState(
+          data && data.accounts.length > 0
+            ? { phase: 'ready', data }
+            : { phase: 'empty' },
+        );
       })
       .catch(() => {
         if (!cancelled) setState({ phase: 'error' });

@@ -19,6 +19,10 @@ export const ROUTE_META: Record<string, PageMeta> = {
     t('ログイン'),
     `Discordアカウントでログインして${SITE_NAME}のプレミアム機能を利用できます。`,
   ),
+  'anya-ai': s(
+    t('あにゃAI'),
+    'Discord会員認証後に、Anyanicalの会員限定教材を検索しながら学習・チャート分析・トレード振り返りを支援するChatGPTです。',
+  ),
   board: s(
     t('相場ボード'),
     '週末参考価格・価格チャート・注意事項をまとめた相場ボード。土日の窓開けチェックにも使えます。',

@@ -3,6 +3,8 @@ interface Env {
   DB: D1Database;
   ADMIN_USER_IDS?: string; // comma-separated Discord user IDs — set via wrangler secret
   SHOWCASE_ACCOUNT_IDS?: string; // comma-separated accounts.id to expose publicly on /api/pnl/showcase — set via wrangler secret
+  DISCORD_GUILD_ID?: string;
+  GPT_ALLOWED_ROLE_IDS?: string; // comma-separated Discord role IDs
 }
 
 interface AccountRow {
@@ -51,6 +53,15 @@ interface GameScoreRow {
   created_at: string;
 }
 
+interface GptKnowledgeRow {
+  id: string;
+  source_id: string;
+  title: string;
+  content: string;
+  keywords: string;
+  sort_order: number;
+}
+
 const VALID_GAMES = ['highlow', 'candle_swipe', 'profit_tower'] as const;
 type GameId = (typeof VALID_GAMES)[number];
 const isValidGame = (value: unknown): value is GameId =>
@@ -58,12 +69,193 @@ const isValidGame = (value: unknown): value is GameId =>
 
 const json = (data: unknown, status = 200): Response => Response.json(data, { status });
 
-async function verifyToken(request: Request): Promise<string | null> {
+const tokenHash = async (token: string): Promise<string> => {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+};
+
+const createOpaqueSessionToken = (): string =>
+  `gpt_${crypto.randomUUID().replaceAll('-', '')}${crypto.randomUUID().replaceAll('-', '')}`;
+
+const GPT_SESSION_LIFETIME_SECONDS = 10 * 60;
+const DISCORD_SUPPORT_URL = 'https://discord.gg/G6xWszr9CZ';
+
+const GPT_SOURCE_TITLES: Record<string, string> = {
+  'INTEGRATION-RULES': '教材統合ルール',
+  'ANYANICAL-MASTER': 'Anyanical統合手法マニュアル',
+  'DISCORD-BASIC-1': 'アニャニカル基本その1',
+  'DISCORD-BASIC-2': 'アニャニカル基本その2',
+  'NOTE-COMBINED': 'Noteエントリー手法',
+  'INDICATOR-SPECS': 'インジケーター概念一覧',
+  'DISCORD-ADVANCED': 'アニャニカル応用',
+  'DISCORD-BEGINNER': '初心者向け学習ロードマップ',
+};
+
+const PUBLIC_FUND_MODE_SUMMARY = `## ファンドモード
+
+ファンドモードは、相場を動かしているファンドが使うテクニカルを可視化し、水平線として描写するモードです。引力線は斜め線が交差するポイントをもとにしており、その付近は売買が起きやすい観測ポイントとして扱います。
+
+相場では期間の異なるファンド同士の売買がぶつかり合うのが基本であり、表示ラインを無条件・機械的に使うものではありません。銘柄、時間帯、相場環境ごとに検証することで、その日に通常動きやすい範囲を整理する材料として活用できます。
+
+確定線とプレビューは区別して確認し、各ラインだけで価格到達や反転を断定しません。作図基準、算出方法、参照している価格・期間、起点・終点、再現手順は内部ロジックのため案内できません。`;
+
+const publicKnowledgeContent = (row: GptKnowledgeRow): string =>
+  row.title.includes('ファンドモード') || row.content.includes('ファンドモード')
+    ? PUBLIC_FUND_MODE_SUMMARY
+    : row.content;
+
+const getBearerToken = (request: Request): string | null => {
   const auth = request.headers.get('Authorization') ?? '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  const match = auth.match(/^Bearer\s+(.+)$/i);
+  const token = match?.[1]?.trim().replace(/^Bearer\s+/i, '') ?? '';
+  return token || null;
+};
+
+const DISCORD_OAUTH_AUTHORIZE_URL = 'https://discord.com/oauth2/authorize';
+const DISCORD_OAUTH_TOKEN_URL = 'https://discord.com/api/oauth2/token';
+const OAUTH_AUTHORIZE_PARAMS = [
+  'client_id',
+  'redirect_uri',
+  'response_type',
+  'scope',
+  'state',
+  'code_challenge',
+  'code_challenge_method',
+  'prompt',
+] as const;
+
+const handleGptOAuthAuthorize = (request: Request): Response => {
+  if (request.method !== 'GET') return json({ error: 'Method Not Allowed' }, 405);
+
+  const sourceUrl = new URL(request.url);
+  const discordUrl = new URL(DISCORD_OAUTH_AUTHORIZE_URL);
+  for (const param of OAUTH_AUTHORIZE_PARAMS) {
+    const value = sourceUrl.searchParams.get(param);
+    if (value !== null) discordUrl.searchParams.set(param, value);
+  }
+  return new Response(null, {
+    status: 302,
+    headers: {
+      'Cache-Control': 'no-store, max-age=0',
+      Location: discordUrl.toString(),
+      Pragma: 'no-cache',
+    },
+  });
+};
+
+const handleGptOAuthToken = async (request: Request, env: Env): Promise<Response> => {
+  if (request.method !== 'POST') return json({ error: 'Method Not Allowed' }, 405);
+
+  const contentType = request.headers.get('Content-Type') ?? '';
+  if (!contentType.toLowerCase().startsWith('application/x-www-form-urlencoded')) {
+    return json({ error: 'Unsupported Media Type' }, 415);
+  }
+
+  const body = await request.text();
+  if (body.length > 16_384) return json({ error: 'Payload Too Large' }, 413);
+
+  const headers = new Headers({
+    Accept: 'application/json',
+    'Content-Type': 'application/x-www-form-urlencoded',
+  });
+  const authorization = request.headers.get('Authorization');
+  if (authorization) headers.set('Authorization', authorization);
+
+  try {
+    const discordResponse = await fetch(DISCORD_OAUTH_TOKEN_URL, {
+      method: 'POST',
+      headers,
+      body,
+    });
+    let responseText = await discordResponse.text();
+    try {
+      const payload = JSON.parse(responseText) as {
+        access_token?: unknown;
+        refresh_token?: unknown;
+      };
+      const accessToken =
+        typeof payload.access_token === 'string' ? payload.access_token : '';
+      if (accessToken) {
+        try {
+          const validationResponse = await fetch(
+            'https://discord.com/api/v10/users/@me',
+            {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            },
+          );
+          if (validationResponse.ok) {
+            const user = (await validationResponse.json()) as { id?: unknown };
+            const userId = typeof user.id === 'string' ? user.id : '';
+            const guildId = env.DISCORD_GUILD_ID?.trim() ?? '';
+            const allowedRoleIds = parseCommaSeparatedIds(env.GPT_ALLOWED_ROLE_IDS);
+            if (userId && guildId && allowedRoleIds.length > 0) {
+              const memberResponse = await fetch(
+                `https://discord.com/api/v10/users/@me/guilds/${guildId}/member`,
+                { headers: { Authorization: `Bearer ${accessToken}` } },
+              );
+              const member = memberResponse.ok
+                ? ((await memberResponse.json()) as { roles?: unknown })
+                : null;
+              const roles = Array.isArray(member?.roles)
+                ? member.roles.filter((role): role is string => typeof role === 'string')
+                : [];
+              const accessAllowed = allowedRoleIds.some((roleId) =>
+                roles.includes(roleId),
+              );
+              const sessionToken = createOpaqueSessionToken();
+              const sessionHash = await tokenHash(sessionToken);
+              const expiresAt =
+                Math.floor(Date.now() / 1000) + GPT_SESSION_LIFETIME_SECONDS;
+              const updatedAt = new Date().toISOString();
+              await env.DB.batch([
+                env.DB.prepare(
+                  `UPDATE gpt_oauth_sessions
+                     SET access_allowed = ?, expires_at = ?, updated_at = ?
+                     WHERE discord_user_id = ?`,
+                ).bind(accessAllowed ? 1 : 0, expiresAt, updatedAt, userId),
+                env.DB.prepare(
+                  `INSERT INTO gpt_oauth_sessions
+                       (token_hash, discord_user_id, access_allowed, expires_at, updated_at)
+                     VALUES (?, ?, ?, ?, ?)`,
+                ).bind(sessionHash, userId, accessAllowed ? 1 : 0, expiresAt, updatedAt),
+                env.DB.prepare(
+                  'DELETE FROM gpt_oauth_sessions WHERE expires_at < ?',
+                ).bind(Math.floor(Date.now() / 1000) - 3600),
+              ]);
+              const outputPayload = JSON.parse(responseText) as Record<string, unknown>;
+              outputPayload.access_token = sessionToken;
+              outputPayload.token_type = 'Bearer';
+              outputPayload.expires_in = GPT_SESSION_LIFETIME_SECONDS;
+              responseText = JSON.stringify(outputPayload);
+            }
+          }
+        } catch {
+          // Discord確認失敗時は元のOAuthレスポンスをそのまま返す。
+        }
+      }
+    } catch {
+      // Discordの非JSONエラー本文は返すが、ログへ本文は出さない。
+    }
+    return new Response(responseText, {
+      status: discordResponse.status,
+      headers: {
+        'Cache-Control': 'no-store',
+        'Content-Type': discordResponse.headers.get('Content-Type') ?? 'application/json',
+        Pragma: 'no-cache',
+      },
+    });
+  } catch {
+    return json({ error: 'OAuth provider unavailable' }, 503);
+  }
+};
+
+async function verifyToken(request: Request): Promise<string | null> {
+  const token = getBearerToken(request);
   if (!token) return null;
   try {
-    const res = await fetch('https://discord.com/api/users/@me', {
+    const res = await fetch('https://discord.com/api/v10/users/@me', {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) return null;
@@ -72,6 +264,277 @@ async function verifyToken(request: Request): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+type GptAccessResult =
+  | { status: 'allowed'; userId: string }
+  | {
+      status: 'unauthorized';
+      reason: 'TOKEN_MISSING' | 'TOKEN_INVALID';
+    }
+  | { status: 'forbidden'; reason: 'GUILD_REQUIRED' | 'ROLE_REQUIRED' }
+  | { status: 'unavailable'; reason: 'NOT_CONFIGURED' | 'DISCORD_UNAVAILABLE' };
+
+const parseCommaSeparatedIds = (value: string | undefined): string[] =>
+  (value ?? '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+
+async function verifyGptAccess(request: Request, env: Env): Promise<GptAccessResult> {
+  const guildId = env.DISCORD_GUILD_ID?.trim();
+  const allowedRoleIds = parseCommaSeparatedIds(env.GPT_ALLOWED_ROLE_IDS);
+  if (!guildId || allowedRoleIds.length === 0) {
+    return { status: 'unavailable', reason: 'NOT_CONFIGURED' };
+  }
+
+  const token = getBearerToken(request);
+  if (!token) return { status: 'unauthorized', reason: 'TOKEN_MISSING' };
+
+  if (token.startsWith('gpt_')) {
+    const session = await env.DB.prepare(
+      `SELECT discord_user_id, access_allowed, expires_at
+       FROM gpt_oauth_sessions WHERE token_hash = ?`,
+    )
+      .bind(await tokenHash(token))
+      .first<{ discord_user_id: string; access_allowed: number; expires_at: number }>();
+    if (!session || session.expires_at < Math.floor(Date.now() / 1000)) {
+      return { status: 'unauthorized', reason: 'TOKEN_INVALID' };
+    }
+    if (session.access_allowed !== 1) {
+      return { status: 'forbidden', reason: 'ROLE_REQUIRED' };
+    }
+    return { status: 'allowed', userId: session.discord_user_id };
+  }
+
+  const userId = await verifyToken(request);
+  if (!userId) {
+    return { status: 'unauthorized', reason: 'TOKEN_INVALID' };
+  }
+
+  try {
+    const memberResponse = await fetch(
+      `https://discord.com/api/v10/users/@me/guilds/${guildId}/member`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+
+    if (memberResponse.status === 401) {
+      return { status: 'unauthorized', reason: 'TOKEN_INVALID' };
+    }
+    if (memberResponse.status === 404) {
+      return { status: 'forbidden', reason: 'GUILD_REQUIRED' };
+    }
+    if (!memberResponse.ok) {
+      return { status: 'unavailable', reason: 'DISCORD_UNAVAILABLE' };
+    }
+
+    const member = (await memberResponse.json()) as { roles?: unknown };
+    const roles = Array.isArray(member.roles)
+      ? member.roles.filter((role): role is string => typeof role === 'string')
+      : [];
+    const isAllowed = allowedRoleIds.some((roleId) => roles.includes(roleId));
+    if (!isAllowed) return { status: 'forbidden', reason: 'ROLE_REQUIRED' };
+
+    return { status: 'allowed', userId };
+  } catch {
+    return { status: 'unavailable', reason: 'DISCORD_UNAVAILABLE' };
+  }
+}
+
+async function handleGptAccess(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return json({ error: 'Not Found' }, 404);
+
+  const result = await verifyGptAccess(request, env);
+  if (result.status === 'allowed') {
+    return json({ allowed: true, membership: 'premium' });
+  }
+  return gptAccessErrorResponse(result);
+}
+
+const gptAccessErrorResponse = (
+  result: Exclude<GptAccessResult, { status: 'allowed' }>,
+): Response => {
+  if (result.status === 'unauthorized') {
+    return json(
+      {
+        allowed: false,
+        error: 'Unauthorized',
+        code: 'OAUTH_REQUIRED',
+        authStage: result.reason,
+        retryable: true,
+        nextStep:
+          '「Sign in with anyanical.com」からDiscord会員認証を完了してください。ボタンを閉じた場合は「会員認証」と送ると再表示できます。',
+      },
+      401,
+    );
+  }
+  if (result.status === 'forbidden') {
+    const guildRequired = result.reason === 'GUILD_REQUIRED';
+    return json(
+      {
+        allowed: false,
+        error: 'Forbidden',
+        code: result.reason,
+        retryable: true,
+        nextStep: guildRequired
+          ? '対象Discordサーバーへ参加した後、「再試行」と送ってください。'
+          : '対象Discordサーバーで会員ロールの付与状況を確認し、付与後に「再試行」と送ってください。',
+        supportUrl: DISCORD_SUPPORT_URL,
+      },
+      403,
+    );
+  }
+  return json(
+    {
+      allowed: false,
+      error: 'Service Unavailable',
+      code: result.reason,
+      retryable: result.reason === 'DISCORD_UNAVAILABLE',
+      nextStep:
+        result.reason === 'DISCORD_UNAVAILABLE'
+          ? '一時的に会員資格を確認できません。「再試行」と送るともう一度確認できます。'
+          : '認証設定を運営者へ確認してください。',
+      supportUrl: DISCORD_SUPPORT_URL,
+    },
+    503,
+  );
+};
+
+const normalizeSearchText = (value: string): string =>
+  value
+    .normalize('NFKC')
+    .toLocaleLowerCase('ja-JP')
+    .replace(/[\s\p{P}\p{S}]+/gu, '');
+
+const SEARCH_ALIAS_GROUPS = [
+  ['調整', '押し目', '戻り'],
+  ['修正', '修正波', '構造転換'],
+  ['損切り', 'sl', 'ストップロス', '無効化'],
+  ['利確', 'tp', 'ターゲット'],
+  ['資金管理', 'ロット', '許容損失', 'リスク管理'],
+  ['環境認識', 'dailybias', '方向性', '上位足'],
+  ['フィボナッチ', 'fibonacci', 'フィボ', '半値'],
+  ['スイープ', 'sweep', 'ヒゲ抜け', '流動性'],
+  ['プレミアムディスカウント', 'premiumdiscount', '半値'],
+  ['トレーディングレンジ', 'tradingrange'],
+  ['インジケーター', 'toolkit', 'direction', 'サイン'],
+  ['初心者', '学習順序', '勉強順', '何から'],
+  ['エントリー', 'パターン1', 'パターン2', 'パターン3'],
+] as const;
+
+const SEARCH_STOP_TERMS = new Set([
+  'について',
+  'ください',
+  '教えて',
+  'とは',
+  '違い',
+  '具体例',
+  'やり方',
+  'どうすれば',
+]);
+
+const buildSearchTerms = (query: string, rows: readonly GptKnowledgeRow[]): string[] => {
+  const normalized = normalizeSearchText(query);
+  if (!normalized) return [];
+
+  const terms = new Set<string>([normalized]);
+
+  const explicitParts = query
+    .normalize('NFKC')
+    .split(/[\s、。・,./／:：!?！？（）()[\]「」『』]+/u)
+    .map(normalizeSearchText)
+    .filter((term) => term.length >= 2 && !SEARCH_STOP_TERMS.has(term));
+  explicitParts.forEach((term) => terms.add(term));
+
+  for (const group of SEARCH_ALIAS_GROUPS) {
+    const normalizedGroup = group.map(normalizeSearchText);
+    if (normalizedGroup.some((term) => normalized.includes(term))) {
+      normalizedGroup.forEach((term) => terms.add(term));
+    }
+  }
+
+  for (const row of rows) {
+    for (const keyword of row.keywords.split(',')) {
+      const term = normalizeSearchText(keyword);
+      if (term.length >= 2 && normalized.includes(term)) terms.add(term);
+    }
+  }
+
+  return [...terms].slice(0, 64);
+};
+
+const countTermMatches = (value: string, terms: readonly string[]): number =>
+  terms.reduce((score, term) => score + (value.includes(term) ? 1 : 0), 0);
+
+const scoreKnowledgeRow = (
+  row: GptKnowledgeRow,
+  normalizedQuery: string,
+  terms: readonly string[],
+): number => {
+  const title = normalizeSearchText(row.title);
+  const keywords = normalizeSearchText(row.keywords);
+  const content = normalizeSearchText(row.content);
+  const exactScore =
+    (title.includes(normalizedQuery) ? 40 : 0) +
+    (keywords.includes(normalizedQuery) ? 25 : 0) +
+    (content.includes(normalizedQuery) ? 15 : 0);
+  const focusedTerms = terms.filter((term) => term !== normalizedQuery);
+  return (
+    exactScore +
+    countTermMatches(title, focusedTerms) * 12 +
+    countTermMatches(keywords, focusedTerms) * 8 +
+    countTermMatches(content, focusedTerms) * 2
+  );
+};
+
+async function handleGptKnowledgeSearch(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') return json({ error: 'Not Found' }, 404);
+
+  const access = await verifyGptAccess(request, env);
+  if (access.status !== 'allowed') return gptAccessErrorResponse(access);
+
+  let body: { query?: unknown; limit?: unknown };
+  try {
+    body = (await request.json()) as { query?: unknown; limit?: unknown };
+  } catch {
+    return json({ error: 'Bad Request', code: 'INVALID_JSON' }, 400);
+  }
+
+  const query = typeof body.query === 'string' ? body.query.trim() : '';
+  if (!query || query.length > 500) {
+    return json({ error: 'Bad Request', code: 'INVALID_QUERY' }, 400);
+  }
+
+  const requestedLimit = body.limit === undefined ? 5 : Number(body.limit);
+  if (!Number.isInteger(requestedLimit) || requestedLimit < 1 || requestedLimit > 8) {
+    return json({ error: 'Bad Request', code: 'INVALID_LIMIT' }, 400);
+  }
+
+  const { results } = await env.DB.prepare(
+    `SELECT id, source_id, title, content, keywords, sort_order
+     FROM gpt_knowledge_chunks`,
+  ).all<GptKnowledgeRow>();
+  const normalizedQuery = normalizeSearchText(query);
+  const terms = buildSearchTerms(query, results);
+  const ranked = results
+    .map((row) => ({ row, score: scoreKnowledgeRow(row, normalizedQuery, terms) }))
+    .filter(({ score }) => score >= 8)
+    .sort(
+      (left, right) =>
+        right.score - left.score || left.row.sort_order - right.row.sort_order,
+    )
+    .slice(0, requestedLimit);
+
+  return json({
+    results: ranked.map(({ row }) => ({
+      sourceId: row.source_id,
+      sourceTitle: GPT_SOURCE_TITLES[row.source_id] ?? row.source_id,
+      title: row.title,
+      content: publicKnowledgeContent(row),
+    })),
+    query,
+    resultCount: ranked.length,
+  });
 }
 
 const isAdmin = (userId: string, env: Env): boolean => {
@@ -83,8 +546,11 @@ const isAdmin = (userId: string, env: Env): boolean => {
 
 // ── GET /api/pnl/showcase (public, no auth) ─────────────────────────────────
 // Exposes only date/pnl (never `notes`) for a fixed set of admin-configured
-// accounts, for a single requested month. Defaults to the current JST month;
-// callers may look back up to 12 months via ?year=&month= (0-indexed).
+// accounts, for a single requested month. When ?year=&month= are omitted,
+// defaults to the oldest month with recorded data (clamped to the 12-month
+// lookback window) so first-time visitors see a full track record instead of
+// a possibly-empty in-progress current month; callers may still request any
+// month up to 12 months back via ?year=&month= (0-indexed).
 async function handleShowcase(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') return json({ error: 'Not Found' }, 404);
 
@@ -110,10 +576,36 @@ async function handleShowcase(request: Request, env: Env): Promise<Response> {
   const nowYear = Number(nowYearStr);
   const nowMonth = Number(nowMonthStr) - 1; // 0-indexed, matches CardOpts.month
 
-  const year = yearParam !== null ? Number(yearParam) : nowYear;
-  const month = monthParam !== null ? Number(monthParam) : nowMonth;
-  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 0 || month > 11) {
-    return json({ error: 'Bad Request' }, 400);
+  const db = env.DB;
+  const placeholders = accountIds.map(() => '?').join(',');
+
+  let year: number;
+  let month: number;
+  if (yearParam !== null && monthParam !== null) {
+    year = Number(yearParam);
+    month = Number(monthParam);
+    if (!Number.isInteger(year) || !Number.isInteger(month) || month < 0 || month > 11) {
+      return json({ error: 'Bad Request' }, 400);
+    }
+  } else {
+    const { results: minRows } = await db
+      .prepare(
+        `SELECT MIN(date) as minDate FROM daily_records WHERE account_id IN (${placeholders})`,
+      )
+      .bind(...accountIds)
+      .all<{ minDate: string | null }>();
+    const minDate = minRows[0]?.minDate ?? null;
+    const nowYm = nowYear * 12 + nowMonth;
+    if (minDate) {
+      const [minYearStr, minMonthStr] = minDate.split('-');
+      const minYm = Number(minYearStr) * 12 + (Number(minMonthStr) - 1);
+      const clampedYm = Math.max(minYm, nowYm - 12);
+      year = Math.floor(clampedYm / 12);
+      month = clampedYm % 12;
+    } else {
+      year = nowYear;
+      month = nowMonth;
+    }
   }
 
   // Allow only the current month down to 12 months back — never the future,
@@ -121,8 +613,6 @@ async function handleShowcase(request: Request, env: Env): Promise<Response> {
   const diff = nowYear * 12 + nowMonth - (year * 12 + month);
   if (diff < 0 || diff > 12) return json({ error: 'Out of range' }, 400);
 
-  const db = env.DB;
-  const placeholders = accountIds.map(() => '?').join(',');
   const { results: accountRows } = await db
     .prepare(`SELECT id, name, unit FROM accounts WHERE id IN (${placeholders})`)
     .bind(...accountIds)
@@ -158,14 +648,27 @@ async function handleShowcase(request: Request, env: Env): Promise<Response> {
 }
 
 async function handleApi(request: Request, env: Env): Promise<Response> {
-  const userId = await verifyToken(request);
-  if (!userId) return json({ error: 'Unauthorized' }, 401);
-
   const pathname = new URL(request.url).pathname;
   const apiPath = pathname.replace(/^\/api\//, '');
   const segments = apiPath.split('/');
   const method = request.method;
   const db = env.DB;
+
+  if (apiPath === 'gpt/oauth/authorize' || apiPath === 'gpt/oauth/v1/authorize') {
+    return handleGptOAuthAuthorize(request);
+  }
+  if (apiPath === 'gpt/oauth/token' || apiPath === 'gpt/oauth/v1/token') {
+    return handleGptOAuthToken(request, env);
+  }
+  if (apiPath === 'gpt/access') {
+    return handleGptAccess(request, env);
+  }
+  if (apiPath === 'gpt/knowledge/search') {
+    return handleGptKnowledgeSearch(request, env);
+  }
+
+  const userId = await verifyToken(request);
+  if (!userId) return json({ error: 'Unauthorized' }, 401);
 
   // ── GET /api/pnl/accounts ────────────────────────────────────────────────
   if (apiPath === 'pnl/accounts' && method === 'GET') {

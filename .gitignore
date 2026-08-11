@@ -12,3 +12,5 @@ pnpm-debug.log*
 
 .wrangler/
 test-results/
+generated/
+.npm-cache/

@@ -37,6 +37,11 @@ const primaryActions = [
 
 const toolRoutes = [
   {
+    title: 'あにゃAI',
+    body: '会員教材を検索するChatGPTの使い方、会員認証、利用時の注意事項を確認します。',
+    href: '#/anya-ai',
+  },
+  {
     title: '通貨強弱',
     body: '主要通貨の強弱とクロスレートを見て、相場の偏りを確認します。',
     href: '#/tools/currency-strength',
@@ -300,6 +305,59 @@ export const HomePage = ({
 
   return (
     <main>
+      <section className="relative overflow-hidden border-b border-amber-300/20 bg-gradient-to-r from-amber-300/[0.13] via-slate-950 to-cyan-300/[0.08]">
+        <div className="pointer-events-none absolute -left-20 -top-28 h-72 w-72 rounded-full bg-amber-300/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-cyan-300/10 blur-3xl" />
+        <div className="relative mx-auto grid max-w-7xl items-center gap-7 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[1fr_auto] lg:px-8">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-amber-300 px-3 py-1 text-xs font-black text-slate-950">
+                テスト版公開中 · MEMBER AI
+              </span>
+              <span className="text-xs font-bold text-cyan-200">
+                アニャニカル覗き部屋メンバー限定
+              </span>
+            </div>
+            <h2 className="mt-4 text-2xl font-black leading-tight text-white sm:text-4xl">
+              教材を探す時間を、
+              <span className="text-amber-200">理解する時間へ。</span>
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
+              Discordやnoteに蓄積された会員教材を横断して、あなたの疑問に合わせて整理する「あにゃAI」のテスト版を公開しました。環境認識や時間足のつながりから、チャート画像の分析、トレードの振り返りまで、会員教材を根拠に一緒に言語化できます。
+            </p>
+            <p className="mt-3 max-w-3xl text-sm font-bold leading-6 text-amber-100">
+              「あにゃ本人に聞くのは少し緊張する」「初歩的な質問を何度も聞きづらい」という方も、まずはAI相手に気兼ねなく整理できます。
+            </p>
+            <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs font-bold text-slate-400">
+              <span>✓ 会員教材から検索</span>
+              <span>✓ 出典を表示</span>
+              <span>✓ チャート相談</span>
+              <span>✓ 初心者の学習順序</span>
+            </div>
+            <p className="mt-3 text-xs leading-5 text-slate-500">
+              Discord会員認証が必要です。回答生成には利用者ご自身のChatGPT利用枠を使用し、運営からOpenAI
+              APIの従量料金を別途請求する仕組みではありません。
+            </p>
+          </div>
+          <div className="flex flex-col gap-3">
+            <a
+              href="#/anya-ai"
+              className="inline-flex min-h-12 items-center justify-center rounded-full bg-amber-300 px-7 text-sm font-black text-slate-950 shadow-[0_16px_50px_rgba(251,191,36,0.24)] transition hover:-translate-y-0.5 hover:bg-amber-200"
+            >
+              あにゃAIを詳しく見る →
+            </a>
+            <a
+              href="https://discord.com/channels/1152131321297129534/1534936700458106920/1534942794811052103"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-center text-xs font-bold text-indigo-200 underline decoration-indigo-300/30 underline-offset-4 hover:text-indigo-100"
+            >
+              Discordの公開案内を見る ↗
+            </a>
+          </div>
+        </div>
+      </section>
+
       <section className="relative isolate overflow-hidden border-b border-white/10">
         <div className="home-grid-bg pointer-events-none absolute inset-0 opacity-70" />
         <div className="home-scan-line pointer-events-none absolute inset-x-0 top-0 h-px bg-cyan-200/70" />
