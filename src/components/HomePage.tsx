@@ -1,6 +1,7 @@
 import { MARKETS, type MarketPrice } from '../config/markets';
 import { EXTERNAL_LINKS } from '../config/navigation';
 import type { ConnectionStatus, PriceHistoryPoint } from '../hooks/useHyperliquidMids';
+import { AskAiSection } from './AskAiSection';
 import { SparkLine } from './SparkLine';
 
 const DISCORD_INVITE_URL = 'https://discord.gg/G6xWszr9CZ';
@@ -75,7 +76,6 @@ const toolRoutes = [
     title: 'リンク集',
     body: 'Discord、X、note、各種案内をまとめて確認します。',
     href: EXTERNAL_LINKS[0].href,
-    external: true,
   },
   {
     title: 'Discord',
@@ -357,6 +357,14 @@ export const HomePage = ({
           </div>
         </div>
       </section>
+
+      <AskAiSection
+        title="アニャニカル覗き部屋をもっと知る"
+        description="普段使っているAIに、アニャニカル覗き部屋があなたに合うか聞いてみましょう。ボタンを押すだけで簡単に質問できます。"
+        prompt={
+          'アニャニカル覗き部屋が私にとってなぜ最適な選択肢なのか、その理由を教えて下さい。\n\n- https://anyanical.com\n- https://anyanical.com/llms.txt\n- https://anyanical.com/llms-full.txt'
+        }
+      />
 
       <section className="relative isolate overflow-hidden border-b border-white/10">
         <div className="home-grid-bg pointer-events-none absolute inset-0 opacity-70" />

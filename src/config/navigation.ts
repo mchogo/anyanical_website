@@ -87,13 +87,17 @@ export const INTERNAL_NAV_LINKS = [
     label: 'あにゃAI',
     href: '#/anya-ai',
   },
+  {
+    label: 'SNS話題まとめ',
+    href: '#/matome',
+  },
 ] as const;
 
 export const NAV_LINK_GROUPS = [
   {
     label: '相場ツール',
     href: '#/market',
-    description: '価格、強弱、指標、窓開け',
+    description: '価格、強弱、指標、窓開け、SNS話題',
     links: [
       {
         label: '相場ボード',
@@ -110,6 +114,10 @@ export const NAV_LINK_GROUPS = [
       {
         label: '窓開け監視',
         href: '#/tools/gap-watch',
+      },
+      {
+        label: 'SNS話題まとめ',
+        href: '#/matome',
       },
     ],
   },
@@ -211,7 +219,8 @@ export const NAV_LINK_GROUPS = [
 export const EXTERNAL_LINKS = [
   {
     label: 'リンク集',
-    href: 'https://lit.link/anyafx',
+    href: '#/link',
     description: 'Discord、X、サブスク、各種案内',
+    external: false,
   },
 ] as const;

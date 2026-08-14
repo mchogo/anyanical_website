@@ -115,6 +115,7 @@ npm run build
 - URL短縮リンク、紹介リンク、ストラテジーURLは `docs/operations/external-links.md` または `src/config/navigation.ts` / 該当コンポーネントに集約する
 - 外部iframe/scriptは信頼済みソースに限定する
 - ユーザー入力を保存・送信する機能は現状なし。追加する場合は入力検証、XSS対策、プライバシー方針を先に設計する
+- `matome_entries`（SNS話題まとめ）はHermesが全自動で投稿する。掲載内容は`scripts/prompts/research_matome.md`のガイドラインに従うが人間の事前レビューはない。書き込みAPI（`POST /api/matome/entries`）を保護する`MATOME_WRITE_KEY`はWebhook URL等と同様の扱いとし、回答・ログ・新規ファイルへ転記しない。詳細は [docs/data-sources.md](docs/data-sources.md) を参照
 
 ---
 

@@ -8,3 +8,8 @@ ADMIN_USER_IDS=
 # (used to render the "損益実績" tabs/card on the copytrade page, one tab per
 # account, in this order). Leave empty to keep that section hidden.
 SHOWCASE_ACCOUNT_IDS=
+
+# Shared secret required in the X-Matome-Write-Key header for
+# POST /api/matome/entries (market-digest-bot / Hermes automated posting).
+# Leave empty to keep the endpoint closed (returns 401 for any key).
+MATOME_WRITE_KEY=

@@ -5,6 +5,7 @@ interface Env {
   SHOWCASE_ACCOUNT_IDS?: string; // comma-separated accounts.id to expose publicly on /api/pnl/showcase — set via wrangler secret
   DISCORD_GUILD_ID?: string;
   GPT_ALLOWED_ROLE_IDS?: string; // comma-separated Discord role IDs
+  MATOME_WRITE_KEY?: string; // shared secret for POST /api/matome/entries (Hermes自動投稿) — set via wrangler secret
 }
 
 interface AccountRow {
@@ -537,6 +538,225 @@ async function handleGptKnowledgeSearch(request: Request, env: Env): Promise<Res
   });
 }
 
+const MATOME_LIST_LIMIT = 200;
+
+// GET は公開（認証不要）、POST は Hermes自動投稿用の共有キー（MATOME_WRITE_KEY）で保護する。
+// Discord OAuthではなくmarket-digest-bot(Hermes)からのサーバー間呼び出しのため、
+// handleApi() の verifyToken() より前段（gpt/*と同様の早期リターン）で処理する。
+async function handleMatomeEntries(request: Request, env: Env): Promise<Response> {
+  const db = env.DB;
+
+  if (request.method === 'GET') {
+    const url = new URL(request.url);
+    const yearParam = url.searchParams.get('year');
+    const monthParam = url.searchParams.get('month');
+    const limitParam = url.searchParams.get('limit');
+    if ((yearParam === null) !== (monthParam === null)) {
+      return json({ error: 'Bad Request' }, 400);
+    }
+    let datePrefix = '';
+    if (yearParam !== null && monthParam !== null) {
+      const year = Number(yearParam);
+      const month = Number(monthParam);
+      if (
+        !Number.isInteger(year) ||
+        !Number.isInteger(month) ||
+        month < 1 ||
+        month > 12
+      ) {
+        return json({ error: 'Bad Request' }, 400);
+      }
+      datePrefix = `${year}-${String(month).padStart(2, '0')}`;
+    }
+    let rowLimit = MATOME_LIST_LIMIT;
+    if (limitParam !== null) {
+      const parsedLimit = Number(limitParam);
+      if (
+        !Number.isInteger(parsedLimit) ||
+        parsedLimit < 1 ||
+        parsedLimit > MATOME_LIST_LIMIT
+      ) {
+        return json({ error: 'Bad Request' }, 400);
+      }
+      rowLimit = parsedLimit;
+    }
+    const { results } = await (
+      datePrefix
+        ? db
+            .prepare(
+              'SELECT id, entry_date, source_url, source_author, headline, commentary, reaction_count, created_at FROM matome_entries WHERE hidden = 0 AND entry_date LIKE ? ORDER BY entry_date DESC, created_at DESC LIMIT ?',
+            )
+            .bind(`${datePrefix}%`, rowLimit)
+        : db
+            .prepare(
+              'SELECT id, entry_date, source_url, source_author, headline, commentary, reaction_count, created_at FROM matome_entries WHERE hidden = 0 ORDER BY entry_date DESC, created_at DESC LIMIT ?',
+            )
+            .bind(rowLimit)
+    ).all<{
+      id: string;
+      entry_date: string;
+      source_url: string;
+      source_author: string;
+      headline: string;
+      commentary: string;
+      reaction_count: number;
+      created_at: string;
+    }>();
+    return json(
+      results.map((r) => ({
+        id: r.id,
+        entryDate: r.entry_date,
+        sourceUrl: r.source_url,
+        sourceAuthor: r.source_author,
+        headline: r.headline,
+        commentary: r.commentary,
+        reactionCount: r.reaction_count,
+        createdAt: r.created_at,
+      })),
+    );
+  }
+
+  if (request.method === 'POST') {
+    const providedKey = request.headers.get('X-Matome-Write-Key') ?? '';
+    if (!env.MATOME_WRITE_KEY || providedKey !== env.MATOME_WRITE_KEY) {
+      return json({ error: 'Unauthorized' }, 401);
+    }
+    let body: {
+      entryDate?: unknown;
+      sourceUrl?: unknown;
+      sourceAuthor?: unknown;
+      headline?: unknown;
+      commentary?: unknown;
+    };
+    try {
+      body = await request.json();
+    } catch {
+      return json({ error: 'Bad Request', code: 'INVALID_JSON' }, 400);
+    }
+    const entryDate = typeof body.entryDate === 'string' ? body.entryDate : '';
+    const sourceUrl = typeof body.sourceUrl === 'string' ? body.sourceUrl.trim() : '';
+    const headline = typeof body.headline === 'string' ? body.headline.trim() : '';
+    const commentary = typeof body.commentary === 'string' ? body.commentary.trim() : '';
+    const sourceAuthor =
+      typeof body.sourceAuthor === 'string' ? body.sourceAuthor.trim() : '';
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(entryDate) ||
+      !sourceUrl ||
+      !headline ||
+      headline.length > 200 ||
+      !commentary ||
+      commentary.length > 4000
+    ) {
+      return json({ error: 'Bad Request', code: 'INVALID_FIELDS' }, 400);
+    }
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(sourceUrl);
+    } catch {
+      return json({ error: 'Bad Request', code: 'INVALID_SOURCE_URL' }, 400);
+    }
+    if (parsedUrl.protocol !== 'https:' && parsedUrl.protocol !== 'http:') {
+      return json({ error: 'Bad Request', code: 'INVALID_SOURCE_URL' }, 400);
+    }
+
+    const id = crypto.randomUUID();
+    const createdAt = new Date().toISOString();
+    await db
+      .prepare(
+        'INSERT INTO matome_entries (id, entry_date, source_url, source_author, headline, commentary, hidden, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?)',
+      )
+      .bind(id, entryDate, sourceUrl, sourceAuthor, headline, commentary, createdAt)
+      .run();
+    return json(
+      { id, entryDate, sourceUrl, sourceAuthor, headline, commentary, createdAt },
+      201,
+    );
+  }
+
+  return json({ error: 'Not Found' }, 404);
+}
+
+// GET /api/matome/entries/:id (公開・認証不要): Discord通知などから単体表示する。
+async function handleMatomeEntry(
+  request: Request,
+  env: Env,
+  apiPath: string,
+): Promise<Response> {
+  if (request.method !== 'GET') return json({ error: 'Not Found' }, 404);
+  const match = apiPath.match(/^matome\/entries\/([^/]+)$/);
+  const id = match?.[1];
+  if (!id) return json({ error: 'Not Found' }, 404);
+
+  const row = await env.DB.prepare(
+    'SELECT id, entry_date, source_url, source_author, headline, commentary, reaction_count, created_at FROM matome_entries WHERE id = ? AND hidden = 0',
+  )
+    .bind(id)
+    .first<{
+      id: string;
+      entry_date: string;
+      source_url: string;
+      source_author: string;
+      headline: string;
+      commentary: string;
+      reaction_count: number;
+      created_at: string;
+    }>();
+  if (!row) return json({ error: 'Not Found' }, 404);
+
+  return json({
+    id: row.id,
+    entryDate: row.entry_date,
+    sourceUrl: row.source_url,
+    sourceAuthor: row.source_author,
+    headline: row.headline,
+    commentary: row.commentary,
+    reactionCount: row.reaction_count,
+    createdAt: row.created_at,
+  });
+}
+
+// POST /api/matome/entries/:id/react (公開・認証不要): リアクション数を1増やす。
+// 匿名の軽いリアクションのため厳密な多重投票防止はサーバー側では行わない。
+// フロント側でlocalStorageに反応済みIDを記録し、同一ブラウザからの連打だけを防ぐ。
+async function handleMatomeReaction(
+  request: Request,
+  env: Env,
+  apiPath: string,
+): Promise<Response> {
+  if (request.method !== 'POST') return json({ error: 'Not Found' }, 404);
+  const match = apiPath.match(/^matome\/entries\/([^/]+)\/react$/);
+  const id = match?.[1];
+  if (!id) return json({ error: 'Not Found' }, 404);
+
+  const result = await env.DB.prepare(
+    'UPDATE matome_entries SET reaction_count = reaction_count + 1 WHERE id = ? AND hidden = 0',
+  )
+    .bind(id)
+    .run();
+  if (result.meta.changes === 0) return json({ error: 'Not Found' }, 404);
+
+  const row = await env.DB.prepare(
+    'SELECT reaction_count FROM matome_entries WHERE id = ?',
+  )
+    .bind(id)
+    .first<{ reaction_count: number }>();
+  return json({ id, reactionCount: row?.reaction_count ?? 0 });
+}
+
+// GET /api/matome/months (公開・認証不要): 投稿がある年月の一覧を新しい順で返す。
+// #/matome トップページの「過去のまとめ」アーカイブリンク生成に使う。
+async function handleMatomeMonths(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return json({ error: 'Not Found' }, 404);
+  const { results } = await env.DB.prepare(
+    `SELECT substr(entry_date, 1, 7) as ym, COUNT(*) as count
+     FROM matome_entries
+     WHERE hidden = 0
+     GROUP BY ym
+     ORDER BY ym DESC`,
+  ).all<{ ym: string; count: number }>();
+  return json(results.map((r) => ({ ym: r.ym, count: r.count })));
+}
+
 const isAdmin = (userId: string, env: Env): boolean => {
   if (!env.ADMIN_USER_IDS) return false;
   return env.ADMIN_USER_IDS.split(',')
@@ -665,6 +885,18 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   }
   if (apiPath === 'gpt/knowledge/search') {
     return handleGptKnowledgeSearch(request, env);
+  }
+  if (apiPath === 'matome/entries') {
+    return handleMatomeEntries(request, env);
+  }
+  if (apiPath.startsWith('matome/entries/') && apiPath.endsWith('/react')) {
+    return handleMatomeReaction(request, env, apiPath);
+  }
+  if (apiPath.startsWith('matome/entries/')) {
+    return handleMatomeEntry(request, env, apiPath);
+  }
+  if (apiPath === 'matome/months') {
+    return handleMatomeMonths(request, env);
   }
 
   const userId = await verifyToken(request);
@@ -1203,6 +1435,24 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
         notes: r.notes ?? undefined,
       })),
     });
+  }
+
+  // ── PATCH /api/admin/matome-entries/:id ──────────────────────────────────
+  if (
+    apiPath.startsWith('admin/matome-entries/') &&
+    method === 'PATCH' &&
+    segments.length === 3
+  ) {
+    if (!isAdmin(userId, env)) return json({ error: 'Forbidden' }, 403);
+    const entryId = segments[2];
+    const body = (await request.json()) as { hidden?: unknown };
+    if (typeof body.hidden !== 'boolean') return json({ error: 'Bad Request' }, 400);
+    const result = await db
+      .prepare('UPDATE matome_entries SET hidden = ? WHERE id = ?')
+      .bind(body.hidden ? 1 : 0, entryId)
+      .run();
+    if (result.meta.changes === 0) return json({ error: 'Not Found' }, 404);
+    return json({ id: entryId, hidden: body.hidden });
   }
 
   return json({ error: 'Not Found' }, 404);

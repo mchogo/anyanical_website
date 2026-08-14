@@ -82,6 +82,26 @@ Cloudflare側の画面でDeploy commandが必須で、プロジェクトがWorke
 
 `assets.directory` は `./dist` です。SPAとして動かすため、`assets.not_found_handling` は `single-page-application` にしています。
 
+## Wrangler secrets
+
+管理者向けAPIやSNS話題まとめの書き込みAPIは、`wrangler secret put <NAME>` で設定するシークレットに依存します（`.dev.vars`はローカル専用、本番はwrangler secret）。
+
+| シークレット名 | 用途 |
+| --- | --- |
+| `ADMIN_USER_IDS` | `/api/admin/*` を叩けるDiscordユーザーID（カンマ区切り） |
+| `SHOWCASE_ACCOUNT_IDS` | `/api/pnl/showcase` で公開する口座ID（カンマ区切り） |
+| `MATOME_WRITE_KEY` | `POST /api/matome/entries`（market-digest-bot/Hermes自動投稿）を保護する共有キー。Hermes側の環境変数`MATOME_WRITE_KEY`と同じ値を設定する |
+
+新規デプロイ・鍵ローテーション時は`npx wrangler secret put MATOME_WRITE_KEY`で更新し、Hermes側の環境変数も同時に更新する。
+
+## D1マイグレーション
+
+`migrations/0008_matome_entries.sql`（SNS話題まとめ用テーブル）を含め、本番D1への適用はユーザーが実行する。
+
+```bash
+npx wrangler d1 migrations apply pnl-calendar --remote
+```
+
 ## デプロイ前チェック
 
 ```bash
@@ -97,6 +117,7 @@ npm run build
 - `#/tools/currency-strength` が表示される
 - `#/tools/economic-calendar` が表示される
 - `#/tools/gap-watch` が表示される
+- `#/matome` が表示される（データ0件でも「この月のまとめはまだありません。」が出ればOK）
 - `#/tools/ea-checklist` が表示される
 - `#/login` にDiscordログインボタンが表示される
 - 固定ナビがモバイルで本文を隠しすぎない

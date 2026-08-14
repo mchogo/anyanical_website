@@ -1,0 +1,1 @@
+ALTER TABLE matome_entries ADD COLUMN reaction_count INTEGER NOT NULL DEFAULT 0;

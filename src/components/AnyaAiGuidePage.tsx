@@ -1,3 +1,5 @@
+import { AskAiSection } from './AskAiSection';
+
 const ANYA_AI_URL = 'https://chatgpt.com/g/g-6a746bc7f72881919b5fac26b0b186a9-aniyaai';
 const ANYA_AI_RELEASE_URL =
   'https://discord.com/channels/1152131321297129534/1534936700458106920/1534942794811052103';
@@ -160,6 +162,14 @@ export const AnyaAiGuidePage = () => (
         </div>
       </div>
     </section>
+
+    <AskAiSection
+      title="あにゃAIをもっと知る"
+      description="普段使っているAIに、あにゃAIが自分に合うか聞いてみましょう。ボタンを押すだけで簡単に質問できます。"
+      prompt={
+        'アニャニカル覗き部屋の学習アシスタント「あにゃAI」が私にとってなぜ最適な選択肢なのか、その理由を教えて下さい。\n\n- https://anyanical.com/#/anya-ai\n- https://anyanical.com/llms.txt\n- https://anyanical.com/llms-full.txt'
+      }
+    />
 
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

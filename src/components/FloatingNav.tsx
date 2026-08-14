@@ -310,8 +310,8 @@ const DesktopNavLinks = ({
       <a
         key={link.href}
         href={link.href}
-        rel="noopener noreferrer"
-        target="_blank"
+        rel={link.external ? 'noopener noreferrer' : undefined}
+        target={link.external ? '_blank' : undefined}
         onClick={onNavigate}
         className="shrink-0 rounded-full bg-emerald-300/10 px-4 py-2 text-sm font-semibold text-emerald-200 ring-1 ring-emerald-300/30 transition hover:bg-emerald-300/20"
       >
@@ -378,8 +378,8 @@ const MobileNavLinks = ({
       <a
         key={link.href}
         href={link.href}
-        rel="noopener noreferrer"
-        target="_blank"
+        rel={link.external ? 'noopener noreferrer' : undefined}
+        target={link.external ? '_blank' : undefined}
         onClick={onNavigate}
         className="col-span-2 flex min-h-10 items-center justify-center rounded-full bg-emerald-300/10 px-4 text-sm font-semibold text-emerald-200 ring-1 ring-emerald-300/30 transition hover:bg-emerald-300/20"
       >
@@ -625,12 +625,12 @@ export const FloatingNav = ({ currentRoute, auth }: FloatingNavContainerProps) =
           aria-expanded={isOpen}
           aria-controls="mobile-primary-nav"
           onClick={toggleMenu}
-          className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-semibold text-slate-100 ring-1 ring-white/10 transition hover:bg-cyan-300/10 hover:text-cyan-100 md:hidden"
+          className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-semibold text-slate-100 ring-1 ring-white/10 transition hover:bg-cyan-300/10 hover:text-cyan-100 lg:hidden"
         >
           {isOpen ? '閉じる' : 'メニュー'}
         </button>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 lg:flex">
           <DesktopNavLinks currentRoute={currentRoute} />
           <AuthControls auth={auth} isOnLoginPage={currentRoute === 'login'} />
           <div className="relative ml-1">
@@ -653,7 +653,7 @@ export const FloatingNav = ({ currentRoute, auth }: FloatingNavContainerProps) =
         <div
           id="mobile-primary-nav"
           style={{ WebkitOverflowScrolling: 'touch' }}
-          className={`mx-auto mt-3 grid max-h-[calc(100dvh-4.5rem)] max-w-7xl grid-cols-2 gap-2 overflow-y-auto overscroll-contain border-t border-white/10 pt-3 md:hidden ${menuClosing ? 'animate-slide-down' : 'animate-slide-up'}`}
+          className={`mx-auto mt-3 grid max-h-[calc(100dvh-4.5rem)] max-w-7xl grid-cols-2 gap-2 overflow-y-auto overscroll-contain border-t border-white/10 pt-3 lg:hidden ${menuClosing ? 'animate-slide-down' : 'animate-slide-up'}`}
         >
           <MobileNavLinks
             currentRoute={currentRoute}

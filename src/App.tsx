@@ -16,8 +16,13 @@ import { CategoryPage, type CategoryPageId } from './components/CategoryPage';
 import { FloatingNav } from './components/FloatingNav';
 import { Header } from './components/Header';
 import { HomePage } from './components/HomePage';
+import { LinkHubPage } from './components/LinkHubPage';
 import { LoginPage } from './components/LoginPage';
 import { MarketBoard } from './components/MarketBoard';
+import { MatomeArchivePage } from './components/MatomeArchivePage';
+import { MatomeEntryPage } from './components/MatomeEntryPage';
+import { MatomeHeadlineBar } from './components/MatomeHeadlineBar';
+import { MatomePage } from './components/MatomePage';
 import { NewFeaturesTicker } from './components/NewFeaturesTicker';
 import { SpaceXBanner } from './components/SpaceXBanner';
 import { SpaceXCountdownPage } from './components/SpaceXCountdownPage';
@@ -159,6 +164,17 @@ const parseCategoryPageId = (route: string): CategoryPageId | null => {
   return null;
 };
 
+const parseMatomeArchiveYm = (route: string): string | null => {
+  const match = route.match(/^matome\/archive\/(\d{4}-\d{2})$/);
+  return match?.[1] ?? null;
+};
+
+const parseMatomeEntryId = (route: string): string | null => {
+  const match = route.match(/^matome\/([^/]+)$/);
+  if (!match?.[1] || match[1] === 'archive') return null;
+  return decodeURIComponent(match[1]);
+};
+
 export const App = () => {
   const discordAuth = useDiscordAuth();
   const { prices, priceHistory, connectionStatus, tickCount, lastUpdatedAt } =
@@ -195,6 +211,10 @@ export const App = () => {
   const isLoginRoute = route === 'login';
   const isAdminRoute = route === 'admin';
   const isAnyaAiRoute = route === 'anya-ai';
+  const isLinkHubRoute = route === 'link';
+  const isMatomeRoute = route === 'matome';
+  const matomeArchiveYm = parseMatomeArchiveYm(route);
+  const matomeEntryId = parseMatomeEntryId(route);
   const isDiscordCallbackRoute = isDiscordOAuthRedirect(route);
 
   useEffect(() => {
@@ -278,6 +298,7 @@ export const App = () => {
         <FloatingNav currentRoute={route} auth={discordAuth} />
         <SpaceXBanner />
         <NewFeaturesTicker />
+        <MatomeHeadlineBar />
         <div key={route} className="animate-fade-in">
           {isAdminRoute ? (
             <AdminPage auth={discordAuth} />
@@ -285,6 +306,14 @@ export const App = () => {
             <LoginPage auth={discordAuth} isCallbackRoute={isDiscordCallbackRoute} />
           ) : isAnyaAiRoute ? (
             <AnyaAiGuidePage />
+          ) : isLinkHubRoute ? (
+            <LinkHubPage prices={prices} />
+          ) : isMatomeRoute ? (
+            <MatomePage />
+          ) : matomeArchiveYm ? (
+            <MatomeArchivePage ym={matomeArchiveYm} />
+          ) : matomeEntryId ? (
+            <MatomeEntryPage entryId={matomeEntryId} />
           ) : isSpaceXRoute ? (
             <SpaceXCountdownPage
               prices={prices}

@@ -277,18 +277,20 @@ const participationRoutes = [
     body: '通常プランへの参加はこちらから。加入後にDiscord/XのID確認へ進んでください。',
     href: NOTE_MEMBERSHIP_URL,
     label: 'note加入ページ',
+    external: true,
   },
   {
     title: '加入申請フォーム',
     body: 'DMを省略したい場合は、note加入後に専用フォームから申請してください。',
     href: MEMBERSHIP_FORM_URL,
     label: 'フォームで申請',
+    external: true,
   },
   {
     title: 'リンク集',
-    body: 'Discord、X、サブスク、各種案内はlit.linkに集約しています。',
+    body: 'Discord、X、サブスク、各種案内をまとめて確認できます。',
     href: EXTERNAL_LINKS[0].href,
-    label: 'lit.link/anyafx',
+    label: 'リンクまとめを見る',
   },
 ];
 
@@ -1287,8 +1289,8 @@ export const ParticipationGuidePage = () => (
           <p className="mt-3 text-sm leading-6 text-slate-400">{route.body}</p>
           <a
             href={route.href}
-            rel="nofollow noopener noreferrer"
-            target="_blank"
+            rel={route.external ? 'nofollow noopener noreferrer' : undefined}
+            target={route.external ? '_blank' : undefined}
             className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg bg-white px-4 text-sm font-bold text-slate-950 transition hover:bg-slate-200"
           >
             {route.label}

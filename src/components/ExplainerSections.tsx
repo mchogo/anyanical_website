@@ -95,7 +95,6 @@ const relatedTools = [
     title: 'リンク集',
     description: 'Discord、X、サブスク、各種案内まとめ',
     href: EXTERNAL_LINKS[0].href,
-    external: true,
   },
 ];
 

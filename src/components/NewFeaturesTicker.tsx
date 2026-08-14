@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 const ANNOUNCEMENTS = [
+  'SNS話題まとめページを新規公開',
   '半裁量EA 配布受付中',
   'Discordメンバー向けに認証申請を受付中',
   'サブスク枠は残りわずか',

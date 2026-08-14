@@ -19,7 +19,7 @@ const categoryPages: Record<CategoryPageId, CategoryData> = {
     subtitle: 'Market tools',
     label: '相場ツール',
     description:
-      '価格の現在地を確認する4つのツール。相場ボード、通貨強弱、経済指標、窓開け監視をまとめて確認できます。',
+      '価格の現在地を確認する5つのツール。相場ボード、通貨強弱、経済指標、窓開け監視、SNS話題まとめをまとめて確認できます。',
     accent: 'cyan',
     tools: [
       {
@@ -43,6 +43,12 @@ const categoryPages: Record<CategoryPageId, CategoryData> = {
         description:
           '週末価格と金曜クローズの差を確認します。平日は直近の偏りを確認します。',
         href: '#/tools/gap-watch',
+      },
+      {
+        title: 'SNS話題まとめ',
+        description:
+          'Xで話題になったトレード関連の投稿を、あにゃが毎日ピックアップして毒舌気味にツッコみます。',
+        href: '#/matome',
       },
     ],
   },
