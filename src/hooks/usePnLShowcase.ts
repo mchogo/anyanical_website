@@ -34,8 +34,9 @@ export const getJstYearMonth = (): { year: number; month: number } => {
   return { year: Number(yearStr), month: Number(monthStr) - 1 };
 };
 
-// year/month === null requests the server's default month (the oldest month
-// with recorded data) instead of a specific one — used for the initial load.
+// year/month === null requests the server's default month (the month with
+// the highest combined profit) instead of a specific one — used for the
+// initial load.
 export const usePnLShowcase = (
   year: number | null,
   month: number | null,

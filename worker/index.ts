@@ -767,10 +767,11 @@ const isAdmin = (userId: string, env: Env): boolean => {
 // ── GET /api/pnl/showcase (public, no auth) ─────────────────────────────────
 // Exposes only date/pnl (never `notes`) for a fixed set of admin-configured
 // accounts, for a single requested month. When ?year=&month= are omitted,
-// defaults to the oldest month with recorded data (clamped to the 12-month
-// lookback window) so first-time visitors see a full track record instead of
-// a possibly-empty in-progress current month; callers may still request any
-// month up to 12 months back via ?year=&month= (0-indexed).
+// defaults to the month with the highest combined profit across the showcase
+// accounts (within the 12-month lookback window) so first-time visitors land
+// on the most impressive track record instead of a possibly-empty
+// in-progress current month; callers may still request any month up to 12
+// months back via ?year=&month= (0-indexed).
 async function handleShowcase(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') return json({ error: 'Not Found' }, 404);
 
@@ -808,20 +809,25 @@ async function handleShowcase(request: Request, env: Env): Promise<Response> {
       return json({ error: 'Bad Request' }, 400);
     }
   } else {
-    const { results: minRows } = await db
-      .prepare(
-        `SELECT MIN(date) as minDate FROM daily_records WHERE account_id IN (${placeholders})`,
-      )
-      .bind(...accountIds)
-      .all<{ minDate: string | null }>();
-    const minDate = minRows[0]?.minDate ?? null;
     const nowYm = nowYear * 12 + nowMonth;
-    if (minDate) {
-      const [minYearStr, minMonthStr] = minDate.split('-');
-      const minYm = Number(minYearStr) * 12 + (Number(minMonthStr) - 1);
-      const clampedYm = Math.max(minYm, nowYm - 12);
-      year = Math.floor(clampedYm / 12);
-      month = clampedYm % 12;
+    const cutoffYm = nowYm - 12;
+    const cutoffDate = `${Math.floor(cutoffYm / 12)}-${String((cutoffYm % 12) + 1).padStart(2, '0')}-01`;
+    const { results: monthRows } = await db
+      .prepare(
+        `SELECT substr(date, 1, 7) as ym, SUM(pnl) as total
+         FROM daily_records
+         WHERE account_id IN (${placeholders}) AND date >= ? AND date <= ?
+         GROUP BY ym
+         ORDER BY total DESC
+         LIMIT 1`,
+      )
+      .bind(...accountIds, cutoffDate, nowYmd)
+      .all<{ ym: string; total: number }>();
+    const bestYm = monthRows[0]?.ym ?? null;
+    if (bestYm) {
+      const [bestYearStr, bestMonthStr] = bestYm.split('-');
+      year = Number(bestYearStr);
+      month = Number(bestMonthStr) - 1;
     } else {
       year = nowYear;
       month = nowMonth;

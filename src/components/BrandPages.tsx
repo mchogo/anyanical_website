@@ -665,9 +665,9 @@ export const StrategyGuidePage = () => (
 );
 
 const PnLShowcaseCard = () => {
-  // null = "let the server pick the oldest month with recorded data" for the
-  // initial load; pinned to concrete values once that first response arrives
-  // so prevMonth/nextMonth have a base to navigate from.
+  // null = "let the server pick the month with the highest combined profit"
+  // for the initial load; pinned to concrete values once that first response
+  // arrives so prevMonth/nextMonth have a base to navigate from.
   const [year, setYear] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
   const [activeIdx, setActiveIdx] = useState(0);
