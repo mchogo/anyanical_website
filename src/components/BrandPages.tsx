@@ -428,6 +428,14 @@ const copyTradeStrategies = [
     href: 'https://my.hfm.com/jp/copy-trading/provider-details?provider=153200466',
     label: '公開ページを見る',
   },
+  {
+    title: 'Yor Scalping Gold',
+    subtitle: 'テスト運用中 / ドル口座ストラテジー',
+    body: 'スキャルピングで細かくエントリーを重ねるスタイル。他のストラテジーより取引回数多めで、小さな利益をコツコツ積み上げていく運用を目指しています。ID: 147053049 / 最低0.01ロットから。現在テスト運用中です。',
+    href: 'https://my.hfm.com/jp/copy-trading/provider-details?provider=147053049',
+    label: '公開ページを見る',
+    isTesting: true,
+  },
 ];
 
 const copyTradeNoticeItems = [
@@ -912,8 +920,13 @@ export const CopyTradeGuidePage = () => (
         {copyTradeStrategies.map((strategy) => (
           <article
             key={strategy.href}
-            className="rounded-lg border border-white/10 bg-slate-950/40 p-5"
+            className="relative rounded-lg border border-white/10 bg-slate-950/40 p-5"
           >
+            {strategy.isTesting && (
+              <span className="absolute -left-2 -top-2 -rotate-6 rounded-full bg-amber-400 px-3 py-1 text-[10px] font-bold text-slate-950 shadow-md ring-2 ring-slate-950">
+                テスト運用中
+              </span>
+            )}
             <p className="text-xs font-semibold uppercase text-slate-500">
               {strategy.subtitle}
             </p>
