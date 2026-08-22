@@ -19,6 +19,7 @@ import {
   SemiAutoSignPage,
   StrategyGuidePage,
 } from './BrandPages';
+import { HtfContextBoard } from './HtfContextBoard';
 import { PnLCalendarTool } from './PnLCalendar';
 import { TraderQuiz } from './TraderQuiz';
 import { HighLowSprint } from './games/HighLowSprint';
@@ -48,7 +49,8 @@ export type ToolPageId =
   | 'profit-tower'
   | 'game-ranking'
   | 'trade-tarot'
-  | 'anya-method-slides';
+  | 'anya-method-slides'
+  | 'htf-context';
 
 type ToolPageProps = {
   pageId: ToolPageId;
@@ -196,6 +198,13 @@ const toolPages: Array<{
       '環境認識からエントリーパターン①〜③までを音声付きスライドで振り返る学習用まとめ。本編はプレミアム限定です。',
     href: '#/tools/anya-method-slides',
   },
+  {
+    id: 'htf-context',
+    title: 'Anyanical Market Dashboard',
+    description:
+      'Anyanical ToolkitのAI環境認識（上目線/下目線/レンジ、上下ターゲット）をカテゴリ別・時間足別(MN1/W1/D1/H4)でまとめて確認します。本編はプレミアム限定です。',
+    href: '#/tools/htf-context',
+  },
 ];
 
 const renderTool = (
@@ -254,6 +263,13 @@ const renderTool = (
     case 'anya-method-slides':
       return (
         <AnyaMethodSlidesTool
+          canAccessPremium={canAccessPremium}
+          isAuthenticated={isAuthenticated}
+        />
+      );
+    case 'htf-context':
+      return (
+        <HtfContextBoard
           canAccessPremium={canAccessPremium}
           isAuthenticated={isAuthenticated}
         />
@@ -585,6 +601,18 @@ const nextActions: Record<
       title: 'プレミアムを見る',
       body: 'note加入、申請フォーム、Discord権限付与の流れを確認します。',
       href: '#/tools/participation',
+    },
+  ],
+  'htf-context': [
+    {
+      title: '通貨強弱',
+      body: '主要通貨の強弱とクロスレートも合わせて確認します。',
+      href: '#/tools/currency-strength',
+    },
+    {
+      title: 'アニャニカル解説',
+      body: '環境認識からエントリーパターンまでの考え方を振り返ります。',
+      href: '#/tools/anya-method-slides',
     },
   ],
 };

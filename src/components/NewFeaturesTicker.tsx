@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 
-const ANNOUNCEMENTS = [
-  'SNS話題まとめページを新規公開',
-  '半裁量EA 配布受付中',
-  'Discordメンバー向けに認証申請を受付中',
-  'サブスク枠は残りわずか',
-  '利用条件とリスク設定を確認してから申請してください',
-  '導入前に口座条件・ロット目安・稼働前チェックを確認',
-  '参加方法と導入手順はツールページから確認できます',
+type Announcement = { text: string; href?: string };
+
+const ANNOUNCEMENTS: Announcement[] = [
+  { text: '📊 Anyanical Market Dashboardを公開中', href: '#/tools/htf-context' },
+  { text: 'SNS話題まとめページを新規公開' },
+  { text: '半裁量EA 配布受付中' },
+  { text: 'Discordメンバー向けに認証申請を受付中' },
+  { text: 'サブスク枠は残りわずか' },
+  { text: '利用条件とリスク設定を確認してから申請してください' },
+  { text: '導入前に口座条件・ロット目安・稼働前チェックを確認' },
+  { text: '参加方法と導入手順はツールページから確認できます' },
 ];
 
 const SEPARATOR = '　·　';
@@ -37,12 +40,23 @@ export const NewFeaturesTicker = () => {
 
         <div className="min-w-0 flex-1 overflow-hidden motion-reduce:overflow-auto">
           <div className="animate-marquee motion-reduce:animate-none inline-flex gap-0 whitespace-nowrap">
-            {[...ANNOUNCEMENTS, ...ANNOUNCEMENTS].map((item, i) => (
-              <span key={i} className="text-xs text-slate-500">
-                {item}
-                {SEPARATOR}
-              </span>
-            ))}
+            {[...ANNOUNCEMENTS, ...ANNOUNCEMENTS].map((item, i) =>
+              item.href ? (
+                <a
+                  key={i}
+                  href={item.href}
+                  className="text-xs font-semibold text-cyan-300 hover:text-cyan-200 hover:underline"
+                >
+                  {item.text}
+                  {SEPARATOR}
+                </a>
+              ) : (
+                <span key={i} className="text-xs text-slate-500">
+                  {item.text}
+                  {SEPARATOR}
+                </span>
+              ),
+            )}
           </div>
         </div>
 

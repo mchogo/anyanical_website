@@ -84,6 +84,10 @@ export const INTERNAL_NAV_LINKS = [
     href: '#/tools/anya-method-slides',
   },
   {
+    label: 'Market Dashboard',
+    href: '#/tools/htf-context',
+  },
+  {
     label: 'あにゃAI',
     href: '#/anya-ai',
   },
@@ -211,6 +215,10 @@ export const NAV_LINK_GROUPS = [
       {
         label: 'アニャニカル解説',
         href: '#/tools/anya-method-slides',
+      },
+      {
+        label: 'Market Dashboard',
+        href: '#/tools/htf-context',
       },
     ],
   },

@@ -139,6 +139,7 @@ const toolPageIds: ToolPageId[] = [
   'game-ranking',
   'trade-tarot',
   'anya-method-slides',
+  'htf-context',
 ];
 
 const categoryPageIds: CategoryPageId[] = ['market', 'games', 'ea-copytrade', 'premium'];
@@ -147,7 +148,10 @@ const MISSION_RETURN_STORAGE_KEY = 'wmb.returnToMission';
 const getRoute = () => window.location.hash.replace(/^#\/?/, '');
 
 const parseToolPageId = (route: string): ToolPageId | null => {
-  const match = route.match(/^tools\/([^/]+)$/);
+  // ルートに?tf=H4のようなクエリが付くページ（htf-context等）があるため、
+  // パス部分だけを取り出してからマッチする。
+  const [pathPart] = route.split('?');
+  const match = pathPart.match(/^tools\/([^/]+)$/);
   const pageId = match?.[1];
 
   if (toolPageIds.includes(pageId as ToolPageId)) {
@@ -218,7 +222,9 @@ export const App = () => {
   const isDiscordCallbackRoute = isDiscordOAuthRedirect(route);
 
   useEffect(() => {
-    const meta = ROUTE_META[route] ?? DEFAULT_META;
+    // htf-context等の?tf=H4のようなクエリ付きルートでもメタ情報を引けるよう、パス部分だけで引く。
+    const [routePath] = route.split('?');
+    const meta = ROUTE_META[routePath] ?? DEFAULT_META;
     document.title = meta.title;
 
     const setMeta = (selector: string, attr: string, value: string) => {

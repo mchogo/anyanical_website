@@ -213,6 +213,18 @@ export const MarketBoard = ({
         </p>
       </div>
 
+      <a
+        href="#/tools/htf-context"
+        className="mb-5 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-300/20 bg-amber-300/[0.06] px-4 py-3 text-sm transition hover:border-amber-300/40 hover:bg-amber-300/10"
+      >
+        <span className="text-slate-200">
+          <span className="font-bold text-amber-200">📊 Anyanical Market Dashboard</span>
+          ｜Anyanical
+          ToolkitのAI環境認識（上目線/下目線/レンジ）を銘柄横断で確認（プレミアム限定）
+        </span>
+        <span className="shrink-0 font-bold text-amber-200">開く →</span>
+      </a>
+
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <input
           type="search"

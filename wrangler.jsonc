@@ -15,4 +15,19 @@
       "database_id": "6929f3da-bbc9-4137-8e67-66a0cc57aff7",
     },
   ],
+  // Anyanical Market DashboardのHTFコンテキストDiscordダイジェスト送信用（worker/index.tsのscheduled()）。
+  // D1/W1/MN1のアンカーはUTC 00:00(=JST 09:00)固定。対象銘柄の大半を占める為替/貴金属の日足終値
+  // （NYクローズ17:00、夏時間JST06:00・冬時間JST07:00）から2〜3時間のバッファを取れる時刻として選定した
+  // （仮想通貨のUTC日足基準ではない）。日足以上は数時間のズレが実害になりにくいため固定時刻のまま。
+  // H4は"*/10 * * * *"で10分おきに発火するが、実際に送信するのはworker/index.tsのisH4DigestDue()が
+  // 「NYクローズ(夏時間/冬時間で動的判定)から30分後」と判定した回だけ（それ以外は即returnで無料に近い）。
+  // 詳細はworker/index.tsのHTF_DIGEST_CRON_TIMEFRAME・isH4DigestDue()のコメント参照。
+  "triggers": {
+    "crons": [
+      "*/10 * * * *", // H4: 10分おきに判定、実送信はNYクローズ30分後(夏JST06:30/冬JST07:30起点で4時間おき)のみ
+      "0 0 * * *", // D1: 毎日JST09:00
+      "0 0 * * 1", // W1: 毎週月曜JST09:00
+      "0 0 1 * *", // MN1: 毎月1日JST09:00
+    ],
+  },
 }

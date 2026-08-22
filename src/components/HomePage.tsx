@@ -2,6 +2,7 @@ import { MARKETS, type MarketPrice } from '../config/markets';
 import { EXTERNAL_LINKS } from '../config/navigation';
 import type { ConnectionStatus, PriceHistoryPoint } from '../hooks/useHyperliquidMids';
 import { AskAiSection } from './AskAiSection';
+import { HtfContextPromoBanner } from './HtfContextPromoBanner';
 import { SparkLine } from './SparkLine';
 
 const DISCORD_INVITE_URL = 'https://discord.gg/G6xWszr9CZ';
@@ -358,6 +359,8 @@ export const HomePage = ({
         </div>
       </section>
 
+      <HtfContextPromoBanner />
+
       <AskAiSection
         title="アニャニカル覗き部屋をもっと知る"
         description="普段使っているAIに、アニャニカル覗き部屋があなたに合うか聞いてみましょう。ボタンを押すだけで簡単に質問できます。"
@@ -401,10 +404,10 @@ export const HomePage = ({
                 相場ボードを開く
               </a>
               <a
-                href="#/tools/participation"
+                href="#/tools/htf-context"
                 className="btn-press inline-flex min-h-12 items-center justify-center rounded-lg bg-amber-300 px-6 text-sm font-black text-slate-950 transition hover:bg-amber-200"
               >
-                プレミアムを見る
+                環境認識を確認する
               </a>
               <a
                 href={DISCORD_INVITE_URL}

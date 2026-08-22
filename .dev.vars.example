@@ -13,3 +13,21 @@ SHOWCASE_ACCOUNT_IDS=
 # POST /api/matome/entries (market-digest-bot / Hermes automated posting).
 # Leave empty to keep the endpoint closed (returns 401 for any key).
 MATOME_WRITE_KEY=
+
+# Shared secret required for POST /api/htf-context (TradingView alert webhook from
+# Anyanical Toolkit 3.0/3.1's AI env recognition alert). TradingView's webhook alerts
+# can't set custom HTTP headers, so set the TradingView Webhook URL to
+# https://<host>/api/htf-context?key=<this value> (the X-Htf-Context-Write-Key header
+# is also accepted, for curl/manual testing). Leave empty to keep the endpoint closed.
+# GET /api/htf-context reuses DISCORD_GUILD_ID / GPT_ALLOWED_ROLE_IDS (see .env.example)
+# for premium-role gating — no separate role config needed.
+HTF_CONTEXT_WRITE_KEY=
+
+# Discord Incoming Webhook URLs for the HTF context digest (worker/index.ts scheduled()
+# Cron Trigger, one per timeframe — matches "時間足ごとに送信先は分ける"). Leave a timeframe
+# empty to skip sending its digest. Fires per group (為替/貴金属/仮想通貨/指数) as separate
+# embeds to the same webhook.
+HTF_DIGEST_WEBHOOK_H4=
+HTF_DIGEST_WEBHOOK_D1=
+HTF_DIGEST_WEBHOOK_W1=
+HTF_DIGEST_WEBHOOK_MN1=

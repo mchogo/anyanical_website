@@ -9,6 +9,15 @@ export const MatomeHeadlineBar = () => {
   );
 
   useEffect(() => {
+    const handler = () => {
+      sessionStorage.removeItem('matome-headline-dismissed');
+      setDismissed(false);
+    };
+    window.addEventListener('banner:reset', handler);
+    return () => window.removeEventListener('banner:reset', handler);
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     fetch('/api/matome/entries')
       .then((res) => (res.ok ? res.json() : []))
@@ -45,6 +54,7 @@ export const MatomeHeadlineBar = () => {
           onClick={() => {
             sessionStorage.setItem('matome-headline-dismissed', '1');
             setDismissed(true);
+            window.dispatchEvent(new Event('banner:dismissed'));
           }}
           className="ml-1 shrink-0 rounded-full p-1 text-slate-700 transition hover:bg-white/10 hover:text-slate-500"
           aria-label="閉じる"

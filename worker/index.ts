@@ -6,6 +6,11 @@ interface Env {
   DISCORD_GUILD_ID?: string;
   GPT_ALLOWED_ROLE_IDS?: string; // comma-separated Discord role IDs
   MATOME_WRITE_KEY?: string; // shared secret for POST /api/matome/entries (Hermes自動投稿) — set via wrangler secret
+  HTF_CONTEXT_WRITE_KEY?: string; // shared secret for POST /api/htf-context (TradingViewアラートWebhook) — set via wrangler secret
+  HTF_DIGEST_WEBHOOK_H4?: string; // Discord webhook URL for the 4H HTF context digest (Cron Trigger) — set via wrangler secret
+  HTF_DIGEST_WEBHOOK_D1?: string; // 同上、日足
+  HTF_DIGEST_WEBHOOK_W1?: string; // 同上、週足
+  HTF_DIGEST_WEBHOOK_MN1?: string; // 同上、月足
 }
 
 interface AccountRow {
@@ -52,6 +57,16 @@ interface GameScoreRow {
   best_streak: number;
   meta_json: string | null;
   created_at: string;
+}
+
+interface HtfSearchPresetRow {
+  id: string;
+  name: string;
+  filters_json: string;
+  schema_version: number;
+  is_default: number;
+  created_at: string;
+  updated_at: string;
 }
 
 interface GptKnowledgeRow {
@@ -676,6 +691,267 @@ async function handleMatomeEntries(request: Request, env: Env): Promise<Response
   return json({ error: 'Not Found' }, 404);
 }
 
+interface HtfContextStateRow {
+  symbol: string;
+  timeframe: string;
+  state: number;
+  ref_high: number | null;
+  ref_low: number | null;
+  reversal_warning: number;
+  bar_time: number;
+  updated_at: string;
+}
+
+// 対象範囲。既存のGAS通知(gas/tradingview_discord_alert/Ananical AI.gs のSYMBOL_GROUPS)で
+// 実際に運用している銘柄群にそのまま合わせている（為替28 + 貴金属2 + 仮想通貨2 + 指数3 = 35銘柄）。
+// 増やす場合はTradingView側のアラート追加（銘柄×時間足の数だけ手動設定が必要）と、
+// src/config/htfContextSymbols.ts の表示用カテゴリ分け、HTF_DIGEST_PICK_PRIORITYも合わせて更新する。
+// exportは本番Workerの挙動には影響しない（Cloudflare Workersは`export default {...}`のみを
+// エントリーポイントとして使い、他のexportは単に無視される）。単体テストでフロント側の
+// 定義（src/config/htfContextSymbols.ts）との一致を検証するために付けている（tests/htfContextConsistency.test.ts）。
+export const HTF_CONTEXT_ALLOWED_SYMBOLS = [
+  // 為替
+  'AUDCAD',
+  'AUDCHF',
+  'AUDJPY',
+  'AUDNZD',
+  'AUDUSD',
+  'CADCHF',
+  'CADJPY',
+  'CHFJPY',
+  'EURAUD',
+  'EURCAD',
+  'EURCHF',
+  'EURGBP',
+  'EURJPY',
+  'EURNZD',
+  'EURUSD',
+  'GBPAUD',
+  'GBPCAD',
+  'GBPCHF',
+  'GBPJPY',
+  'GBPNZD',
+  'GBPUSD',
+  'NZDCAD',
+  'NZDCHF',
+  'NZDJPY',
+  'NZDUSD',
+  'USDCAD',
+  'USDCHF',
+  'USDJPY',
+  // 貴金属
+  'XAUUSD',
+  'XAGUSD',
+  // 仮想通貨
+  'BTCUSDT',
+  'ETHUSDT',
+  // 指数
+  'NAS100USD',
+  'SPX500USD',
+  'JP225YJPY',
+] as const;
+// MN1=1M(月足) / W1=1W(週足) / D1=1D(日足) / H4=240(4時間足)。Pine側のtfh入力コードと一致させる。
+const HTF_CONTEXT_ALLOWED_TIMEFRAMES = ['1M', '1W', '1D', '240'] as const;
+const HTF_CONTEXT_DEFAULT_FAVORITES = ['USDJPY', 'XAUUSD'];
+
+// 検索条件プリセット（/api/htf-context/search-presets）用のマスタ・上限値。
+// フロント側 src/config/htfContextSymbols.ts のHtfContextCategoryId/HtfContextTimeframeIdと
+// 一致させる（workerは自己完結ファイルにする既存方針のため複製している）。
+const HTF_SEARCH_PRESET_VALID_STATES = [1, -1, 2, -2, 0] as const;
+const HTF_SEARCH_PRESET_VALID_REVERSAL = ['warning', 'none'] as const;
+const HTF_SEARCH_PRESET_VALID_CATEGORIES = [
+  'main',
+  'usd-straight',
+  'jpy-cross',
+  'other-fx',
+  'metal',
+  'crypto',
+  'index',
+] as const;
+const HTF_SEARCH_PRESET_VALID_TIMEFRAMES = ['MN1', 'W1', 'D1', 'H4'] as const;
+const HTF_SEARCH_PRESET_SCHEMA_VERSION = 1;
+const HTF_SEARCH_PRESET_MAX_COUNT = 20;
+const HTF_SEARCH_PRESET_MAX_NAME_LENGTH = 50;
+const HTF_SEARCH_PRESET_MAX_FILTERS_JSON_BYTES = 4096;
+
+type HtfSearchFilters = {
+  states: number[];
+  reversal: string[];
+  categories: string[];
+  timeframes: string[];
+  favoriteOnly: boolean;
+};
+
+// クライアントを信用せず、既知の値との突合だけで正規化する。配列が渡された場合は
+// （フィルター結果が空でも）そのまま尊重する——「全解除」は正当な検索条件の一つであり、
+// 未指定・不正な型のときだけ既定値（全選択）へフォールバックする。
+const normalizeHtfSearchFilters = (input: unknown): HtfSearchFilters => {
+  const obj = (input && typeof input === 'object' ? input : {}) as Record<
+    string,
+    unknown
+  >;
+  const states = Array.isArray(obj.states)
+    ? obj.states.filter(
+        (v): v is number =>
+          typeof v === 'number' &&
+          (HTF_SEARCH_PRESET_VALID_STATES as readonly number[]).includes(v),
+      )
+    : [...HTF_SEARCH_PRESET_VALID_STATES];
+  const reversal = Array.isArray(obj.reversal)
+    ? obj.reversal.filter(
+        (v): v is string =>
+          typeof v === 'string' &&
+          (HTF_SEARCH_PRESET_VALID_REVERSAL as readonly string[]).includes(v),
+      )
+    : [...HTF_SEARCH_PRESET_VALID_REVERSAL];
+  const categories = Array.isArray(obj.categories)
+    ? obj.categories.filter(
+        (v): v is string =>
+          typeof v === 'string' &&
+          (HTF_SEARCH_PRESET_VALID_CATEGORIES as readonly string[]).includes(v),
+      )
+    : [...HTF_SEARCH_PRESET_VALID_CATEGORIES];
+  const timeframes = Array.isArray(obj.timeframes)
+    ? obj.timeframes.filter(
+        (v): v is string =>
+          typeof v === 'string' &&
+          (HTF_SEARCH_PRESET_VALID_TIMEFRAMES as readonly string[]).includes(v),
+      )
+    : [...HTF_SEARCH_PRESET_VALID_TIMEFRAMES];
+  const favoriteOnly = obj.favoriteOnly === true;
+  return { states, reversal, categories, timeframes, favoriteOnly };
+};
+
+const validateHtfPresetName = (input: unknown): string | null => {
+  if (typeof input !== 'string') return null;
+  const trimmed = input.trim();
+  if (trimmed.length === 0 || trimmed.length > HTF_SEARCH_PRESET_MAX_NAME_LENGTH)
+    return null;
+  return trimmed;
+};
+
+const htfSearchPresetRowToJson = (r: HtfSearchPresetRow) => ({
+  id: r.id,
+  name: r.name,
+  filters: JSON.parse(r.filters_json) as HtfSearchFilters,
+  schemaVersion: r.schema_version,
+  isDefault: Boolean(r.is_default),
+  createdAt: r.created_at,
+  updatedAt: r.updated_at,
+});
+
+// GET はプレミアムロール限定（既存のGPT_ALLOWED_ROLE_IDS＝プレミアム相当ロールをそのまま流用）、
+// POST はTradingViewアラートWebhookからの直接呼び出し用に共有キー（HTF_CONTEXT_WRITE_KEY）で保護する。
+// matome/gpt系と同様、handleApi()のverifyToken()より前段（Discord OAuthを経由しないPOSTがあるため）で処理する。
+async function handleHtfContext(request: Request, env: Env): Promise<Response> {
+  if (request.method === 'GET') {
+    const access = await verifyGptAccess(request, env);
+    if (access.status !== 'allowed') {
+      return gptAccessErrorResponse(access);
+    }
+    const { results } = await env.DB.prepare(
+      'SELECT symbol, timeframe, state, ref_high, ref_low, reversal_warning, bar_time, updated_at FROM htf_context_states ORDER BY symbol, timeframe',
+    ).all<HtfContextStateRow>();
+    return json(
+      results.map((r) => ({
+        symbol: r.symbol,
+        timeframe: r.timeframe,
+        state: r.state,
+        refHigh: r.ref_high,
+        refLow: r.ref_low,
+        reversalWarning: r.reversal_warning === 1,
+        barTime: r.bar_time,
+        updatedAt: r.updated_at,
+      })),
+    );
+  }
+
+  if (request.method === 'POST') {
+    // TradingViewのWebhookアラートはカスタムHTTPヘッダーを指定できないため、
+    // Webhook URLのクエリパラメータ(?key=...)でキーを渡す方式を主とする。
+    // ヘッダーもcurl等での動作確認用に後方互換として引き続き受け付ける。
+    const providedKey =
+      new URL(request.url).searchParams.get('key') ??
+      request.headers.get('X-Htf-Context-Write-Key') ??
+      '';
+    if (!env.HTF_CONTEXT_WRITE_KEY || providedKey !== env.HTF_CONTEXT_WRITE_KEY) {
+      return json({ error: 'Unauthorized' }, 401);
+    }
+    let body: {
+      symbol?: unknown;
+      timeframe?: unknown;
+      state?: unknown;
+      refHigh?: unknown;
+      refLow?: unknown;
+      reversalWarning?: unknown;
+      barTime?: unknown;
+    };
+    try {
+      body = await request.json();
+    } catch {
+      return json({ error: 'Bad Request', code: 'INVALID_JSON' }, 400);
+    }
+
+    const symbol =
+      typeof body.symbol === 'string' ? body.symbol.trim().toUpperCase() : '';
+    const timeframe = typeof body.timeframe === 'string' ? body.timeframe.trim() : '';
+    const state =
+      typeof body.state === 'number' && Number.isInteger(body.state) ? body.state : null;
+    const refHigh =
+      typeof body.refHigh === 'number' && Number.isFinite(body.refHigh)
+        ? body.refHigh
+        : null;
+    const refLow =
+      typeof body.refLow === 'number' && Number.isFinite(body.refLow)
+        ? body.refLow
+        : null;
+    const reversalWarning = body.reversalWarning === true;
+    const barTime =
+      typeof body.barTime === 'number' && Number.isInteger(body.barTime)
+        ? body.barTime
+        : null;
+
+    if (
+      !(HTF_CONTEXT_ALLOWED_SYMBOLS as readonly string[]).includes(symbol) ||
+      !(HTF_CONTEXT_ALLOWED_TIMEFRAMES as readonly string[]).includes(timeframe) ||
+      state === null ||
+      state < -2 ||
+      state > 2 ||
+      barTime === null
+    ) {
+      return json({ error: 'Bad Request', code: 'INVALID_FIELDS' }, 400);
+    }
+
+    const updatedAt = new Date().toISOString();
+    await env.DB.prepare(
+      `INSERT INTO htf_context_states (symbol, timeframe, state, ref_high, ref_low, reversal_warning, bar_time, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(symbol, timeframe) DO UPDATE SET
+         state = excluded.state,
+         ref_high = excluded.ref_high,
+         ref_low = excluded.ref_low,
+         reversal_warning = excluded.reversal_warning,
+         bar_time = excluded.bar_time,
+         updated_at = excluded.updated_at`,
+    )
+      .bind(
+        symbol,
+        timeframe,
+        state,
+        refHigh,
+        refLow,
+        reversalWarning ? 1 : 0,
+        barTime,
+        updatedAt,
+      )
+      .run();
+
+    return json({ ok: true });
+  }
+
+  return json({ error: 'Method Not Allowed' }, 405);
+}
+
 // GET /api/matome/entries/:id (公開・認証不要): Discord通知などから単体表示する。
 async function handleMatomeEntry(
   request: Request,
@@ -904,6 +1180,9 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   if (apiPath === 'matome/months') {
     return handleMatomeMonths(request, env);
   }
+  if (apiPath === 'htf-context') {
+    return handleHtfContext(request, env);
+  }
 
   const userId = await verifyToken(request);
   if (!userId) return json({ error: 'Unauthorized' }, 401);
@@ -1072,6 +1351,216 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
       )
       .bind(userId, favJson)
       .run();
+    return json({ ok: true });
+  }
+
+  // ── GET /api/htf-context/favorites ───────────────────────────────────────
+  // Anyanical Market Dashboardの銘柄お気に入り。ナビ用の/api/favoritesとは別カラムで管理する
+  // （ページ favoriteと銘柄favoriteは意味が異なり、同じ30件上限リストに混在させたくないため）。
+  if (apiPath === 'htf-context/favorites' && method === 'GET') {
+    const row = await db
+      .prepare(
+        'SELECT htf_context_favorites_json FROM user_settings WHERE discord_user_id = ?',
+      )
+      .bind(userId)
+      .first<{ htf_context_favorites_json: string }>();
+    // 行が存在しない(=一度もPUTしたことがない)ユーザーには既定のお気に入りを返す。
+    // 明示的に空へ整理したユーザー(行はあるがfavorites=[])とは区別する。
+    if (!row) {
+      return json({ favorites: HTF_CONTEXT_DEFAULT_FAVORITES, isDefault: true });
+    }
+    const favorites = JSON.parse(row.htf_context_favorites_json) as string[];
+    return json({ favorites, isDefault: false });
+  }
+
+  // ── PUT /api/htf-context/favorites ───────────────────────────────────────
+  if (apiPath === 'htf-context/favorites' && method === 'PUT') {
+    const body = (await request.json()) as { favorites: unknown };
+    const list = Array.isArray(body.favorites)
+      ? body.favorites.filter((s): s is string => typeof s === 'string').slice(0, 30)
+      : [];
+    const favJson = JSON.stringify(list);
+    await db
+      .prepare(
+        `INSERT INTO user_settings (discord_user_id, htf_context_favorites_json) VALUES (?, ?)
+         ON CONFLICT(discord_user_id) DO UPDATE SET htf_context_favorites_json = excluded.htf_context_favorites_json`,
+      )
+      .bind(userId, favJson)
+      .run();
+    return json({ ok: true });
+  }
+
+  // ── GET /api/htf-context/search-presets ───────────────────────────────────
+  // 検索条件プリセット。htf-context/favoritesと同じ認証方式（プレミアムロール限定の
+  // verifyGptAccessではなく、一般Discordログイン=verifyTokenでスコープする）。
+  if (apiPath === 'htf-context/search-presets' && method === 'GET') {
+    const { results } = await db
+      .prepare(
+        `SELECT id, name, filters_json, schema_version, is_default, created_at, updated_at
+         FROM htf_context_search_presets WHERE discord_user_id = ? ORDER BY created_at ASC`,
+      )
+      .bind(userId)
+      .all<HtfSearchPresetRow>();
+    return json({ presets: results.map(htfSearchPresetRowToJson) });
+  }
+
+  // ── POST /api/htf-context/search-presets ──────────────────────────────────
+  if (apiPath === 'htf-context/search-presets' && method === 'POST') {
+    const body = (await request.json().catch(() => null)) as {
+      name?: unknown;
+      filters?: unknown;
+    } | null;
+    if (!body) return json({ error: 'Invalid JSON body' }, 400);
+
+    const name = validateHtfPresetName(body.name);
+    if (!name) return json({ error: 'Invalid preset name' }, 400);
+
+    const filters = normalizeHtfSearchFilters(body.filters);
+    const filtersJson = JSON.stringify(filters);
+    if (filtersJson.length > HTF_SEARCH_PRESET_MAX_FILTERS_JSON_BYTES) {
+      return json({ error: 'Filters too large' }, 400);
+    }
+
+    const countRow = await db
+      .prepare(
+        'SELECT COUNT(*) as c FROM htf_context_search_presets WHERE discord_user_id = ?',
+      )
+      .bind(userId)
+      .first<{ c: number }>();
+    if ((countRow?.c ?? 0) >= HTF_SEARCH_PRESET_MAX_COUNT) {
+      return json({ error: 'Preset limit reached' }, 400);
+    }
+
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    await db
+      .prepare(
+        `INSERT INTO htf_context_search_presets
+          (id, discord_user_id, name, filters_json, schema_version, is_default, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, 0, ?, ?)`,
+      )
+      .bind(id, userId, name, filtersJson, HTF_SEARCH_PRESET_SCHEMA_VERSION, now, now)
+      .run();
+    return json(
+      {
+        id,
+        name,
+        filters,
+        schemaVersion: HTF_SEARCH_PRESET_SCHEMA_VERSION,
+        isDefault: false,
+        createdAt: now,
+        updatedAt: now,
+      },
+      201,
+    );
+  }
+
+  // ── PUT /api/htf-context/search-presets/:id ────────────────────────────────
+  if (
+    apiPath.startsWith('htf-context/search-presets/') &&
+    method === 'PUT' &&
+    segments.length === 3
+  ) {
+    const presetId = segments[2];
+    const existing = await db
+      .prepare(
+        'SELECT id FROM htf_context_search_presets WHERE id = ? AND discord_user_id = ?',
+      )
+      .bind(presetId, userId)
+      .first<{ id: string }>();
+    if (!existing) return json({ error: 'Not Found' }, 404);
+
+    const body = (await request.json().catch(() => null)) as {
+      name?: unknown;
+      filters?: unknown;
+    } | null;
+    if (!body) return json({ error: 'Invalid JSON body' }, 400);
+
+    const setParts: string[] = [];
+    const binds: (string | number)[] = [];
+    if (body.name !== undefined) {
+      const name = validateHtfPresetName(body.name);
+      if (!name) return json({ error: 'Invalid preset name' }, 400);
+      setParts.push('name = ?');
+      binds.push(name);
+    }
+    if (body.filters !== undefined) {
+      const filters = normalizeHtfSearchFilters(body.filters);
+      const filtersJson = JSON.stringify(filters);
+      if (filtersJson.length > HTF_SEARCH_PRESET_MAX_FILTERS_JSON_BYTES) {
+        return json({ error: 'Filters too large' }, 400);
+      }
+      setParts.push('filters_json = ?');
+      binds.push(filtersJson);
+    }
+    if (setParts.length === 0) return json({ error: 'Nothing to update' }, 400);
+
+    const now = new Date().toISOString();
+    setParts.push('updated_at = ?');
+    binds.push(now);
+    await db
+      .prepare(
+        `UPDATE htf_context_search_presets SET ${setParts.join(', ')} WHERE id = ? AND discord_user_id = ?`,
+      )
+      .bind(...binds, presetId, userId)
+      .run();
+    return json({ ok: true, updatedAt: now });
+  }
+
+  // ── DELETE /api/htf-context/search-presets/:id ─────────────────────────────
+  if (
+    apiPath.startsWith('htf-context/search-presets/') &&
+    method === 'DELETE' &&
+    segments.length === 3
+  ) {
+    const presetId = segments[2];
+    const existing = await db
+      .prepare(
+        'SELECT id FROM htf_context_search_presets WHERE id = ? AND discord_user_id = ?',
+      )
+      .bind(presetId, userId)
+      .first<{ id: string }>();
+    if (!existing) return json({ error: 'Not Found' }, 404);
+    await db
+      .prepare(
+        'DELETE FROM htf_context_search_presets WHERE id = ? AND discord_user_id = ?',
+      )
+      .bind(presetId, userId)
+      .run();
+    return json({ ok: true });
+  }
+
+  // ── PUT /api/htf-context/search-presets/:id/default ─────────────────────────
+  if (
+    apiPath.startsWith('htf-context/search-presets/') &&
+    method === 'PUT' &&
+    segments.length === 4 &&
+    segments[3] === 'default'
+  ) {
+    const presetId = segments[2];
+    const existing = await db
+      .prepare(
+        'SELECT id FROM htf_context_search_presets WHERE id = ? AND discord_user_id = ?',
+      )
+      .bind(presetId, userId)
+      .first<{ id: string }>();
+    if (!existing) return json({ error: 'Not Found' }, 404);
+
+    const now = new Date().toISOString();
+    // 部分ユニークインデックス（1ユーザーにつき既定は1件まで）に違反しないよう、
+    // 先に他行の既定を解除してから対象行を既定にする。db.batch()で1トランザクションとして扱う。
+    await db.batch([
+      db
+        .prepare(
+          'UPDATE htf_context_search_presets SET is_default = 0, updated_at = ? WHERE discord_user_id = ? AND is_default = 1',
+        )
+        .bind(now, userId),
+      db
+        .prepare(
+          'UPDATE htf_context_search_presets SET is_default = 1, updated_at = ? WHERE id = ? AND discord_user_id = ?',
+        )
+        .bind(now, presetId, userId),
+    ]);
     return json({ ok: true });
   }
 
@@ -1464,6 +1953,376 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   return json({ error: 'Not Found' }, 404);
 }
 
+// ── HTFコンテキスト Discord定期ダイジェスト（Cron Trigger） ───────────────────
+// 埋め込みの体裁・Tips文言は既存GAS通知(gas/tradingview_discord_alert/Ananical AI.gs)を踏襲するが、
+// 選定ロジックは独自: 全銘柄を並べるのではなく「反転警戒なし・レンジでない・上位足と方向一致」の
+// 良条件のみを、メイン→ドルスト残り+クロス円→指数→その他 の優先度順に走査して最大5件だけ拾い、
+// 時間足ごとに1本の埋め込みへ集約する（カテゴリ別に分けて複数本送らない）。
+// データ源はhtf_context_states(D1)のスナップショット読み取りのみで、GAS側にあった
+// 「揃うまで待つ/タイムアウトで確定」という完了判定は不要（D1に既に最新状態がupsertされているため）。
+type HtfDigestTimeframe = 'H4' | 'D1' | 'W1' | 'MN1';
+
+const HTF_DIGEST_PINE_CODE: Record<HtfDigestTimeframe, string> = {
+  H4: '240',
+  D1: '1D',
+  W1: '1W',
+  MN1: '1M',
+};
+
+// D1/W1/MN1のアンカーはUTC 00:00(=JST 09:00)固定。仮想通貨(UTC日足)基準ではなく、対象銘柄の大半を
+// 占める為替/貴金属の日足終値（NYクローズ17:00、夏時間UTC21:00=JST06:00、冬時間UTC22:00=JST07:00）から
+// 2〜3時間のバッファを確保できる時刻として選定した。日足以上は数時間のズレが実害になりにくいため、
+// 夏/冬時間の自動追従はせず固定UTC時刻とし、ズレはこのバッファ幅で吸収する方針のまま。
+// H4だけは4時間ごとの実際のローソク境界（NYクローズ起点）に対して数時間ズレると鮮度が大きく落ちるため、
+// 下のisH4DigestDue()でNY(米東部)の夏時間/冬時間を判定し動的に境界時刻を切り替える
+// （gas/tradingview_discord_alert/Ananical AI.gs のisUSSummerTime()と同じ判定式を移植）。
+// Cron式(wrangler.jsoncのtriggers.cronsと一致させる) → 対応する時間足。H4はisH4DigestDue()で別途判定するため含めない。
+const HTF_DIGEST_CRON_TIMEFRAME: Record<string, HtfDigestTimeframe> = {
+  '0 0 * * *': 'D1',
+  '0 0 * * 1': 'W1',
+  '0 0 1 * *': 'MN1',
+};
+
+const HTF_DIGEST_H4_CRON = '*/10 * * * *';
+// NYクローズ(17:00 NY)から30分後を基準時刻とする。夏時間: NY17:00=UTC21:00、冬時間: NY17:00=UTC22:00。
+const HTF_H4_BOUNDARY_BUFFER_MIN = 30;
+const HTF_H4_ANCHOR_HOURS_UTC_SUMMER = [21, 1, 5, 9, 13, 17];
+const HTF_H4_ANCHOR_HOURS_UTC_WINTER = [22, 2, 6, 10, 14, 18];
+
+// 米国夏時間(DST)判定。3月第2日曜2:00開始〜11月第1日曜2:00終了。
+// gas/tradingview_discord_alert/Ananical AI.gs の isUSSummerTime() と同じ計算式のTypeScript移植。
+const isUsSummerTime = (now: Date): boolean => {
+  const y = now.getUTCFullYear();
+  const mar14 = new Date(Date.UTC(y, 2, 14));
+  const nov7 = new Date(Date.UTC(y, 10, 7));
+  const dstStart = new Date(Date.UTC(y, 2, 14 - mar14.getUTCDay(), 2));
+  const dstEnd = new Date(Date.UTC(y, 10, 7 - nov7.getUTCDay(), 2));
+  return now.getTime() >= dstStart.getTime() && now.getTime() < dstEnd.getTime();
+};
+
+// H4ダイジェストの発火判定。10分おきに呼ばれ、直近10分以内に境界+バッファ時刻を通過していればtrue。
+// （Cronの実行タイミングの多少のジッタで発火を取りこぼさないよう「直後10分以内」の範囲判定にしている）
+const isH4DigestDue = (now: Date): boolean => {
+  const anchors = isUsSummerTime(now)
+    ? HTF_H4_ANCHOR_HOURS_UTC_SUMMER
+    : HTF_H4_ANCHOR_HOURS_UTC_WINTER;
+  const nowMinuteOfDay = now.getUTCHours() * 60 + now.getUTCMinutes();
+  return anchors.some((h) => {
+    const target = (h * 60 + HTF_H4_BOUNDARY_BUFFER_MIN) % 1440;
+    const diff = (((nowMinuteOfDay - target) % 1440) + 1440) % 1440;
+    return diff < 10;
+  });
+};
+
+const HTF_DIGEST_TITLE_TIER: Record<HtfDigestTimeframe, string> = {
+  H4: '1m-15m-4h',
+  D1: '5m-1h-1D',
+  W1: '15m-4h-1W',
+  MN1: '1h-1D-1M',
+};
+
+const HTF_DIGEST_LOOKBACK_NOTE: Record<HtfDigestTimeframe, string> = {
+  H4: '🌸 通知は最大4時間前まで遡ってね！',
+  D1: '📅 通知は最大1日前まで遡ってね！',
+  W1: '🗓 通知は1週間前まで遡ってね！',
+  MN1: '🌙 通知は1ヶ月前まで遡ってね！',
+};
+
+const getHtfDigestWebhook = (
+  env: Env,
+  timeframe: HtfDigestTimeframe,
+): string | undefined => {
+  switch (timeframe) {
+    case 'H4':
+      return env.HTF_DIGEST_WEBHOOK_H4;
+    case 'D1':
+      return env.HTF_DIGEST_WEBHOOK_D1;
+    case 'W1':
+      return env.HTF_DIGEST_WEBHOOK_W1;
+    case 'MN1':
+      return env.HTF_DIGEST_WEBHOOK_MN1;
+  }
+};
+
+// 「良い条件」の優先度順（重複なし）。メイン→ドルスト残り+クロス円→指数→その他 の順で走査し、
+// 条件を満たしたものを先頭からHTF_DIGEST_PICK_LIMIT件だけ拾う。
+// メイン(USDJPY/XAUUSD/EURUSD/GBPUSD)は他カテゴリとの重複銘柄のため、後続グループには含めていない。
+export const HTF_DIGEST_PICK_PRIORITY: string[] = [
+  // メイン
+  'USDJPY',
+  'XAUUSD',
+  'EURUSD',
+  'GBPUSD',
+  // ドルストレート残り + クロス円
+  'AUDUSD',
+  'NZDUSD',
+  'USDCAD',
+  'USDCHF',
+  'EURJPY',
+  'GBPJPY',
+  'AUDJPY',
+  'NZDJPY',
+  'CADJPY',
+  'CHFJPY',
+  // 指数
+  'NAS100USD',
+  'SPX500USD',
+  'JP225YJPY',
+  // その他（その他通貨 + 貴金属残り + 仮想通貨）
+  'AUDCAD',
+  'AUDCHF',
+  'AUDNZD',
+  'CADCHF',
+  'EURAUD',
+  'EURCAD',
+  'EURCHF',
+  'EURGBP',
+  'EURNZD',
+  'GBPAUD',
+  'GBPCAD',
+  'GBPCHF',
+  'GBPNZD',
+  'NZDCAD',
+  'NZDCHF',
+  'XAGUSD',
+  'BTCUSDT',
+  'ETHUSDT',
+];
+
+const HTF_DIGEST_PICK_LIMIT = 5;
+
+// 「上位足と方向一致」の確認先（H4→D1→W1→MN1の順。MN1はこれ以上の上位足を扱っていないため確認しない）。
+export const HTF_DIGEST_HIGHER_TIMEFRAME: Partial<
+  Record<HtfDigestTimeframe, HtfDigestTimeframe>
+> = {
+  H4: 'D1',
+  D1: 'W1',
+  W1: 'MN1',
+};
+
+// gas/tradingview_discord_alert/Ananical AI.gs の TIPS_LIST とそのまま揃える。
+const HTF_DIGEST_TIPS = [
+  '🌸 上位足の方向には逆らわないのがコツだよ！',
+  '✨ 損切りは『次のチャンスへの入場料』、怖くないよ。',
+  '🎀 分からない時は『何もしない』のも立派なトレードだよ。',
+  '🌙 深夜の無理なエントリーは、お肌にも資金にも優しくないよ。',
+  '💎 利益を追うより、リスクを管理する方がずっと大事だよ。',
+  '🌸 監視足の確定を見てから執行足でタイミングを測るのが王道だね！',
+  '✨ チャートに張り付くより、心に余裕がある時の方が勝てるかも？',
+  '🎯 『勝つこと』より『負けないこと』を意識すると結果がついてくるよ。',
+  '🧭 自分のトレードスタイルを持ってる人が最終的に一番強いよ。',
+  '🪴 トレードは短距離走じゃなくてマラソン。ゆっくり育てていこうね。',
+  '🛡 1回のトレードでリスクは資金の2%以内が安心だよ。',
+  '📏 ロットは『負けても平気な量』で入るのが長生きのコツだよ。',
+  '⚖️ リスクリワード1:2以上を意識するだけで、勝率50%でも利益が残るよ。',
+  '🚫 ナンピンは計画的に。感情のナンピンは資金が溶けるよ…。',
+  '💰 含み益は利益じゃないよ。確定して初めてお金になるんだよ。',
+  '🧮 勝率よりも期待値。10回中3回でも大きく勝てればプラスだよ。',
+  '🪤 全額投入は一発退場の入り口だよ。余力は常に残してね。',
+  '📉 最大ドローダウンを想定しておくと、暴落でもパニックにならないよ。',
+  '🎯 エントリーの根拠を言葉にできないなら、それはギャンブルかも？',
+  '⏰ 指標発表の前後はスプレッドが広がるから気をつけてね。',
+  '📊 レンジ相場を無理にトレードしなくていいよ。トレンドを待とう！',
+  '🔍 押し目・戻りを待てる人が最終的に勝つよ。焦らないでね。',
+  '🏁 利確も技術のうち。欲張りすぎると建値で返されるよ。',
+  '🚪 エントリーする前に『どこで逃げるか』を決めておくのが鉄則だよ。',
+  '🎣 チャンスは待ってれば来る。飛び乗りエントリーは火傷のもとだよ。',
+  '⛳ 『ここで入らなきゃ』は幻想だよ。見送ったチャンスは損失じゃないよ。',
+  '🔔 アラートを使えば、チャートを見続けなくてもタイミングを逃さないよ。',
+  '🧩 複数の根拠が重なるポイントほど、勝率が高くなるよ。',
+  '📈 トレンド初動より、トレンドの途中に乗る方が安全だよ。',
+  '🎪 髭で狩られたくなければ、損切り位置に少し余裕を持たせてね。',
+  '🧘 負けた後すぐリベンジトレードするのは一番やっちゃダメなパターンだよ。',
+  '📓 トレード日記をつけると、自分のクセが見えてくるよ。',
+  '☕ 連敗したら一回休憩。相場は明日もあるよ。',
+  '🌈 勝ちトレードより、ルール通りにできたトレードを褒めてあげてね。',
+  '💤 睡眠不足の判断力は酔っ払いと同じって言われてるよ。ちゃんと寝てね。',
+  '🪞 他人のトレードと比べないで。自分のペースが一番大事だよ。',
+  '🎭 感情でポジションサイズを変えるのは危険サインだよ。',
+  '🫧 SNSの爆益報告は生存者バイアスだよ。惑わされないでね。',
+  '🧸 大きく負けた日は、チャートを閉じてお気に入りの動画でも見ようね。',
+  '🏔 勝てるようになるまでの道のりは長いけど、続けた人だけがたどり着くよ。',
+  '🎵 音楽聴きながらのトレードもアリだよ。リラックスが大事。',
+  '📵 ポジション持ったまま寝落ちは危険だよ。逆指値は必ず入れてね。',
+  '📅 月曜と金曜はダマシが多いから慎重にね。',
+  '🌍 ロンドン時間とNY時間の重なる21〜24時はボラが高まるよ。',
+  '🔄 トレンドの転換は一瞬じゃなくて、レンジを経由することが多いよ。',
+  '📐 水平線は多くの人が見てるから、それだけで強い根拠になるよ。',
+  '🐢 コツコツ積み上げた利益を、一発で飛ばさない仕組みが大事だよ。',
+  '🏦 中央銀行の発言は相場を大きく動かすよ。要人発言カレンダーは要チェック。',
+  '🌊 相場には波があるよ。波に逆らわず、波に乗る意識を持とうね。',
+  '📆 月末・四半期末はリバランスの流れで普段と違う動きが出やすいよ。',
+  '🔗 通貨の相関を意識すると、ダマシを減らせるよ。',
+  '⛽ ゴールドはリスクオフで買われやすいよ。株が下がった時は注目してね。',
+  '🗞 噂で買って事実で売る。織り込み済みの材料で逆に動くこともあるよ。',
+  '🧊 ボラが低い時は無理に入らなくていいよ。嵐の前の静けさかもしれないけどね。',
+  '📉 下落トレンドは上昇より速いよ。ショートは利確タイミングに注意してね。',
+  '🌐 ドルインデックスを見ておくと、ドルストレート全体の方向感が掴めるよ。',
+  '🔭 大きな足で方向を見て、小さな足でタイミングを取るのが基本だよ。',
+  '🗺 日足で迷ったら週足を見てみて。景色が全然違うよ。',
+  '⏳ 5分足で振り回されてたら、一度15分足に切り替えてみて。落ち着くよ。',
+  '🎶 MTF分析は上位足→下位足の順番が大事。下から見ると迷子になるよ。',
+  '🔬 執行足だけ見てると木を見て森を見ずになるよ。環境認識足も忘れずにね。',
+];
+
+const pickHtfDigestTip = (): string =>
+  HTF_DIGEST_TIPS[Math.floor(Math.random() * HTF_DIGEST_TIPS.length)];
+
+// GASの「Ananical AI.gs」と同じオリジナルキャラクター画像リスト（embedのthumbnailに使う）
+const HTF_DIGEST_ICON_LIST = [
+  'https://drive.google.com/uc?export=view&id=19IXswqrbE1JOeEef_zxWjSjo_0neUyVH',
+  'https://drive.google.com/uc?export=view&id=1wuCVbS7I6fm9onyb-P5w0-Gs4UfBt-lU',
+  'https://drive.google.com/uc?export=view&id=1jR6tY_dZS6mN_l0epUybrBnhLhdDxXO3',
+  'https://drive.google.com/uc?export=view&id=1cE6PDXseF-LqIzAG4I7Jz1mw6n_GE78X',
+  'https://drive.google.com/uc?export=view&id=1ItUbP1QfG2TGBQBTj4ASzCm8wpaOb4-y',
+  'https://drive.google.com/uc?export=view&id=12wLRfr1qRto6oM-GHxv4ExluHTV_jF3j',
+  'https://drive.google.com/uc?export=view&id=1xD9DQPetkiSSyhe2-dEIvlWYvOmlUe7j',
+  'https://drive.google.com/uc?export=view&id=1yJMWpFhhDZBPtOoxdLTCtg3hN1qDCRwk',
+  'https://drive.google.com/uc?export=view&id=1xOqaiPh1LiFvfINzlWPKB7MZZ0mu09cB',
+  'https://drive.google.com/uc?export=view&id=1xOqaiPh1LiFvfINzlWPKB7MZZ0mu09cB',
+  'https://drive.google.com/uc?export=view&id=1Bb_tFopiQrCueB8y43uMZeuILwO4te37',
+  'https://drive.google.com/uc?export=view&id=1QEHvYVarRSHsD87D2LQCc2dENHQOyuS2',
+  'https://drive.google.com/uc?export=view&id=1_FhWywI4v0IMCKbuChGb0s5jf2mOaWhj',
+  'https://drive.google.com/uc?export=view&id=11XOy0bn9j6DKsfGsmxxW6RQ-BmvG0VXo',
+  'https://drive.google.com/uc?export=view&id=1Xf70I9jC9W9w-DctMbJF6pZs4OieBecH',
+];
+
+const pickHtfDigestIcon = (): string =>
+  HTF_DIGEST_ICON_LIST[Math.floor(Math.random() * HTF_DIGEST_ICON_LIST.length)];
+
+async function sendHtfContextDigest(
+  env: Env,
+  timeframe: HtfDigestTimeframe,
+): Promise<void> {
+  const webhookUrl = getHtfDigestWebhook(env, timeframe);
+  if (!webhookUrl) return;
+
+  const pineCode = HTF_DIGEST_PINE_CODE[timeframe];
+  const { results } = await env.DB.prepare(
+    'SELECT symbol, state, reversal_warning, bar_time, last_digest_bar_time FROM htf_context_states WHERE timeframe = ?',
+  )
+    .bind(pineCode)
+    .all<{
+      symbol: string;
+      state: number;
+      reversal_warning: number;
+      bar_time: number;
+      last_digest_bar_time: number | null;
+    }>();
+  const stateBySymbol = new Map(results.map((r) => [r.symbol, r]));
+
+  const higherTimeframe = HTF_DIGEST_HIGHER_TIMEFRAME[timeframe];
+  let higherStateBySymbol: Map<string, { state: number }> | null = null;
+  if (higherTimeframe) {
+    const higherPineCode = HTF_DIGEST_PINE_CODE[higherTimeframe];
+    const { results: higherResults } = await env.DB.prepare(
+      'SELECT symbol, state FROM htf_context_states WHERE timeframe = ?',
+    )
+      .bind(higherPineCode)
+      .all<{ symbol: string; state: number }>();
+    higherStateBySymbol = new Map(higherResults.map((r) => [r.symbol, r]));
+  }
+
+  // 良い条件 = 反転警戒がない・レンジ(中立)でない・（上位足がある場合は）上位足と方向一致。
+  // メイン→ドルスト残り+クロス円→指数→その他 の優先度順に走査し、先頭から最大5件だけ拾う。
+  const longs: string[] = [];
+  const shorts: string[] = [];
+  const pickedBarTimeBySymbol = new Map<string, number>();
+  for (const symbol of HTF_DIGEST_PICK_PRIORITY) {
+    if (longs.length + shorts.length >= HTF_DIGEST_PICK_LIMIT) break;
+    const row = stateBySymbol.get(symbol);
+    if (!row || row.state === 0 || row.reversal_warning) continue;
+    if (higherStateBySymbol) {
+      const higherRow = higherStateBySymbol.get(symbol);
+      if (!higherRow || higherRow.state === 0) continue;
+      if (Math.sign(row.state) !== Math.sign(higherRow.state)) continue;
+    }
+    if (row.state > 0) longs.push(symbol);
+    else shorts.push(symbol);
+    pickedBarTimeBySymbol.set(symbol, row.bar_time);
+  }
+
+  if (longs.length === 0 && shorts.length === 0) return; // 良条件の銘柄が1つもなければ送らない
+
+  // このタイムフレームで前回送信した時点の最新bar_timeより新しい確定足が1つもなければ、
+  // ピック内容が実質同じ再送になるため送らない（土日など新しい確定足が来ていない場合）。
+  // 銘柄単位ではなくタイムフレーム単位で判定することで、上限5件から漏れていた別の古い銘柄が
+  // 繰り上がって再送されてしまう事態を防ぐ。
+  const previousWatermark = Math.max(
+    0,
+    ...[...stateBySymbol.values()].map((r) => r.last_digest_bar_time ?? 0),
+  );
+  const candidateMaxBarTime = Math.max(...pickedBarTimeBySymbol.values());
+  if (candidateMaxBarTime <= previousWatermark) return;
+
+  const dashboardUrl = `https://anyanical.com/#/tools/htf-context?tf=${timeframe}`;
+  const note = `📋 好条件の銘柄だけを厳選してピックアップしたものだよ（全銘柄ではないよ）。他の銘柄も含めた詳細は下のボタンから見てね！\n⚠️ 必ずご自身で「監視足」「環境認識足」の波などを確認してね！\n${HTF_DIGEST_LOOKBACK_NOTE[timeframe]}`;
+
+  const embed = {
+    title: `🔔 Anyanical AI：${HTF_DIGEST_TITLE_TIER[timeframe]}分析レポート`,
+    url: dashboardUrl, // タイトル自体もリンクにしておく（ボタンに気づかない人向けの保険）
+    description: note,
+    color: 16624639,
+    thumbnail: { url: pickHtfDigestIcon() },
+    fields: [
+      {
+        name: '📈 ロング狙い (LONG)',
+        value: longs.length > 0 ? longs.map((s) => `\`${s}\``).join('\n') : 'なし',
+        inline: true,
+      },
+      {
+        name: '📉 ショート狙い (SHORT)',
+        value: shorts.length > 0 ? shorts.map((s) => `\`${s}\``).join('\n') : 'なし',
+        inline: true,
+      },
+    ],
+    timestamp: new Date().toISOString(),
+    footer: { text: `💡 Tips: ${pickHtfDigestTip()} 🌸` },
+  };
+
+  // Linkボタン（type=2, style=5）はインタラクションを発生させない非インタラクティブコンポーネントなので、
+  // Application非所有のIncoming Webhookでも `with_components=true` を付ければ送信できる。
+  // 埋め込みタイトルのリンクより視認性が高く「どこを押せばいいか」が明確になるため採用。
+  const components = [
+    {
+      type: 1,
+      components: [
+        {
+          type: 2,
+          style: 5,
+          label: '📊 Market Dashboardを開く',
+          url: dashboardUrl,
+        },
+      ],
+    },
+  ];
+
+  try {
+    const res = await fetch(`${webhookUrl}?with_components=true`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        embeds: [embed],
+        components,
+        allowed_mentions: { parse: [] },
+      }),
+    });
+    if (res.ok) {
+      // 送信できた銘柄だけ「最後にダイジェストへ載せたbar_time」を更新する。
+      // 拾われなかった（上限漏れ・条件未達の）銘柄は次回以降も引き続き対象になる。
+      await env.DB.batch(
+        Array.from(pickedBarTimeBySymbol.entries()).map(([symbol, barTime]) =>
+          env.DB.prepare(
+            'UPDATE htf_context_states SET last_digest_bar_time = ? WHERE symbol = ? AND timeframe = ?',
+          ).bind(barTime, symbol, pineCode),
+        ),
+      );
+    }
+  } catch {
+    // 送信失敗しても他の時間足の処理には影響しない（scheduled()側で各時間足を独立に処理する）
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -1474,5 +2333,20 @@ export default {
       return handleApi(request, env);
     }
     return env.ASSETS.fetch(request);
+  },
+  async scheduled(
+    controller: ScheduledController,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<void> {
+    if (controller.cron === HTF_DIGEST_H4_CRON) {
+      if (isH4DigestDue(new Date(controller.scheduledTime))) {
+        ctx.waitUntil(sendHtfContextDigest(env, 'H4'));
+      }
+      return;
+    }
+    const timeframe = HTF_DIGEST_CRON_TIMEFRAME[controller.cron];
+    if (!timeframe) return;
+    ctx.waitUntil(sendHtfContextDigest(env, timeframe));
   },
 } satisfies ExportedHandler<Env>;

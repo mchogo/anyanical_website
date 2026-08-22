@@ -172,6 +172,12 @@ const categoryPages: Record<CategoryPageId, CategoryData> = {
           '口座ごとの日次損益をカレンダーで管理するプレミアム限定ツール。複数口座に対応。',
         href: '#/tools/trade-journal',
       },
+      {
+        title: 'Anyanical Market Dashboard',
+        description:
+          'AI環境認識（上目線/下目線/レンジ、上下ターゲット）をカテゴリ別・時間足別(MN1/W1/D1/H4)でまとめて確認するプレミアム限定ボード。',
+        href: '#/tools/htf-context',
+      },
     ],
   },
 };

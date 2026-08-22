@@ -131,6 +131,10 @@ export const ROUTE_META: Record<string, PageMeta> = {
     t('アニャニカル解説'),
     '環境認識からエントリーパターン①〜③までを音声付きスライドで振り返る学習用まとめ。本編はプレミアム限定です。',
   ),
+  'tools/htf-context': s(
+    t('Anyanical Market Dashboard'),
+    'Anyanical ToolkitのAI環境認識（上目線/下目線/レンジ、上下ターゲット）をカテゴリ別・時間足別(MN1/W1/D1/H4)でまとめて確認します。プレミアム限定です。',
+  ),
 };
 
 export const DEFAULT_META: PageMeta = ROUTE_META[''];

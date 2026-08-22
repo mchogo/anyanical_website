@@ -389,7 +389,12 @@ const MobileNavLinks = ({
   </>
 );
 
-const BANNER_KEYS = ['spacex-banner-dismissed', 'announce-banner-dismissed'];
+const BANNER_KEYS = [
+  'spacex-banner-dismissed',
+  'announce-banner-dismissed',
+  'htf-context-promo-dismissed',
+  'matome-headline-dismissed',
+];
 
 const hasDismissedBanners = () =>
   BANNER_KEYS.some((key) => sessionStorage.getItem(key) === '1');
