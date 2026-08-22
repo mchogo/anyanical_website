@@ -412,7 +412,7 @@ export const AnyaAiAssistant = () => {
       {isOpen && (
         <div className="fixed inset-0 z-[39]" onClick={close} aria-hidden="true" />
       )}
-      <aside className="fixed bottom-4 right-4 z-40 w-[min(calc(100vw-2rem),22rem)]">
+      <aside className="ml-auto w-[min(100%,22rem)]">
         {isOpen ? (
           <div className="flex max-h-[min(560px,calc(100dvh-5rem))] flex-col overflow-hidden rounded-xl border border-amber-300/20 bg-slate-950/95 shadow-[0_20px_70px_rgba(0,0,0,0.55)] backdrop-blur animate-slide-up">
             {/* Header */}

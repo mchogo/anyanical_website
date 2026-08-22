@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { SITE_URL } from '../config/pageMeta';
 import { useDiscordAuth } from '../hooks/useDiscordAuth';
 import { usePnLCalendar, type Account, type DailyRecord } from '../hooks/usePnLCalendar';
+import { Dialog } from './common/Dialog';
 import { badgeTier, evaluateBadges, type PnLBadge } from '../utils/pnlBadges';
 import {
   buildCalendarDays,
@@ -428,50 +429,36 @@ const AccountTabs = ({
   </div>
 );
 
-const PremiumUpsellModal = ({ onClose }: { onClose: () => void }) => {
-  const [closing, setClosing] = useState(false);
-  useEffect(() => {
-    if (!closing) return;
-    const t = window.setTimeout(onClose, 160);
-    return () => window.clearTimeout(t);
-  }, [closing, onClose]);
-  const close = () => setClosing(true);
-  return (
-    <div
-      className={`fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}
-      onClick={close}
-    >
-      <div
-        className={`w-full max-w-md rounded-lg border border-amber-300/30 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)] ${closing ? 'animate-slide-down' : 'animate-slide-up'}`}
-        onClick={(e) => e.stopPropagation()}
+const PremiumUpsellModal = ({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) => (
+  <Dialog open={open} onClose={onClose} title="複数口座はプレミアム限定です">
+    <p className="mt-1 text-sm font-semibold text-amber-100">Premium feature</p>
+    <p className="mt-3 text-sm leading-6 text-slate-400">
+      Discordログインのみでも1口座の損益カレンダーは使えます。複数口座、全口座合計、より細かい運用管理はプレミアムで解放されます。
+    </p>
+    <div className="mt-5 flex flex-wrap gap-2">
+      <a
+        href="#/tools/participation"
+        onClick={onClose}
+        className="inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
       >
-        <p className="text-sm font-semibold text-amber-100">Premium feature</p>
-        <h3 className="mt-1 text-xl font-bold text-white">
-          複数口座はプレミアム限定です
-        </h3>
-        <p className="mt-3 text-sm leading-6 text-slate-400">
-          Discordログインのみでも1口座の損益カレンダーは使えます。複数口座、全口座合計、より細かい運用管理はプレミアムで解放されます。
-        </p>
-        <div className="mt-5 flex flex-wrap gap-2">
-          <a
-            href="#/tools/participation"
-            onClick={close}
-            className="inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
-          >
-            プレミアム内容を見る
-          </a>
-          <button
-            type="button"
-            onClick={close}
-            className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
-          >
-            閉じる
-          </button>
-        </div>
-      </div>
+        プレミアム内容を見る
+      </a>
+      <button
+        type="button"
+        onClick={onClose}
+        className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+      >
+        閉じる
+      </button>
     </div>
-  );
-};
+  </Dialog>
+);
 
 // ── Account forms ──────────────────────────────────────────────────────────────
 
@@ -565,148 +552,134 @@ const AccountForm = ({
 
 // ── Import guide overlay ──────────────────────────────────────────────────────
 
-const ImportGuideModal = ({ onClose }: { onClose: () => void }) => {
-  const [closing, setClosing] = useState(false);
-  useEffect(() => {
-    if (!closing) return;
-    const t = window.setTimeout(onClose, 160);
-    return () => window.clearTimeout(t);
-  }, [closing, onClose]);
-  const close = () => setClosing(true);
+const ImportGuideModal = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
   return (
-    <div
-      className={`fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}
-      onClick={close}
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="MT4 / MT5 履歴の取り込み方法"
+      panelClassName="max-w-lg !rounded-xl !border-white/10 !bg-slate-900"
     >
-      <div
-        className={`w-full max-w-lg rounded-xl border border-white/10 bg-slate-900 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.6)] ${closing ? 'animate-slide-down' : 'animate-slide-up'}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <h3 className="text-base font-bold text-white">MT4 / MT5 履歴の取り込み方法</h3>
-          <button
-            onClick={close}
-            className="shrink-0 text-slate-500 transition hover:text-white"
-            aria-label="閉じる"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="space-y-5 text-sm">
-          {/* MT4 */}
-          <div>
-            <p className="mb-2 font-bold text-cyan-300">MT4 の場合</p>
-            <ol className="space-y-1.5 text-slate-300">
-              <li className="flex gap-2">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
-                  1
-                </span>
-                <span>
-                  MT4 を開き、上部メニューの{' '}
-                  <strong className="text-white">「表示」→「ターミナル」</strong> を開く
-                </span>
-              </li>
-              <li className="flex gap-2">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
-                  2
-                </span>
-                <span>
-                  ターミナル内の <strong className="text-white">「口座履歴」</strong>{' '}
-                  タブを選択
-                </span>
-              </li>
-              <li className="flex gap-2">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
-                  3
-                </span>
-                <span>期間を右クリック →「すべての履歴」など期間を選択</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
-                  4
-                </span>
-                <span>
-                  再度右クリック →{' '}
-                  <strong className="text-white">
-                    「詳細な履歴のHTMLレポートを保存」
-                  </strong>{' '}
-                  をクリック
-                </span>
-              </li>
-              <li className="flex gap-2">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
-                  5
-                </span>
-                <span>
-                  保存した <strong className="text-white">.htm ファイル</strong>{' '}
-                  をここで選択
-                </span>
-              </li>
-            </ol>
-          </div>
-
-          <div className="border-t border-white/10" />
-
-          {/* MT5 */}
-          <div>
-            <p className="mb-2 font-bold text-cyan-300">MT5 の場合</p>
-            <ol className="space-y-1.5 text-slate-300">
-              <li className="flex gap-2">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
-                  1
-                </span>
-                <span>
-                  MT5 を開き、
-                  <strong className="text-white">「表示」→「ツールボックス」</strong>
-                  （または Ctrl+T）を開く
-                </span>
-              </li>
-              <li className="flex gap-2">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
-                  2
-                </span>
-                <span>
-                  <strong className="text-white">「履歴」</strong>{' '}
-                  タブを選択し、期間を設定
-                </span>
-              </li>
-              <li className="flex gap-2">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
-                  3
-                </span>
-                <span>
-                  右クリック →{' '}
-                  <strong className="text-white">「レポート」→「HTML形式で保存」</strong>
-                </span>
-              </li>
-              <li className="flex gap-2">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
-                  4
-                </span>
-                <span>
-                  保存した <strong className="text-white">.html ファイル</strong>{' '}
-                  をここで選択
-                </span>
-              </li>
-            </ol>
-          </div>
-
-          <div className="border-t border-white/10" />
-
-          <p className="text-xs text-slate-500">
-            XLSX形式は非対応です。HTML形式のみ対応しています。CSVはMT4/MT5の「CSVとして保存」でも取り込めます。
-          </p>
-        </div>
-
+      <div className="mb-1 flex justify-end">
         <button
-          onClick={close}
-          className="mt-5 inline-flex min-h-9 w-full items-center justify-center rounded-full bg-white/[0.06] text-sm font-bold text-slate-300 transition hover:bg-white/10"
+          onClick={onClose}
+          className="shrink-0 text-slate-500 transition hover:text-white"
+          aria-label="閉じる"
         >
-          閉じる
+          ✕
         </button>
       </div>
-    </div>
+
+      <div className="space-y-5 text-sm">
+        {/* MT4 */}
+        <div>
+          <p className="mb-2 font-bold text-cyan-300">MT4 の場合</p>
+          <ol className="space-y-1.5 text-slate-300">
+            <li className="flex gap-2">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                1
+              </span>
+              <span>
+                MT4 を開き、上部メニューの{' '}
+                <strong className="text-white">「表示」→「ターミナル」</strong> を開く
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                2
+              </span>
+              <span>
+                ターミナル内の <strong className="text-white">「口座履歴」</strong>{' '}
+                タブを選択
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                3
+              </span>
+              <span>期間を右クリック →「すべての履歴」など期間を選択</span>
+            </li>
+            <li className="flex gap-2">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                4
+              </span>
+              <span>
+                再度右クリック →{' '}
+                <strong className="text-white">「詳細な履歴のHTMLレポートを保存」</strong>{' '}
+                をクリック
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                5
+              </span>
+              <span>
+                保存した <strong className="text-white">.htm ファイル</strong>{' '}
+                をここで選択
+              </span>
+            </li>
+          </ol>
+        </div>
+
+        <div className="border-t border-white/10" />
+
+        {/* MT5 */}
+        <div>
+          <p className="mb-2 font-bold text-cyan-300">MT5 の場合</p>
+          <ol className="space-y-1.5 text-slate-300">
+            <li className="flex gap-2">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                1
+              </span>
+              <span>
+                MT5 を開き、
+                <strong className="text-white">「表示」→「ツールボックス」</strong>
+                （または Ctrl+T）を開く
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                2
+              </span>
+              <span>
+                <strong className="text-white">「履歴」</strong> タブを選択し、期間を設定
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                3
+              </span>
+              <span>
+                右クリック →{' '}
+                <strong className="text-white">「レポート」→「HTML形式で保存」</strong>
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-slate-400">
+                4
+              </span>
+              <span>
+                保存した <strong className="text-white">.html ファイル</strong>{' '}
+                をここで選択
+              </span>
+            </li>
+          </ol>
+        </div>
+
+        <div className="border-t border-white/10" />
+
+        <p className="text-xs text-slate-500">
+          XLSX形式は非対応です。HTML形式のみ対応しています。CSVはMT4/MT5の「CSVとして保存」でも取り込めます。
+        </p>
+      </div>
+
+      <button
+        onClick={onClose}
+        className="mt-5 inline-flex min-h-9 w-full items-center justify-center rounded-full bg-white/[0.06] text-sm font-bold text-slate-300 transition hover:bg-white/10"
+      >
+        閉じる
+      </button>
+    </Dialog>
   );
 };
 
@@ -771,7 +744,7 @@ const CsvImportPanel = ({
 
   return (
     <>
-      {showGuide && <ImportGuideModal onClose={() => setShowGuide(false)} />}
+      <ImportGuideModal open={showGuide} onClose={() => setShowGuide(false)} />
       <div className="mb-4 rounded-lg border border-white/10 bg-white/[0.035] p-4">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div>
@@ -2121,9 +2094,10 @@ export const PnLCalendarTool = () => {
         )}
       </div>
 
-      {showPremiumUpsell && (
-        <PremiumUpsellModal onClose={() => setShowPremiumUpsell(false)} />
-      )}
+      <PremiumUpsellModal
+        open={showPremiumUpsell}
+        onClose={() => setShowPremiumUpsell(false)}
+      />
 
       {shareModal && (
         <ShareModal

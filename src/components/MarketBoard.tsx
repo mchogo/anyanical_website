@@ -226,17 +226,26 @@ export const MarketBoard = ({
       </a>
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
+        <label htmlFor="market-board-search" className="sr-only">
+          銘柄を検索
+        </label>
         <input
+          id="market-board-search"
           type="search"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="銘柄を検索... (例: GOLD、BTC)"
           className="w-full rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-slate-200 placeholder-slate-600 outline-none ring-1 ring-white/10 transition focus:border-cyan-300/30 focus:ring-cyan-300/20 sm:max-w-xs"
         />
-        <div className="flex rounded-full bg-white/[0.04] p-0.5 ring-1 ring-white/10">
+        <div
+          role="group"
+          aria-label="表示切り替え"
+          className="flex rounded-full bg-white/[0.04] p-0.5 ring-1 ring-white/10"
+        >
           <button
             type="button"
             onClick={() => switchBoardView('grid')}
+            aria-pressed={boardView === 'grid'}
             className={`rounded-full px-4 py-1.5 text-xs font-bold transition ${
               boardView === 'grid'
                 ? 'bg-cyan-300 text-slate-950'
@@ -248,6 +257,7 @@ export const MarketBoard = ({
           <button
             type="button"
             onClick={() => switchBoardView('heatmap')}
+            aria-pressed={boardView === 'heatmap'}
             className={`rounded-full px-4 py-1.5 text-xs font-bold transition ${
               boardView === 'heatmap'
                 ? 'bg-cyan-300 text-slate-950'
@@ -259,7 +269,11 @@ export const MarketBoard = ({
         </div>
       </div>
 
-      <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
+      <div
+        role="group"
+        aria-label="カテゴリで絞り込み"
+        className="mb-5 flex gap-2 overflow-x-auto pb-1"
+      >
         {categoryFilters.map((filter) => {
           const isActive = categoryFilter === filter.value;
 
@@ -268,6 +282,7 @@ export const MarketBoard = ({
               key={filter.value}
               type="button"
               onClick={() => setCategoryFilter(filter.value)}
+              aria-pressed={isActive}
               className={`btn-press shrink-0 rounded-full px-4 py-2 text-sm font-semibold ring-1 transition ${
                 isActive
                   ? 'bg-cyan-300 text-slate-950 ring-cyan-200'

@@ -1,66 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { CHART_SYMBOLS } from '../config/markets';
+import { TradingViewWidget } from './common/TradingViewWidget';
 
 type ChartSymbol = (typeof CHART_SYMBOLS)[number];
 
-const TradingViewWidget = ({ symbol }: { symbol: string }) => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-
-    container.innerHTML =
-      '<div class="tradingview-widget-container" style="height:100%;width:100%"><div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div></div>';
-
-    const script = document.createElement('script');
-    script.src =
-      'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-    script.type = 'text/javascript';
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol,
-      interval: '60',
-      timezone: 'Asia/Tokyo',
-      theme: 'dark',
-      style: '1',
-      locale: 'ja',
-      backgroundColor: '#020617',
-      gridColor: 'rgba(148, 163, 184, 0.12)',
-      hide_side_toolbar: true,
-      allow_symbol_change: true,
-      calendar: false,
-      support_host: 'https://www.tradingview.com',
-    });
-
-    container.querySelector('.tradingview-widget-container')?.appendChild(script);
-
-    return () => {
-      container.innerHTML = '';
-    };
-  }, [symbol]);
-
-  return (
-    <div
-      ref={containerRef}
-      className="h-[460px] w-full overflow-hidden rounded-lg border border-white/10 bg-slate-950 md:h-[560px]"
-    />
-  );
-};
-
 export const ChartSection = () => {
   const [activeSymbol, setActiveSymbol] = useState<ChartSymbol>(CHART_SYMBOLS[0]);
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleSymbolChange = (symbol: ChartSymbol) => {
     if (symbol.symbol === activeSymbol.symbol) return;
     setActiveSymbol(symbol);
-    setIsLoading(true);
-    window.setTimeout(() => setIsLoading(false), 2500);
   };
 
   return (
@@ -116,14 +66,27 @@ export const ChartSection = () => {
           </div>
           <p className="text-xs text-slate-500">{activeSymbol.symbol}</p>
         </div>
-        <div className="relative">
-          {isLoading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-slate-950/80 backdrop-blur-sm">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-cyan-300" />
-            </div>
-          )}
-          <TradingViewWidget key={activeSymbol.symbol} symbol={activeSymbol.symbol} />
-        </div>
+        <TradingViewWidget
+          key={activeSymbol.symbol}
+          src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js"
+          heightClassName="h-[460px] md:h-[560px]"
+          fallbackUrl="https://www.tradingview.com/"
+          config={{
+            autosize: true,
+            symbol: activeSymbol.symbol,
+            interval: '60',
+            timezone: 'Asia/Tokyo',
+            theme: 'dark',
+            style: '1',
+            locale: 'ja',
+            backgroundColor: '#020617',
+            gridColor: 'rgba(148, 163, 184, 0.12)',
+            hide_side_toolbar: true,
+            allow_symbol_change: true,
+            calendar: false,
+            support_host: 'https://www.tradingview.com',
+          }}
+        />
       </div>
     </section>
   );

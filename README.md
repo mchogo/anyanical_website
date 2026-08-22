@@ -86,6 +86,8 @@ http://127.0.0.1:5173/
 
 ハッシュルーティングのため、Cloudflare Pagesなどの静的ホスティングで追加rewriteなしに動作します。
 
+`#/tools/*` ページのID・タイトル・説明・hrefは [src/config/toolPages.ts](src/config/toolPages.ts) が正本です。新しいツールページを追加する手順は [docs/coding-standards/frontend.md](docs/coding-standards/frontend.md) を参照してください。
+
 ---
 
 ## 開発コマンド
@@ -97,6 +99,7 @@ http://127.0.0.1:5173/
 | `npm run lint`         | ESLint                  |
 | `npm run format`       | Prettier整形            |
 | `npm run format:check` | Prettier確認            |
+| `npm run test`         | vitest(単体テスト)      |
 
 ---
 

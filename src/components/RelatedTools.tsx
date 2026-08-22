@@ -1,19 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { WEEKEND_MARKETS, type MarketConfig, type MarketPrice } from '../config/markets';
 import type { PriceHistoryPoint } from '../hooks/useHyperliquidMids';
+import { TradingViewWidget } from './common/TradingViewWidget';
 
 type RelatedToolsProps = {
   prices: Record<string, MarketPrice>;
   priceHistory?: Record<string, PriceHistoryPoint[]>;
   isWeekendMode?: boolean;
-};
-
-type TradingViewScriptWidgetProps = {
-  src: string;
-  config: Record<string, unknown>;
-  heightClassName: string;
-  className?: string;
 };
 
 const changeTone = (value: number | null) => {
@@ -65,39 +59,6 @@ const SEMI_AUTO_EA_FORM_URL = 'https://forms.gle/1EiRMR257pgQ9GDJ7';
 const EA_DISTRIBUTION_CHANNEL_URL =
   'https://discord.com/channels/1152131321297129534/1488800327514718270';
 
-const TradingViewScriptWidget = ({
-  src,
-  config,
-  heightClassName,
-  className = 'overflow-hidden rounded-lg border border-white/10 bg-slate-950',
-}: TradingViewScriptWidgetProps) => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const configJson = JSON.stringify(config);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-
-    container.innerHTML =
-      '<div class="tradingview-widget-container" style="height:100%;width:100%"><div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div></div>';
-
-    const script = document.createElement('script');
-    script.src = src;
-    script.type = 'text/javascript';
-    script.async = true;
-    script.innerHTML = configJson;
-    container.querySelector('.tradingview-widget-container')?.appendChild(script);
-
-    return () => {
-      container.innerHTML = '';
-    };
-  }, [src, configJson]);
-
-  return <div ref={containerRef} className={`${heightClassName} ${className}`} />;
-};
-
 export const CurrencyStrengthTool = () => (
   <section id="tools-currency-strength" className="scroll-mt-8">
     <div className="mb-4">
@@ -113,9 +74,10 @@ export const CurrencyStrengthTool = () => (
     </div>
 
     <div className="animate-fade-up stagger-3 grid gap-4 xl:grid-cols-[1fr_1fr]">
-      <TradingViewScriptWidget
+      <TradingViewWidget
         src="https://s3.tradingview.com/external-embedding/embed-widget-forex-heat-map.js"
         heightClassName="h-[520px] xl:h-[470px]"
+        fallbackUrl="https://www.tradingview.com/"
         config={{
           width: '100%',
           height: '100%',
@@ -125,9 +87,10 @@ export const CurrencyStrengthTool = () => (
           locale: 'ja',
         }}
       />
-      <TradingViewScriptWidget
+      <TradingViewWidget
         src="https://s3.tradingview.com/external-embedding/embed-widget-forex-cross-rates.js"
         heightClassName="h-[520px] xl:h-[470px]"
+        fallbackUrl="https://www.tradingview.com/"
         config={{
           width: '100%',
           height: '100%',
@@ -163,10 +126,11 @@ export const EconomicCalendarTool = () => (
             TradingView公式カレンダーをライトテーマで表示しています。
           </p>
         </div>
-        <TradingViewScriptWidget
+        <TradingViewWidget
           src="https://s3.tradingview.com/external-embedding/embed-widget-events.js"
           heightClassName="h-[620px]"
           className="bg-white"
+          fallbackUrl="https://jp.tradingview.com/economic-calendar/"
           config={{
             width: '100%',
             height: '100%',
@@ -255,6 +219,9 @@ export const GapWatchTool = ({
     setSortDir((prev) => (prev === null ? 'desc' : prev === 'desc' ? 'asc' : null));
   };
 
+  const ariaSort: 'ascending' | 'descending' | 'none' =
+    sortDir === 'desc' ? 'descending' : sortDir === 'asc' ? 'ascending' : 'none';
+
   const sortedMarkets =
     sortDir === null
       ? WEEKEND_MARKETS
@@ -267,6 +234,85 @@ export const GapWatchTool = ({
             : Math.abs(calculateHistoryChangePct(priceHistory?.[b.symbol]) ?? -Infinity);
           return sortDir === 'desc' ? bVal - aVal : aVal - bVal;
         });
+
+  // テーブル行(デスクトップ)・カード(モバイル)の両方で同じ導出値を使うため、
+  // ここで一度だけ計算する。
+  const rows = sortedMarkets.map((market) => {
+    const price = prices[market.symbol];
+    const changePct = price?.changePct ?? null;
+    const absChange = Math.abs(changePct ?? 0);
+    const alertLabel =
+      changePct === null
+        ? '未取得'
+        : absChange >= 1
+          ? isWeekendMode
+            ? '高'
+            : '大きめ'
+          : absChange >= 0.35
+            ? isWeekendMode
+              ? '中'
+              : '確認'
+            : isWeekendMode
+              ? '低'
+              : '通常';
+    const alertClass =
+      alertLabel === '高' || alertLabel === '大きめ'
+        ? 'bg-rose-400/15 text-rose-200 ring-rose-300/30'
+        : alertLabel === '中' || alertLabel === '確認'
+          ? 'bg-amber-400/15 text-amber-200 ring-amber-300/30'
+          : 'bg-slate-400/15 text-slate-200 ring-slate-300/30';
+    const hasPrice = price?.price !== null && price?.price !== undefined;
+    const recentChangePct = calculateHistoryChangePct(priceHistory?.[market.symbol]);
+    const recentAbsChange = Math.abs(recentChangePct ?? 0);
+    const recentLabel =
+      recentChangePct === null
+        ? '履歴取得中'
+        : recentAbsChange >= 0.8
+          ? '大きめ'
+          : recentAbsChange >= 0.25
+            ? '動きあり'
+            : '落ち着き';
+    const recentClass =
+      recentLabel === '大きめ'
+        ? 'bg-rose-400/15 text-rose-200 ring-rose-300/30'
+        : recentLabel === '動きあり'
+          ? 'bg-amber-400/15 text-amber-200 ring-amber-300/30'
+          : recentLabel === '落ち着き'
+            ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-300/30'
+            : 'bg-slate-400/15 text-slate-200 ring-slate-300/30';
+
+    return {
+      market,
+      price,
+      changePct,
+      alertLabel,
+      alertClass,
+      hasPrice,
+      recentChangePct,
+      recentLabel,
+      recentClass,
+    };
+  });
+
+  const sortLabel = isWeekendMode ? '週末変動率' : '直近6時間';
+  const sortStateLabel =
+    sortDir === null ? '未ソート' : sortDir === 'desc' ? '降順' : '昇順';
+  const SortToggleButton = ({ className = '' }: { className?: string }) => (
+    <button
+      type="button"
+      onClick={handleSort}
+      aria-label={`${sortLabel}で並べ替え(現在: ${sortStateLabel})`}
+      className={`inline-flex min-h-9 items-center gap-1.5 rounded-full bg-white/[0.04] px-3 text-xs font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10 ${className}`}
+    >
+      並べ替え: {sortLabel}
+      <span
+        className={sortDir !== null ? 'text-cyan-300' : 'text-slate-600'}
+        aria-hidden="true"
+      >
+        {sortDir === null ? '↕' : sortDir === 'desc' ? '↓' : '↑'}
+      </span>
+    </button>
+  );
 
   return (
     <section id="tools-gap-watch" className="scroll-mt-8">
@@ -297,7 +343,11 @@ export const GapWatchTool = ({
         {guidance}
       </div>
 
-      <div className="animate-fade-up stagger-4 overflow-x-auto rounded-lg border border-white/10 bg-slate-900/80">
+      <div className="animate-fade-up stagger-4 mb-3 flex justify-end sm:hidden">
+        <SortToggleButton />
+      </div>
+
+      <div className="animate-fade-up stagger-4 hidden overflow-x-auto rounded-lg border border-white/10 bg-slate-900/80 sm:block">
         <table className="min-w-[760px] w-full text-left text-sm">
           <thead className="bg-white/[0.04] text-xs uppercase text-slate-500">
             {isWeekendMode ? (
@@ -305,16 +355,19 @@ export const GapWatchTool = ({
                 <th className="px-4 py-3">銘柄</th>
                 <th className="px-4 py-3 text-right">現在値</th>
                 <th className="px-4 py-3 text-right">金曜基準</th>
-                <th
-                  className="cursor-pointer select-none px-4 py-3 text-right transition hover:text-slate-300"
-                  onClick={handleSort}
-                >
-                  週末変動率
-                  <span
-                    className={`ml-1 ${sortDir !== null ? 'text-cyan-300' : 'text-slate-600'}`}
+                <th aria-sort={ariaSort} className="px-4 py-3 text-right">
+                  <button
+                    type="button"
+                    onClick={handleSort}
+                    className="select-none text-right transition hover:text-slate-300"
                   >
-                    {sortDir === null ? '↕' : sortDir === 'desc' ? '↓' : '↑'}
-                  </span>
+                    週末変動率
+                    <span
+                      className={`ml-1 ${sortDir !== null ? 'text-cyan-300' : 'text-slate-600'}`}
+                    >
+                      {sortDir === null ? '↕' : sortDir === 'desc' ? '↓' : '↑'}
+                    </span>
+                  </button>
                 </th>
                 <th className="px-4 py-3">窓開け警戒</th>
               </tr>
@@ -322,16 +375,19 @@ export const GapWatchTool = ({
               <tr>
                 <th className="px-4 py-3">監視銘柄</th>
                 <th className="px-4 py-3 text-right">現在値</th>
-                <th
-                  className="cursor-pointer select-none px-4 py-3 text-right transition hover:text-slate-300"
-                  onClick={handleSort}
-                >
-                  直近6時間
-                  <span
-                    className={`ml-1 ${sortDir !== null ? 'text-cyan-300' : 'text-slate-600'}`}
+                <th aria-sort={ariaSort} className="px-4 py-3 text-right">
+                  <button
+                    type="button"
+                    onClick={handleSort}
+                    className="select-none text-right transition hover:text-slate-300"
                   >
-                    {sortDir === null ? '↕' : sortDir === 'desc' ? '↓' : '↑'}
-                  </span>
+                    直近6時間
+                    <span
+                      className={`ml-1 ${sortDir !== null ? 'text-cyan-300' : 'text-slate-600'}`}
+                    >
+                      {sortDir === null ? '↕' : sortDir === 'desc' ? '↓' : '↑'}
+                    </span>
+                  </button>
                 </th>
                 <th className="px-4 py-3">短期状態</th>
                 <th className="px-4 py-3">取得状態</th>
@@ -339,129 +395,194 @@ export const GapWatchTool = ({
             )}
           </thead>
           <tbody className="divide-y divide-white/10">
-            {sortedMarkets.map((market) => {
-              const price = prices[market.symbol];
-              const changePct = price?.changePct ?? null;
-              const absChange = Math.abs(changePct ?? 0);
-              const alertLabel =
-                changePct === null
-                  ? '未取得'
-                  : absChange >= 1
-                    ? isWeekendMode
-                      ? '高'
-                      : '大きめ'
-                    : absChange >= 0.35
-                      ? isWeekendMode
-                        ? '中'
-                        : '確認'
-                      : isWeekendMode
-                        ? '低'
-                        : '通常';
-              const alertClass =
-                alertLabel === '高' || alertLabel === '大きめ'
-                  ? 'bg-rose-400/15 text-rose-200 ring-rose-300/30'
-                  : alertLabel === '中' || alertLabel === '確認'
-                    ? 'bg-amber-400/15 text-amber-200 ring-amber-300/30'
-                    : 'bg-slate-400/15 text-slate-200 ring-slate-300/30';
-              const hasPrice = price?.price !== null && price?.price !== undefined;
-              const recentChangePct = calculateHistoryChangePct(
-                priceHistory?.[market.symbol],
-              );
-              const recentAbsChange = Math.abs(recentChangePct ?? 0);
-              const recentLabel =
-                recentChangePct === null
-                  ? '履歴取得中'
-                  : recentAbsChange >= 0.8
-                    ? '大きめ'
-                    : recentAbsChange >= 0.25
-                      ? '動きあり'
-                      : '落ち着き';
-              const recentClass =
-                recentLabel === '大きめ'
-                  ? 'bg-rose-400/15 text-rose-200 ring-rose-300/30'
-                  : recentLabel === '動きあり'
-                    ? 'bg-amber-400/15 text-amber-200 ring-amber-300/30'
-                    : recentLabel === '落ち着き'
-                      ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-300/30'
-                      : 'bg-slate-400/15 text-slate-200 ring-slate-300/30';
+            {rows.map(
+              ({
+                market,
+                price,
+                changePct,
+                alertLabel,
+                alertClass,
+                hasPrice,
+                recentChangePct,
+                recentLabel,
+                recentClass,
+              }) => {
+                if (!isWeekendMode) {
+                  return (
+                    <tr key={market.symbol}>
+                      <td className="px-4 py-4">
+                        <p className="font-semibold text-white">{market.displayName}</p>
+                        <p className="text-xs text-slate-500">
+                          {market.officialMarketLabel ?? market.sourceLabel}
+                        </p>
+                      </td>
+                      <td className="px-4 py-4 text-right font-semibold text-slate-200 tabular-nums">
+                        {formatNumber(price?.price ?? null, market)}
+                      </td>
+                      <td
+                        className={`px-4 py-4 text-right font-semibold tabular-nums ${changeTone(recentChangePct)}`}
+                      >
+                        {formatPercent(recentChangePct)}
+                      </td>
+                      <td className="px-4 py-4">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${recentClass}`}
+                        >
+                          {recentLabel}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${
+                            hasPrice
+                              ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-300/30'
+                              : 'bg-slate-400/15 text-slate-200 ring-slate-300/30'
+                          }`}
+                        >
+                          {hasPrice ? '取得中' : '未取得'}
+                        </span>
+                        <p className="mt-2 text-xs text-slate-500">
+                          {price?.activeSymbol ?? '採用シンボル確認中'}
+                        </p>
+                      </td>
+                    </tr>
+                  );
+                }
 
-              if (!isWeekendMode) {
                 return (
                   <tr key={market.symbol}>
                     <td className="px-4 py-4">
-                      <p className="font-semibold text-white">{market.displayName}</p>
+                      <p className="font-semibold text-white">
+                        {isWeekendMode && market.weekendDisplayName
+                          ? market.weekendDisplayName
+                          : market.displayName}
+                      </p>
                       <p className="text-xs text-slate-500">
-                        {market.officialMarketLabel ?? market.sourceLabel}
+                        {price?.activeSymbol ?? '未取得'}
                       </p>
                     </td>
                     <td className="px-4 py-4 text-right font-semibold text-slate-200 tabular-nums">
                       {formatNumber(price?.price ?? null, market)}
                     </td>
+                    <td className="px-4 py-4 text-right text-slate-400 tabular-nums">
+                      {formatNumber(price?.comparisonPrice ?? null, market)}
+                    </td>
                     <td
-                      className={`px-4 py-4 text-right font-semibold tabular-nums ${changeTone(recentChangePct)}`}
+                      className={`px-4 py-4 text-right font-semibold tabular-nums ${changeTone(changePct)}`}
                     >
-                      {formatPercent(recentChangePct)}
+                      {formatPercent(changePct)}
                     </td>
                     <td className="px-4 py-4">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${recentClass}`}
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${alertClass}`}
                       >
-                        {recentLabel}
+                        {alertLabel}
                       </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${
-                          hasPrice
-                            ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-300/30'
-                            : 'bg-slate-400/15 text-slate-200 ring-slate-300/30'
-                        }`}
-                      >
-                        {hasPrice ? '取得中' : '未取得'}
-                      </span>
-                      <p className="mt-2 text-xs text-slate-500">
-                        {price?.activeSymbol ?? '採用シンボル確認中'}
-                      </p>
                     </td>
                   </tr>
                 );
-              }
-
-              return (
-                <tr key={market.symbol}>
-                  <td className="px-4 py-4">
-                    <p className="font-semibold text-white">
-                      {isWeekendMode && market.weekendDisplayName
-                        ? market.weekendDisplayName
-                        : market.displayName}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {price?.activeSymbol ?? '未取得'}
-                    </p>
-                  </td>
-                  <td className="px-4 py-4 text-right font-semibold text-slate-200 tabular-nums">
-                    {formatNumber(price?.price ?? null, market)}
-                  </td>
-                  <td className="px-4 py-4 text-right text-slate-400 tabular-nums">
-                    {formatNumber(price?.comparisonPrice ?? null, market)}
-                  </td>
-                  <td
-                    className={`px-4 py-4 text-right font-semibold tabular-nums ${changeTone(changePct)}`}
-                  >
-                    {formatPercent(changePct)}
-                  </td>
-                  <td className="px-4 py-4">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${alertClass}`}
-                    >
-                      {alertLabel}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
+              },
+            )}
           </tbody>
         </table>
+      </div>
+
+      {/* モバイル: テーブルの代わりにカード一覧を表示する */}
+      <div className="animate-fade-up stagger-4 grid gap-3 sm:hidden">
+        {rows.map(
+          ({
+            market,
+            price,
+            changePct,
+            alertLabel,
+            alertClass,
+            hasPrice,
+            recentChangePct,
+            recentLabel,
+            recentClass,
+          }) => (
+            <div
+              key={market.symbol}
+              className="rounded-lg border border-white/10 bg-slate-900/80 p-4"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold text-white">
+                    {isWeekendMode && market.weekendDisplayName
+                      ? market.weekendDisplayName
+                      : market.displayName}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {isWeekendMode
+                      ? (price?.activeSymbol ?? '未取得')
+                      : (market.officialMarketLabel ?? market.sourceLabel)}
+                  </p>
+                </div>
+                {isWeekendMode ? (
+                  <span
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${alertClass}`}
+                  >
+                    {alertLabel}
+                  </span>
+                ) : (
+                  <span
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${
+                      hasPrice
+                        ? 'bg-emerald-400/15 text-emerald-200 ring-emerald-300/30'
+                        : 'bg-slate-400/15 text-slate-200 ring-slate-300/30'
+                    }`}
+                  >
+                    {hasPrice ? '取得中' : '未取得'}
+                  </span>
+                )}
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                <div>
+                  <p className="text-slate-500">現在値</p>
+                  <p className="mt-0.5 font-semibold tabular-nums text-slate-200">
+                    {formatNumber(price?.price ?? null, market)}
+                  </p>
+                </div>
+                {isWeekendMode ? (
+                  <>
+                    <div>
+                      <p className="text-slate-500">金曜基準</p>
+                      <p className="mt-0.5 tabular-nums text-slate-400">
+                        {formatNumber(price?.comparisonPrice ?? null, market)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500">週末変動率</p>
+                      <p
+                        className={`mt-0.5 font-semibold tabular-nums ${changeTone(changePct)}`}
+                      >
+                        {formatPercent(changePct)}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="col-span-2">
+                    <p className="text-slate-500">直近6時間</p>
+                    <p
+                      className={`mt-0.5 font-semibold tabular-nums ${changeTone(recentChangePct)}`}
+                    >
+                      {formatPercent(recentChangePct)}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {!isWeekendMode && (
+                <span
+                  className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ${recentClass}`}
+                >
+                  {recentLabel}
+                </span>
+              )}
+            </div>
+          ),
+        )}
       </div>
     </section>
   );

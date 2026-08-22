@@ -143,7 +143,7 @@ const categoryPages: Record<CategoryPageId, CategoryData> = {
     accent: 'amber',
     tools: [
       {
-        title: 'マイページ',
+        title: 'メンバーダッシュボード',
         description:
           'Discordログイン状態、今日のミッション進捗、週末ギャップ予想、プレミアム導線をまとめて確認します。',
         href: '#/tools/member-dashboard',
@@ -167,7 +167,7 @@ const categoryPages: Record<CategoryPageId, CategoryData> = {
         href: '#/tools/community',
       },
       {
-        title: 'トレード日誌',
+        title: '損益カレンダー',
         description:
           '口座ごとの日次損益をカレンダーで管理するプレミアム限定ツール。複数口座に対応。',
         href: '#/tools/trade-journal',

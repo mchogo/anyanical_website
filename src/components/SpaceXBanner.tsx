@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-
 // JST 2026-06-12 00:00:00
 const CUTOFF_MS = new Date('2026-06-12T00:00:00+09:00').getTime();
 
@@ -20,28 +18,9 @@ const formatCountdown = (ms: number): string => {
   return `${d}日 ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 };
 
-export const SpaceXBanner = () => {
-  const [now, setNow] = useState(() => Date.now());
-  const [dismissed, setDismissed] = useState(
-    () => sessionStorage.getItem('spacex-banner-dismissed') === '1',
-  );
-
-  useEffect(() => {
-    const handler = () => {
-      sessionStorage.removeItem('spacex-banner-dismissed');
-      setDismissed(false);
-    };
-    window.addEventListener('banner:reset', handler);
-    return () => window.removeEventListener('banner:reset', handler);
-  }, []);
-
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 1_000);
-    return () => window.clearInterval(id);
-  }, []);
-
-  if (dismissed || now >= CUTOFF_MS) return null;
-
+// 表示可否の判定は src/hooks/useAnnouncementBanners.ts の useSpaceXBannerState
+// (AnnouncementBar.tsxが他の告知バナーとの優先順位付けに使う)。
+export const SpaceXBanner = ({ now, dismiss }: { now: number; dismiss: () => void }) => {
   const remaining = CUTOFF_MS - now;
 
   return (
@@ -62,8 +41,8 @@ export const SpaceXBanner = () => {
 
         <span className="hidden h-3 w-px shrink-0 bg-white/15 sm:block" />
 
-        <div className="min-w-0 flex-1 overflow-hidden">
-          <div className="animate-marquee inline-flex gap-16 whitespace-nowrap">
+        <div className="min-w-0 flex-1 overflow-hidden motion-reduce:overflow-auto">
+          <div className="animate-marquee motion-reduce:animate-none inline-flex gap-16 whitespace-nowrap">
             {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
               <span key={i} className="text-xs text-slate-400 sm:text-sm">
                 {item}
@@ -81,9 +60,7 @@ export const SpaceXBanner = () => {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            sessionStorage.setItem('spacex-banner-dismissed', '1');
-            setDismissed(true);
-            window.dispatchEvent(new Event('banner:dismissed'));
+            dismiss();
           }}
           className="ml-1 shrink-0 rounded-full p-1 text-slate-600 transition hover:bg-white/10 hover:text-slate-400"
           aria-label="バナーを閉じる"

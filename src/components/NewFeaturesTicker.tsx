@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-
 type Announcement = { text: string; href?: string };
 
 const ANNOUNCEMENTS: Announcement[] = [
@@ -15,64 +13,45 @@ const ANNOUNCEMENTS: Announcement[] = [
 
 const SEPARATOR = '　·　';
 
-export const NewFeaturesTicker = () => {
-  const [dismissed, setDismissed] = useState(
-    () => sessionStorage.getItem('announce-banner-dismissed') === '1',
-  );
+// 表示可否の判定は src/hooks/useAnnouncementBanners.ts の useNewFeaturesTickerState
+// (AnnouncementBar.tsxが他の告知バナーとの優先順位付けに使う)。
+export const NewFeaturesTicker = ({ dismiss }: { dismiss: () => void }) => (
+  <div className="border-b border-white/[0.07] bg-white/[0.015]">
+    <div className="mx-auto flex max-w-7xl items-center gap-3 px-3 py-1.5 sm:px-6 lg:px-8">
+      <span className="shrink-0 rounded bg-cyan-400/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-cyan-400 ring-1 ring-cyan-300/20">
+        LIVE
+      </span>
 
-  useEffect(() => {
-    const handler = () => {
-      sessionStorage.removeItem('announce-banner-dismissed');
-      setDismissed(false);
-    };
-    window.addEventListener('banner:reset', handler);
-    return () => window.removeEventListener('banner:reset', handler);
-  }, []);
-
-  if (dismissed) return null;
-
-  return (
-    <div className="border-b border-white/[0.07] bg-white/[0.015]">
-      <div className="mx-auto flex max-w-7xl items-center gap-3 px-3 py-1.5 sm:px-6 lg:px-8">
-        <span className="shrink-0 rounded bg-cyan-400/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-cyan-400 ring-1 ring-cyan-300/20">
-          LIVE
-        </span>
-
-        <div className="min-w-0 flex-1 overflow-hidden motion-reduce:overflow-auto">
-          <div className="animate-marquee motion-reduce:animate-none inline-flex gap-0 whitespace-nowrap">
-            {[...ANNOUNCEMENTS, ...ANNOUNCEMENTS].map((item, i) =>
-              item.href ? (
-                <a
-                  key={i}
-                  href={item.href}
-                  className="text-xs font-semibold text-cyan-300 hover:text-cyan-200 hover:underline"
-                >
-                  {item.text}
-                  {SEPARATOR}
-                </a>
-              ) : (
-                <span key={i} className="text-xs text-slate-500">
-                  {item.text}
-                  {SEPARATOR}
-                </span>
-              ),
-            )}
-          </div>
+      <div className="min-w-0 flex-1 overflow-hidden motion-reduce:overflow-auto">
+        <div className="animate-marquee motion-reduce:animate-none inline-flex gap-0 whitespace-nowrap">
+          {[...ANNOUNCEMENTS, ...ANNOUNCEMENTS].map((item, i) =>
+            item.href ? (
+              <a
+                key={i}
+                href={item.href}
+                className="text-xs font-semibold text-cyan-300 hover:text-cyan-200 hover:underline"
+              >
+                {item.text}
+                {SEPARATOR}
+              </a>
+            ) : (
+              <span key={i} className="text-xs text-slate-500">
+                {item.text}
+                {SEPARATOR}
+              </span>
+            ),
+          )}
         </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            sessionStorage.setItem('announce-banner-dismissed', '1');
-            setDismissed(true);
-            window.dispatchEvent(new Event('banner:dismissed'));
-          }}
-          className="ml-1 shrink-0 rounded-full p-1 text-slate-700 transition hover:bg-white/10 hover:text-slate-500"
-          aria-label="閉じる"
-        >
-          ✕
-        </button>
       </div>
+
+      <button
+        type="button"
+        onClick={dismiss}
+        className="ml-1 shrink-0 rounded-full p-1 text-slate-700 transition hover:bg-white/10 hover:text-slate-500"
+        aria-label="閉じる"
+      >
+        ✕
+      </button>
     </div>
-  );
-};
+  </div>
+);

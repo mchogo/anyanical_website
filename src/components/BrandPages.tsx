@@ -637,7 +637,7 @@ export const StrategyGuidePage = () => (
         ))}
       </div>
 
-      <div className="mt-5 overflow-x-auto rounded-lg border border-white/10 bg-slate-950/40">
+      <div className="mt-5 hidden overflow-x-auto rounded-lg border border-white/10 bg-slate-950/40 sm:block">
         <table className="min-w-[720px] w-full text-left text-sm">
           <thead className="bg-white/[0.04] text-xs uppercase text-slate-500">
             <tr>
@@ -658,6 +658,22 @@ export const StrategyGuidePage = () => (
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:hidden">
+        {semiAutoEaRiskRows.map((row) => (
+          <div
+            key={`${row.account}-${row.balance}`}
+            className="rounded-lg border border-white/10 bg-slate-950/40 p-4"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-semibold text-white">{row.account}</p>
+              <p className="text-sm font-semibold text-amber-200">{row.lot}</p>
+            </div>
+            <p className="mt-1 text-sm text-slate-300">{row.balance}</p>
+            <p className="mt-2 text-xs leading-5 text-slate-400">{row.note}</p>
+          </div>
+        ))}
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">

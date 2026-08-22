@@ -51,7 +51,7 @@ export const AlertToasts = ({ notifications, dismissNotification }: AlertToastsP
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex w-[calc(100vw-2rem)] max-w-sm flex-col gap-3">
+    <div className="flex w-full max-w-sm flex-col gap-3">
       {notifications.map((notification) => (
         <Toast
           key={notification.id}

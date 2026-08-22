@@ -12,7 +12,10 @@ import { ExplainerSections } from './components/ExplainerSections';
 import { AnyaAiAssistant } from './components/AnyaAiAssistant';
 import { AnyaAiGuidePage } from './components/AnyaAiGuidePage';
 import { AlertToasts } from './components/AlertToasts';
+import { AnnouncementBar } from './components/AnnouncementBar';
 import { CategoryPage, type CategoryPageId } from './components/CategoryPage';
+import { FavoriteSaveStatus } from './components/common/FavoriteSaveStatus';
+import { FavoriteUpsellDialog } from './components/common/FavoriteUpsellDialog';
 import { FloatingNav } from './components/FloatingNav';
 import { Header } from './components/Header';
 import { HomePage } from './components/HomePage';
@@ -21,20 +24,25 @@ import { LoginPage } from './components/LoginPage';
 import { MarketBoard } from './components/MarketBoard';
 import { MatomeArchivePage } from './components/MatomeArchivePage';
 import { MatomeEntryPage } from './components/MatomeEntryPage';
-import { MatomeHeadlineBar } from './components/MatomeHeadlineBar';
 import { MatomePage } from './components/MatomePage';
-import { NewFeaturesTicker } from './components/NewFeaturesTicker';
-import { SpaceXBanner } from './components/SpaceXBanner';
 import { SpaceXCountdownPage } from './components/SpaceXCountdownPage';
 import { AdminPage } from './components/AdminPage';
 import { ToolPage, type ToolPageId } from './components/ToolPage';
+import { TOOL_PAGE_IDS } from './config/toolPages';
 import { useAlerts } from './hooks/useAlerts';
 import { isDiscordOAuthRedirect, useDiscordAuth } from './hooks/useDiscordAuth';
 import { useHyperliquidMids } from './hooks/useHyperliquidMids';
 
 const BoardFavButton = () => {
-  const { favorites, canAccessPremium, isAuthenticated, toggleFavorite } =
-    useFavoritesContext();
+  const {
+    favorites,
+    canAccessPremium,
+    isAuthenticated,
+    toggleFavorite,
+    saveError,
+    statusMessage,
+    retry,
+  } = useFavoritesContext();
   const [showUpsell, setShowUpsell] = useState(false);
   const route = 'board';
   const isFav = favorites.includes(route);
@@ -61,50 +69,16 @@ const BoardFavButton = () => {
       >
         {isFav ? '★' : '☆'}
       </button>
-      {showUpsell && (
-        <div
-          className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm"
-          onClick={() => setShowUpsell(false)}
-        >
-          <div
-            className="w-full max-w-md rounded-lg border border-amber-300/30 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-sm font-semibold text-amber-100">Premium feature</p>
-            <h3 className="mt-1 text-xl font-bold text-white">
-              お気に入りはプレミアム限定です
-            </h3>
-            <p className="mt-3 text-sm leading-6 text-slate-400">
-              よく使うページを登録してナビバーからすぐアクセスできます。プレミアム会員向け機能です。
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <a
-                href="#/tools/participation"
-                onClick={() => setShowUpsell(false)}
-                className="inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
-              >
-                プレミアム内容を見る
-              </a>
-              {!isAuthenticated && (
-                <a
-                  href="#/login"
-                  onClick={() => setShowUpsell(false)}
-                  className="inline-flex min-h-10 items-center justify-center rounded-full bg-indigo-400 px-4 text-sm font-bold text-white transition hover:bg-indigo-300"
-                >
-                  Discordログイン
-                </a>
-              )}
-              <button
-                type="button"
-                onClick={() => setShowUpsell(false)}
-                className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
-              >
-                閉じる
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <FavoriteSaveStatus
+        saveError={saveError}
+        statusMessage={statusMessage}
+        onRetry={retry}
+      />
+      <FavoriteUpsellDialog
+        open={showUpsell}
+        onClose={() => setShowUpsell(false)}
+        isAuthenticated={isAuthenticated}
+      />
     </>
   );
 };
@@ -118,34 +92,19 @@ const isWeekendModeInJst = (timestamp: number) => {
   return weekday === 'Sat' || weekday === 'Sun';
 };
 
-const toolPageIds: ToolPageId[] = [
-  'currency-strength',
-  'economic-calendar',
-  'gap-watch',
-  'ea-checklist',
-  'strategy',
-  'copytrade',
-  'community',
-  'participation',
-  'semi-auto-sign',
-  'trade-journal',
-  'trader-quiz',
-  'member-dashboard',
-  'daily-mission',
-  'gap-prediction',
-  'highlow-sprint',
-  'candle-swipe',
-  'profit-tower',
-  'game-ranking',
-  'trade-tarot',
-  'anya-method-slides',
-  'htf-context',
-];
+const toolPageIds: ToolPageId[] = TOOL_PAGE_IDS;
 
 const categoryPageIds: CategoryPageId[] = ['market', 'games', 'ea-copytrade', 'premium'];
 const MISSION_RETURN_STORAGE_KEY = 'wmb.returnToMission';
 
 const getRoute = () => window.location.hash.replace(/^#\/?/, '');
+
+type WmbHistoryState = { wmbDepth: number } | null;
+
+const readWmbHistoryDepth = (): number => {
+  const state = window.history.state as WmbHistoryState;
+  return typeof state?.wmbDepth === 'number' ? state.wmbDepth : 0;
+};
 
 const parseToolPageId = (route: string): ToolPageId | null => {
   // ルートに?tf=H4のようなクエリが付くページ（htf-context等）があるため、
@@ -194,8 +153,15 @@ export const App = () => {
   } = useAlerts(prices);
   const [now, setNow] = useState(() => Date.now());
   const [route, setRoute] = useState(getRoute);
-  const [routeHistory, setRouteHistory] = useState<string[]>(() => [getRoute()]);
-  const skipNextHistoryPush = useRef(false);
+  const currentRouteRef = useRef(route);
+  // 実際のブラウザ履歴(history.state)に深さを持たせ、独自の履歴配列を
+  // 二重管理しない。ブラウザの戻る/進むボタンと「← 前のページ」ボタンが
+  // 同じ history スタックを操作するため、挙動が食い違わない。
+  const historyDepthRef = useRef(readWmbHistoryDepth());
+  const [canGoBack, setCanGoBack] = useState(() => historyDepthRef.current > 0);
+  // ルートごとのスクロール位置。戻る/進むで既に訪れたルートに戻った時だけ
+  // 復元し、新規のリンク遷移では先頭にスクロールする。
+  const scrollPositionsRef = useRef<Map<string, number>>(new Map());
   const [showMissionReturn, setShowMissionReturn] = useState(
     () =>
       window.sessionStorage.getItem(MISSION_RETURN_STORAGE_KEY) === '1' &&
@@ -265,30 +231,58 @@ export const App = () => {
     };
   }, []);
 
-  const canGoBack = routeHistory.length > 1;
+  // 直接URLで開いた/リロードした場合、このエントリにまだ深さタグが
+  // 付いていなければ0として付与する(戻るボタンを出さない基準点)。
+  useEffect(() => {
+    if (window.history.state?.wmbDepth === undefined) {
+      window.history.replaceState({ wmbDepth: 0 }, '');
+    }
+  }, []);
 
   const goBack = () => {
     if (!canGoBack) return;
-    const newHistory = routeHistory.slice(0, -1);
-    setRouteHistory(newHistory);
-    skipNextHistoryPush.current = true;
-    const prevRoute = newHistory[newHistory.length - 1];
-    window.location.hash = prevRoute ? `#/${prevRoute}` : '#/';
+    window.history.back();
   };
 
   useEffect(() => {
     const handleHashChange = () => {
+      const prevRoute = currentRouteRef.current;
       const nextRoute = getRoute();
+      scrollPositionsRef.current.set(prevRoute, window.scrollY);
+
       setRoute(nextRoute);
-      if (!skipNextHistoryPush.current) {
-        setRouteHistory((prev) => [...prev, nextRoute]);
+      currentRouteRef.current = nextRoute;
+
+      const state = window.history.state as WmbHistoryState;
+      const isRestoringTaggedEntry = state !== null && typeof state.wmbDepth === 'number';
+
+      if (isRestoringTaggedEntry) {
+        // ブラウザの戻る/進むで既存エントリへ移動した。
+        historyDepthRef.current = state.wmbDepth;
+      } else {
+        // 新規のフォワードナビゲーション(リンククリック等)。深さを1つ進めて
+        // このエントリにタグ付けする。
+        historyDepthRef.current += 1;
+        window.history.replaceState({ wmbDepth: historyDepthRef.current }, '');
       }
-      skipNextHistoryPush.current = false;
+      setCanGoBack(historyDepthRef.current > 0);
+
       setShowMissionReturn(
         window.sessionStorage.getItem(MISSION_RETURN_STORAGE_KEY) === '1' &&
           nextRoute !== 'tools/daily-mission',
       );
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      const savedY = scrollPositionsRef.current.get(nextRoute);
+      if (isRestoringTaggedEntry && typeof savedY === 'number') {
+        // 戻る/進むで既に訪れたルートに戻った: 保存していたスクロール位置を
+        // 復元する。key={route}によるDOM再構築後に反映されるよう次フレームで実行。
+        requestAnimationFrame(() => window.scrollTo({ top: savedY, behavior: 'auto' }));
+      } else {
+        const prefersReducedMotion = window.matchMedia(
+          '(prefers-reduced-motion: reduce)',
+        ).matches;
+        window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+      }
     };
 
     window.addEventListener('hashchange', handleHashChange);
@@ -302,9 +296,7 @@ export const App = () => {
     <FavoritesContext.Provider value={favoritesCtx}>
       <div className="min-h-screen bg-slate-950 pt-16 text-slate-100">
         <FloatingNav currentRoute={route} auth={discordAuth} />
-        <SpaceXBanner />
-        <NewFeaturesTicker />
-        <MatomeHeadlineBar />
+        <AnnouncementBar />
         <div key={route} className="animate-fade-in">
           {isAdminRoute ? (
             <AdminPage auth={discordAuth} />
@@ -385,14 +377,11 @@ export const App = () => {
             />
           )}
         </div>
-        <AlertToasts
-          notifications={notifications}
-          dismissNotification={dismissNotification}
-        />
         {canGoBack && !isHomeRoute && !showMissionReturn && (
           <button
             onClick={goBack}
-            className="fixed bottom-4 left-4 z-[60] inline-flex min-h-11 items-center justify-center rounded-full bg-slate-700 px-5 text-sm font-black text-white shadow-[0_16px_50px_rgba(0,0,0,0.4)] transition hover:bg-slate-600 animate-slide-up"
+            style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+            className="fixed left-4 z-[60] inline-flex min-h-11 items-center justify-center rounded-full bg-slate-700 px-5 text-sm font-black text-white shadow-[0_16px_50px_rgba(0,0,0,0.4)] transition hover:bg-slate-600 animate-slide-up"
           >
             ← 前のページ
           </button>
@@ -404,12 +393,24 @@ export const App = () => {
               window.sessionStorage.removeItem(MISSION_RETURN_STORAGE_KEY);
               setShowMissionReturn(false);
             }}
-            className="fixed bottom-4 left-4 z-[60] inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 text-sm font-black text-slate-950 shadow-[0_16px_50px_rgba(34,211,238,0.22)] transition hover:bg-cyan-200"
+            style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+            className="fixed left-4 z-[60] inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-300 px-5 text-sm font-black text-slate-950 shadow-[0_16px_50px_rgba(34,211,238,0.22)] transition hover:bg-cyan-200"
           >
             ミッションに戻る
           </a>
         )}
-        <AnyaAiAssistant />
+        {/* 右下の浮遊UIをまとめて1つのスタックにする(トースト通知とあにゃAIが
+            同じ角に重なっていたのを解消)。トーストが上、あにゃAIが一番下。 */}
+        <div
+          className="fixed inset-x-4 z-40 flex flex-col items-end gap-3"
+          style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+        >
+          <AlertToasts
+            notifications={notifications}
+            dismissNotification={dismissNotification}
+          />
+          <AnyaAiAssistant />
+        </div>
       </div>
     </FavoritesContext.Provider>
   );

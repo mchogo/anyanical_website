@@ -7,6 +7,7 @@ import {
 } from '../config/navigation';
 import type { useDiscordAuth } from '../hooks/useDiscordAuth';
 import { useFavoritesContext } from '../hooks/useFavorites';
+import { FavoriteUpsellDialog } from './common/FavoriteUpsellDialog';
 
 const ROUTE_LABELS: Record<string, string> = Object.fromEntries(
   INTERNAL_NAV_LINKS.map((l) => [l.href.replace(/^#\/?/, ''), l.label]),
@@ -43,57 +44,6 @@ const isActiveGroup = (
   );
 };
 
-const FavUpsellOverlay = ({
-  onClose,
-  isAuthenticated,
-}: {
-  onClose: () => void;
-  isAuthenticated: boolean;
-}) => (
-  <div
-    className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm animate-fade-in"
-    onClick={onClose}
-  >
-    <div
-      className="w-full max-w-md rounded-lg border border-amber-300/30 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)] animate-slide-up"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <p className="text-sm font-semibold text-amber-100">Premium feature</p>
-      <h3 className="mt-1 text-xl font-bold text-white">
-        お気に入りはプレミアム限定です
-      </h3>
-      <p className="mt-3 text-sm leading-6 text-slate-400">
-        よく使うページを登録してナビバーからすぐアクセスできます。プレミアム会員向け機能です。
-      </p>
-      <div className="mt-5 flex flex-wrap gap-2">
-        <a
-          href="#/tools/participation"
-          onClick={onClose}
-          className="inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
-        >
-          プレミアム内容を見る
-        </a>
-        {!isAuthenticated && (
-          <a
-            href="#/login"
-            onClick={onClose}
-            className="inline-flex min-h-10 items-center justify-center rounded-full bg-indigo-400 px-4 text-sm font-bold text-white transition hover:bg-indigo-300"
-          >
-            Discordログイン
-          </a>
-        )}
-        <button
-          type="button"
-          onClick={onClose}
-          className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
-        >
-          閉じる
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
 const FavoritesDropdown = ({ onNavigate }: { onNavigate?: () => void }) => {
   const { favorites, canAccessPremium, isAuthenticated } = useFavoritesContext();
   const [showUpsell, setShowUpsell] = useState(false);
@@ -108,12 +58,11 @@ const FavoritesDropdown = ({ onNavigate }: { onNavigate?: () => void }) => {
         >
           ☆ お気に入り
         </button>
-        {showUpsell && (
-          <FavUpsellOverlay
-            onClose={() => setShowUpsell(false)}
-            isAuthenticated={isAuthenticated}
-          />
-        )}
+        <FavoriteUpsellDialog
+          open={showUpsell}
+          onClose={() => setShowUpsell(false)}
+          isAuthenticated={isAuthenticated}
+        />
       </>
     );
   }
@@ -185,12 +134,11 @@ const MobileFavoritesSection = ({ onNavigate }: { onNavigate?: () => void }) => 
         >
           ☆ お気に入り
         </button>
-        {showUpsell && (
-          <FavUpsellOverlay
-            onClose={() => setShowUpsell(false)}
-            isAuthenticated={isAuthenticated}
-          />
-        )}
+        <FavoriteUpsellDialog
+          open={showUpsell}
+          onClose={() => setShowUpsell(false)}
+          isAuthenticated={isAuthenticated}
+        />
       </>
     );
   }
@@ -658,7 +606,12 @@ export const FloatingNav = ({ currentRoute, auth }: FloatingNavContainerProps) =
         <div
           id="mobile-primary-nav"
           style={{ WebkitOverflowScrolling: 'touch' }}
-          className={`mx-auto mt-3 grid max-h-[calc(100dvh-4.5rem)] max-w-7xl grid-cols-2 gap-2 overflow-y-auto overscroll-contain border-t border-white/10 pt-3 lg:hidden ${menuClosing ? 'animate-slide-down' : 'animate-slide-up'}`}
+          // 閉じる側は `animate-fade-out` を使う。`animate-slide-down` は
+          // src/index.css 側にも同名の別動作(上からの入場)クラスがあり
+          // カスケードでそちらが勝ってしまうため、退場アニメーションとしては
+          // 使わない(FloatingNavではこの衝突に気づいて回避しているが、
+          // 他ファイルで新しく `animate-slide-down` を退場用途に使わないこと)。
+          className={`mx-auto mt-3 grid max-h-[calc(100dvh-4.5rem)] max-w-7xl grid-cols-2 gap-2 overflow-y-auto overscroll-contain border-t border-white/10 pt-3 lg:hidden ${menuClosing ? 'animate-fade-out' : 'animate-slide-up'}`}
         >
           <MobileNavLinks
             currentRoute={currentRoute}

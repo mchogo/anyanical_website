@@ -30,16 +30,28 @@
 - `src/components/ChartSection.tsx`
 - `docs/data-sources.md`
 
-ナビゲーション追加時に確認する場所:
+新しいツールページ(`#/tools/*`)追加時に確認する場所:
 
-- `src/config/navigation.ts`
-- `src/components/FloatingNav.tsx`
-- `src/components/ExplainerSections.tsx`
+- `src/config/toolPages.ts`(ID・タイトル・説明・hrefの正本。まずここに追加する)
+- `src/components/ToolPage.tsx`(`renderTool`のswitch、`nextActions`)
+- `src/config/navigation.ts`(固定ナビ用の短縮ラベル)
+- `src/config/pageMeta.ts`(SEO用description)
+- 該当カテゴリがあれば `src/components/CategoryPage.tsx`(タイトルは`toolPages.ts`と合わせる)
 - `README.md`
+
+## 共通コンポーネント (`src/components/common/`)
+
+新規に似たようなUIを個別実装する前に確認する:
+
+- `Dialog.tsx`: 確認・アップセル系モーダルの基盤(a11y・フォーカス管理・スクロールロック込み)
+- `FavoriteUpsellDialog.tsx` / `PremiumLockedDialog.tsx`: お気に入り/プレミアムロック案内の定型文言
+- `FavoriteSaveStatus.tsx`: 保存失敗時のaria-live通知+再試行ボタン
+- `TradingViewWidget.tsx`: TradingView埋め込みの読み込み中/失敗/再試行状態つきラッパー
+- `IframeTool.tsx`: 同一オリジン静的ページ埋め込み用(全画面表示/新しいタブで開くボタン付き)
 
 ## TradingView Widget
 
-TradingViewのscriptはReact管理外のDOM操作です。
+TradingViewのscriptはReact管理外のDOM操作です。個別実装せず `src/components/common/TradingViewWidget.tsx` を使ってください。
 
 守ること:
 
@@ -47,6 +59,7 @@ TradingViewのscriptはReact管理外のDOM操作です。
 - 銘柄・widget種別変更時に中身をクリアする
 - scriptを `.tradingview-widget-container` 内へappendする
 - widgetが表示できないシンボルをハードコードし続けない
+- 読み込み中/失敗の状態を実際のDOM挿入・`onerror`・タイムアウトから判定する(固定タイマーで「読み込み中」を演出するだけの実装にしない)
 
 ## スタイリング
 
@@ -70,4 +83,5 @@ TradingViewのscriptはReact管理外のDOM操作です。
 npm run format:check
 npm run lint
 npm run build
+npm run test
 ```

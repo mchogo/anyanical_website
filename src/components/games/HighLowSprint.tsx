@@ -186,13 +186,18 @@ export const HighLowSprint = ({ prices }: { prices: Record<string, MarketPrice> 
         <div className="rounded-lg border border-cyan-300/20 bg-cyan-300/[0.06] p-5">
           {/* 銘柄選択 */}
           <div className="flex items-center justify-between gap-2">
-            <div className="flex rounded-full bg-white/[0.04] p-0.5 ring-1 ring-white/10">
+            <div
+              role="group"
+              aria-label="銘柄選択"
+              className="flex rounded-full bg-white/[0.04] p-0.5 ring-1 ring-white/10"
+            >
               {GAME_SYMBOLS.map((s) => (
                 <button
                   key={s}
                   type="button"
                   disabled={round.phase === 'running'}
                   onClick={() => setSymbol(s)}
+                  aria-pressed={symbol === s}
                   className={`rounded-full px-4 py-1.5 text-xs font-bold transition disabled:opacity-40 ${
                     symbol === s
                       ? 'bg-cyan-300 text-slate-950'

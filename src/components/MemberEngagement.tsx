@@ -5,6 +5,9 @@ import { useDiscordAuth, type DiscordAuthSession } from '../hooks/useDiscordAuth
 import { useFavoritesContext } from '../hooks/useFavorites';
 import { INTERNAL_NAV_LINKS } from '../config/navigation';
 import { GapGauge } from './GapGauge';
+import { Dialog } from './common/Dialog';
+import { FavoriteSaveStatus } from './common/FavoriteSaveStatus';
+import { PremiumLockedDialog } from './common/PremiumLockedDialog';
 
 const ROUTE_LABELS: Record<string, string> = Object.fromEntries(
   INTERNAL_NAV_LINKS.map((l) => [l.href.replace(/^#\/?/, ''), l.label]),
@@ -217,7 +220,9 @@ const syncMissionToServer = (date: string, completedIds: string[], token: string
 
 const useDailyMissionState = (ownerId: string, session?: DiscordAuthSession | null) => {
   const date = todayJst();
-  const [history, setHistory] = useState<StoredMissionHistory>(() => readMissionHistory(ownerId));
+  const [history, setHistory] = useState<StoredMissionHistory>(() =>
+    readMissionHistory(ownerId),
+  );
 
   useEffect(() => {
     setHistory(readMissionHistory(ownerId));
@@ -278,7 +283,8 @@ const useDailyMissionState = (ownerId: string, session?: DiscordAuthSession | nu
         : [...completedIds, id];
       const next = { ...current, [date]: nextCompleted };
       writeJson(missionStorageKey(ownerId), next);
-      if (session?.accessToken) syncMissionToServer(date, nextCompleted, session.accessToken);
+      if (session?.accessToken)
+        syncMissionToServer(date, nextCompleted, session.accessToken);
       return next;
     });
   };
@@ -645,58 +651,33 @@ export const MemberDashboard = ({ prices }: { prices: Record<string, MarketPrice
         </div>
       </div>
 
-      {lockedPremiumTitle && (
-        <div className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-lg border border-amber-300/30 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-            <p className="text-sm font-semibold text-amber-100">Premium locked</p>
-            <h3 className="mt-1 text-xl font-bold text-white">
-              {lockedPremiumTitle} はプレミアム限定です
-            </h3>
-            <p className="mt-3 text-sm leading-6 text-slate-400">
-              先出し考察、ゴールドの節目、追加考察をDiscord限定チャンネルで確認できます。
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <a
-                href="#/tools/participation"
-                onClick={() => setLockedPremiumTitle(null)}
-                className="inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
-              >
-                プレミアム内容を見る
-              </a>
-              {!auth.isAuthenticated && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLockedPremiumTitle(null);
-                    auth.signIn('#/tools/member-dashboard');
-                  }}
-                  className="inline-flex min-h-10 items-center justify-center rounded-full bg-indigo-400 px-4 text-sm font-bold text-white transition hover:bg-indigo-300"
-                >
-                  Discordログイン
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setLockedPremiumTitle(null)}
-                className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
-              >
-                閉じる
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <PremiumLockedDialog
+        lockedTitle={lockedPremiumTitle}
+        onClose={() => setLockedPremiumTitle(null)}
+        isAuthenticated={auth.isAuthenticated}
+        onSignIn={() => auth.signIn('#/tools/member-dashboard')}
+      />
       {auth.canAccessPremium && <FavoritesManager />}
     </section>
   );
 };
 
 const FavoritesManager = () => {
-  const { favorites, toggleFavorite } = useFavoritesContext();
+  const { favorites, toggleFavorite, saveError, statusMessage, retry } =
+    useFavoritesContext();
   return (
     <div className="rounded-lg border border-white/10 bg-white/[0.035] p-5">
-      <p className="text-sm font-semibold text-amber-200">お気に入り</p>
-      <h3 className="mt-1 text-xl font-bold text-white">お気に入りページ管理</h3>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-semibold text-amber-200">お気に入り</p>
+          <h3 className="mt-1 text-xl font-bold text-white">お気に入りページ管理</h3>
+        </div>
+        <FavoriteSaveStatus
+          saveError={saveError}
+          statusMessage={statusMessage}
+          onRetry={retry}
+        />
+      </div>
       {favorites.length === 0 ? (
         <p className="mt-3 text-sm leading-6 text-slate-500">
           各ページ右上の ☆ を押してお気に入りに追加できます。
@@ -946,99 +927,63 @@ export const DailyMissionTool = () => {
         </div>
       </div>
 
-      {lockedPremiumTitle && (
-        <div
-          className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm animate-fade-in"
-          onClick={() => setLockedPremiumTitle(null)}
-        >
-          <div
-            className="w-full max-w-md rounded-lg border border-amber-300/30 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)] animate-slide-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-sm font-semibold text-amber-100">Premium locked</p>
-            <h3 className="mt-1 text-xl font-bold text-white">
-              {lockedPremiumTitle} はプレミアム限定です
-            </h3>
-            <p className="mt-3 text-sm leading-6 text-slate-400">
-              先出し考察、ゴールドの節目、追加考察をDiscord限定チャンネルで確認できます。
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <a
-                href="#/tools/participation"
-                onClick={() => setLockedPremiumTitle(null)}
-                className="inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
-              >
-                プレミアム内容を見る
-              </a>
-              {!auth.isAuthenticated && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLockedPremiumTitle(null);
-                    auth.signIn('#/tools/daily-mission');
-                  }}
-                  className="inline-flex min-h-10 items-center justify-center rounded-full bg-indigo-400 px-4 text-sm font-bold text-white transition hover:bg-indigo-300"
-                >
-                  Discordログイン
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setLockedPremiumTitle(null)}
-                className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
-              >
-                閉じる
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <PremiumLockedDialog
+        lockedTitle={lockedPremiumTitle}
+        onClose={() => setLockedPremiumTitle(null)}
+        isAuthenticated={auth.isAuthenticated}
+        onSignIn={() => auth.signIn('#/tools/daily-mission')}
+      />
 
-      {showCelebration && (
-        <div className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md overflow-hidden rounded-lg border border-emerald-300/30 bg-slate-950 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-            <div className="relative p-6">
-              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-cyan-300 via-emerald-300 to-amber-200" />
-              <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-emerald-200/50 bg-emerald-300/15 shadow-[0_0_36px_rgba(110,231,183,0.18)]">
-                <span className="text-3xl font-black text-emerald-200">✓</span>
-              </div>
-              <p className="mt-5 text-center text-sm font-semibold text-emerald-200">
-                Daily mission complete
+      <Dialog
+        open={showCelebration}
+        onClose={() => setShowCelebration(false)}
+        title="今日の相場チェック完了"
+        hideTitleVisually
+        panelClassName="overflow-hidden !p-0 border-emerald-300/30"
+      >
+        <div className="relative p-6">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-cyan-300 via-emerald-300 to-amber-200" />
+          <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-emerald-200/50 bg-emerald-300/15 shadow-[0_0_36px_rgba(110,231,183,0.18)]">
+            <span className="text-3xl font-black text-emerald-200">✓</span>
+          </div>
+          <p className="mt-5 text-center text-sm font-semibold text-emerald-200">
+            Daily mission complete
+          </p>
+          <h3
+            className="mt-2 text-center text-2xl font-black text-white"
+            aria-hidden="true"
+          >
+            今日の相場チェック完了
+          </h3>
+          <p className="mt-3 text-center text-sm leading-6 text-slate-400">
+            相場ボード、強弱、指標、窓開け、振り返り、今日の一枚まで確認できました。
+          </p>
+          {auth.canAccessPremium && (
+            <div className="mt-5 rounded-lg border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-6 text-amber-50/85">
+              <p className="font-bold text-white">プレミアム特典</p>
+              <p className="mt-1">
+                Discord内の限定コンテンツにいいね・リアクションすると、プレゼント企画の当選確率アップにつながります。
               </p>
-              <h3 className="mt-2 text-center text-2xl font-black text-white">
-                今日の相場チェック完了
-              </h3>
-              <p className="mt-3 text-center text-sm leading-6 text-slate-400">
-                相場ボード、強弱、指標、窓開け、振り返り、今日の一枚まで確認できました。
-              </p>
-              {auth.canAccessPremium && (
-                <div className="mt-5 rounded-lg border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-6 text-amber-50/85">
-                  <p className="font-bold text-white">プレミアム特典</p>
-                  <p className="mt-1">
-                    Discord内の限定コンテンツにいいね・リアクションすると、プレゼント企画の当選確率アップにつながります。
-                  </p>
-                </div>
-              )}
-              <div className="mt-5 grid gap-2 sm:grid-cols-2">
-                <a
-                  href="#/tools/member-dashboard"
-                  onClick={() => setShowCelebration(false)}
-                  className="inline-flex min-h-10 items-center justify-center rounded-full bg-cyan-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-cyan-200"
-                >
-                  マイページへ
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setShowCelebration(false)}
-                  className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
-                >
-                  続けて見る
-                </button>
-              </div>
             </div>
+          )}
+          <div className="mt-5 grid gap-2 sm:grid-cols-2">
+            <a
+              href="#/tools/member-dashboard"
+              onClick={() => setShowCelebration(false)}
+              className="inline-flex min-h-10 items-center justify-center rounded-full bg-cyan-300 px-4 text-sm font-bold text-slate-950 transition hover:bg-cyan-200"
+            >
+              マイページへ
+            </a>
+            <button
+              type="button"
+              onClick={() => setShowCelebration(false)}
+              className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
+            >
+              続けて見る
+            </button>
           </div>
         </div>
-      )}
+      </Dialog>
     </section>
   );
 };
@@ -1120,10 +1065,14 @@ export const GapPredictionTool = ({
           <p className="text-sm font-semibold text-amber-100">Prediction</p>
           <h3 className="mt-1 text-xl font-bold text-white">今週の予想を入れる</h3>
 
-          <label className="mt-5 block text-xs font-semibold text-amber-50/70">
+          <label
+            htmlFor="gap-prediction-symbol"
+            className="mt-5 block text-xs font-semibold text-amber-50/70"
+          >
             銘柄
           </label>
           <select
+            id="gap-prediction-symbol"
             value={symbol}
             onChange={(event) => setSymbol(event.target.value)}
             className="mt-2 w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white focus:border-amber-200/60 focus:outline-none"
@@ -1136,13 +1085,23 @@ export const GapPredictionTool = ({
           </select>
 
           <div className="mt-5">
-            <p className="text-xs font-semibold text-amber-50/70">方向</p>
-            <div className="mt-2 grid grid-cols-3 gap-2">
+            <p
+              id="gap-prediction-direction-label"
+              className="text-xs font-semibold text-amber-50/70"
+            >
+              方向
+            </p>
+            <div
+              role="group"
+              aria-labelledby="gap-prediction-direction-label"
+              className="mt-2 grid grid-cols-3 gap-2"
+            >
               {(['up', 'down', 'flat'] as GapDirection[]).map((value) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => setDirection(value)}
+                  aria-pressed={direction === value}
                   className={`min-h-10 rounded-full px-3 text-sm font-bold ring-1 transition ${
                     direction === value
                       ? 'bg-amber-200 text-slate-950 ring-amber-100'
@@ -1155,10 +1114,14 @@ export const GapPredictionTool = ({
             </div>
           </div>
 
-          <label className="mt-5 block text-xs font-semibold text-amber-50/70">
+          <label
+            htmlFor="gap-prediction-confidence"
+            className="mt-5 block text-xs font-semibold text-amber-50/70"
+          >
             自信度 {confidence}%
           </label>
           <input
+            id="gap-prediction-confidence"
             type="range"
             min="10"
             max="100"
@@ -1168,10 +1131,14 @@ export const GapPredictionTool = ({
             className="mt-2 w-full accent-amber-200"
           />
 
-          <label className="mt-5 block text-xs font-semibold text-amber-50/70">
+          <label
+            htmlFor="gap-prediction-note"
+            className="mt-5 block text-xs font-semibold text-amber-50/70"
+          >
             メモ
           </label>
           <textarea
+            id="gap-prediction-note"
             value={note}
             onChange={(event) => setNote(event.target.value)}
             rows={4}

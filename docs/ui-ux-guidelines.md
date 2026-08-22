@@ -86,3 +86,55 @@ UI変更時は最低限以下を確認します。
 - 固定ナビがヘッダーやページタイトルを隠さない
 - iframeやTradingView widgetが親幅を超えない
 - ボタン内テキストが潰れない
+- テーブルは`overflow-x-auto`頼みにせず、モバイルではカード表示に切り替える（GapWatch/戦略ロット例テーブルが実装例）。行データはテーブル用とカード用で二重計算せず、1回の`.map()`で導出した配列を両方の描画から参照する。管理画面のように新規UI着手対象でないページは、カード化ではなく先頭列`sticky left-0`での横スクロール改善に留めてよい
+
+## 共通モーダル(Dialog)
+
+新しい確認・アップセル系モーダルは `src/components/common/Dialog.tsx` を使う。独自に`fixed inset-0`実装を追加しない。
+
+- `role="dialog"` / `aria-modal` / `aria-labelledby` / フォーカストラップ / Escape / 背景クリックでの開閉 / フォーカス復帰 / 背景スクロールロック / 退場アニメーション(`prefers-reduced-motion`対応)を標準で提供する
+- 見出しを独自レイアウト(アイコン付き演出等)にしたい場合は`hideTitleVisually`でh1相当の要素をsr-only化し、アクセシブルネームだけ維持する
+- 破壊的操作(削除確認等)の安全策(確認ボタンを主要CTAから離す等)はDialog自体ではなく呼び出し側が担保する
+- 同時に開くDialogは1つを想定(ネスト時のスクロールロック競合は未対応)
+
+## 保存状態の標準パターン(サーバーへの書き込みを伴う操作)
+
+お気に入り(`useFavorites.ts`)・SNSリアクション(`MatomeEntryCard.tsx`)・HTFお気に入り/検索プリセット(`useHtfContextFavorites.ts`等)で共通のsaveId方式を使っている。新しい保存機能もこれに倣う。
+
+- 楽観的更新(即座に画面反映してからPUT/POST)を基本とする
+- 単調増加するsaveId/requestIdで「最後に発火した保存だけが正」とし、古い応答が新しい状態を上書きしないようにする
+- 失敗時は直前の状態(ロールバック先)へ戻し、`aria-live`で通知する。ローカルストレージも使っている場合はそちらもロールバックする
+- 再試行手段を用意する(ボタン、または直近の保存内容を再送する`retry()`)
+- 連打防止(二重送信防止)はローディング中の無効化で行い、失敗時は再試行可能な状態に戻す(「失敗しても反応済みのまま固定」のような設計はユーザー体験を損なうため避ける)
+
+## ページ定義の正本
+
+ツールページ(`#/tools/*`)のID・タイトル・説明・hrefは `src/config/toolPages.ts` の`TOOL_PAGES`が正本。`App.tsx`のルート判定、`ToolPage.tsx`の描画はここから導出する。新しいツールページを追加するときはまずここに追加する。
+
+以下は目的が異なるため、意図的に正本を分けたまま残している(無理に一本化しない):
+
+- `src/config/navigation.ts`: 固定ナビ用の短縮ラベル(例:「60秒ハイロー」)。ページ本編の正式タイトルとは別に短い表現が必要
+- `src/config/pageMeta.ts`: `<meta name="description">`用のSEO文言。UI内の短い説明文とは文体・長さが異なる
+- `src/components/CategoryPage.tsx`: カテゴリ別に厳選した紹介文。`#/board`や`#/matome`などツールページ以外のルートも含むため、`TOOL_PAGES`だけでは表現できない
+  - ただしタイトル文言が`TOOL_PAGES`と食い違うのは意図しないズレ(実際に2箇所で発見・修正した)。新しいツールページをカテゴリに追加するときは、`TOOL_PAGES`のタイトルと合わせる
+
+## 外部Widget/iframeの失敗表示
+
+- TradingView埋め込みは `src/components/common/TradingViewWidget.tsx` を使う。読み込み中(`aria-busy`)/失敗(script onerror、または一定時間内に要素が挿入されない場合のタイムアウト)/再試行/外部で開くリンク、を標準で提供する。「読み込み中の演出だけで実際の成否を見ていない」実装(旧ChartSection.tsxがこれだった)を新たに作らない
+- 同一オリジンの静的ページをiframeで埋め込む場合は `src/components/common/IframeTool.tsx` を使う。postMessageでの高さ同期が難しい埋め込み先では、モバイルは`dvh`基準の高さ上限+内部スクロール、全画面表示ボタン、新しいタブで開くボタンで逃げ道を用意する
+
+## アニメーション / reduced-motion
+
+- 新しいCSSアニメーションを追加するときは、`motion-reduce:animate-none`(または`motion-reduce:overflow-auto`等)を対応するTailwindクラスに付ける。`src/index.css`にグローバルな`@media (prefers-reduced-motion)`上書きは置かない(既存の要素ごと`motion-reduce:`指定という方針に合わせる)
+- `src/index.css`の自前`@keyframes`/`.animate-*`と、`tailwind.config.ts`の`animation`拡張は同名になり得る(例: 以前`animate-slide-down`が両方に別内容で存在し、退場アニメーションのつもりが入場アニメーションになっていたバグがあった)。新しいアニメーションクラスを追加するときは、両方のファイルを検索して同名衝突がないか確認する
+
+## 固定フローティングUI
+
+画面に常駐する固定要素(戻るボタン、あにゃAI、トースト通知等)は同じ角に重ねない。`App.tsx`の右下スタック(`AlertToasts`+`AnyaAiAssistant`を1つの`fixed`コンテナにまとめている)を参考に、新しい固定UIを追加するときは既存の角(左下=戻る系、右下=通知系)のどちらかに統合する。
+
+- 固定要素には`env(safe-area-inset-bottom)`を足し、iPhoneのホームインジケーター等と重ならないようにする
+- z-indexは Dialog(70) > 個別モーダル(60-61) > 固定フローティング層(40-50) > 通常コンテンツ、の順を維持する。Dialogより低いz-indexにしておけば、Dialog表示中は自動的にフローティングUIが隠れる(追加の非表示ロジックは不要)
+
+## 告知バナー
+
+`App.tsx`直下の告知バナーは `src/components/AnnouncementBar.tsx` が優先順位付けして最大1つだけ表示する(以前は複数バナーが常に縦に並んでいた)。新しい告知を追加するときは、表示可否ロジックを`src/hooks/useAnnouncementBanners.ts`に追加し、`AnnouncementBar.tsx`の優先順位に組み込む。個別バナーのsessionStorageキー/`banner:reset`・`banner:dismissed`イベントの命名規則は`FloatingNav.tsx`の`BANNER_KEYS`と合わせること。

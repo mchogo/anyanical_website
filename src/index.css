@@ -315,6 +315,55 @@ details[open] summary .faq-icon {
   animation: toast-in 0.22s ease-out both;
 }
 
+/* 共通Dialog基盤(src/components/common/Dialog.tsx)専用のアニメーション。
+   Tailwind config側にも同名に近いユーティリティがあるため、名前の衝突を
+   避けて意図した動きを保証するために専用クラスを用意している。 */
+@keyframes dialog-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-dialog-panel-in {
+  animation: dialog-panel-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes dialog-panel-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+}
+
+.animate-dialog-panel-out {
+  animation: dialog-panel-out 0.16s ease-in both;
+}
+
+@keyframes dialog-backdrop-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+.animate-dialog-backdrop-out {
+  animation: dialog-backdrop-out 0.16s ease-in both;
+}
+
 @keyframes toast-progress {
   from {
     width: 100%;

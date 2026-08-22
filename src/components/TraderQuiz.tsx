@@ -574,7 +574,12 @@ export const TraderQuiz = () => {
           Authorization: `Bearer ${auth.session.accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ id: record.id, typeCode: record.typeCode, answers: record.answers, createdAt: record.createdAt }),
+        body: JSON.stringify({
+          id: record.id,
+          typeCode: record.typeCode,
+          answers: record.answers,
+          createdAt: record.createdAt,
+        }),
       });
     }
   };
@@ -605,7 +610,7 @@ export const TraderQuiz = () => {
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
             Trader Type Quiz
           </p>
-          <h1 className="mt-3 text-3xl font-black text-white">トレーダータイプ16診断</h1>
+          <h2 className="mt-3 text-3xl font-black text-white">トレーダータイプ16診断</h2>
           <p className="mt-4 text-sm leading-7 text-slate-400">
             12問の質問に答えて、あなたのトレードスタイルを4つの軸で分析。
             16タイプのトレーダー像の中からあなたに近いタイプを診断します。

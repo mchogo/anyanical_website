@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import type { MatomeEntry } from '../hooks/useMatomeEntries';
 import { XPostEmbed } from './XPostEmbed';
@@ -33,20 +33,35 @@ const REACTED_STORAGE_KEY = 'matome-reacted-ids';
 const getReactedIds = (): Set<string> => {
   try {
     const raw = localStorage.getItem(REACTED_STORAGE_KEY);
-    return new Set(raw ? (JSON.parse(raw) as string[]) : []);
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return new Set(
+      Array.isArray(parsed)
+        ? parsed.filter((x): x is string => typeof x === 'string')
+        : [],
+    );
   } catch {
     return new Set();
+  }
+};
+
+const setReactedIds = (ids: Set<string>) => {
+  try {
+    localStorage.setItem(REACTED_STORAGE_KEY, JSON.stringify([...ids]));
+  } catch {
+    // localStorageが使えなくても機能自体は継続する
   }
 };
 
 const markReacted = (id: string) => {
   const ids = getReactedIds();
   ids.add(id);
-  try {
-    localStorage.setItem(REACTED_STORAGE_KEY, JSON.stringify([...ids]));
-  } catch {
-    // localStorageが使えなくても機能自体は継続する
-  }
+  setReactedIds(ids);
+};
+
+const unmarkReacted = (id: string) => {
+  const ids = getReactedIds();
+  ids.delete(id);
+  setReactedIds(ids);
 };
 
 const ReactionButton = ({
@@ -58,35 +73,70 @@ const ReactionButton = ({
 }) => {
   const [count, setCount] = useState(initialCount);
   const [reacted, setReacted] = useState(() => getReactedIds().has(entryId));
+  const [isSaving, setIsSaving] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const latestRequestId = useRef(0);
 
   const handleClick = () => {
-    if (reacted) return;
+    if (reacted || isSaving) return;
+
+    const requestId = ++latestRequestId.current;
     setReacted(true);
     setCount((c) => c + 1);
+    setFailed(false);
+    setIsSaving(true);
     markReacted(entryId);
+
     fetch(`/api/matome/entries/${entryId}/react`, { method: 'POST' })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { reactionCount: number } | null) => {
-        if (data) setCount(data.reactionCount);
+      .then((res) => {
+        if (requestId !== latestRequestId.current) return null;
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<{ reactionCount: number }>;
+      })
+      .then((data) => {
+        if (requestId !== latestRequestId.current || !data) return;
+        setCount(data.reactionCount);
+        setIsSaving(false);
       })
       .catch(() => {
-        // 反映に失敗してもUI上は反応済みのままにする（連打防止を優先）
+        if (requestId !== latestRequestId.current) return;
+        // 楽観的に加算していたカウント・反応済み状態・localStorageの記録を戻し、再試行できるようにする
+        setReacted(false);
+        setCount((c) => c - 1);
+        unmarkReacted(entryId);
+        setIsSaving(false);
+        setFailed(true);
       });
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={reacted}
-      className={`inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition disabled:cursor-default ${
-        reacted
-          ? 'bg-cyan-300/15 text-cyan-200 ring-1 ring-cyan-300/30'
-          : 'bg-white/[0.06] text-slate-300 ring-1 ring-white/15 hover:bg-cyan-300/10 hover:text-cyan-100'
-      }`}
-    >
-      👍 {count}
-    </button>
+    <div className="flex flex-col items-end gap-1">
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={reacted || isSaving}
+        aria-label={
+          failed ? 'いいねの送信に失敗しました。もう一度押してください' : undefined
+        }
+        className={`inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition disabled:cursor-default ${
+          reacted
+            ? 'bg-cyan-300/15 text-cyan-200 ring-1 ring-cyan-300/30'
+            : failed
+              ? 'bg-rose-400/10 text-rose-300 ring-1 ring-rose-400/30 hover:bg-rose-400/20'
+              : 'bg-white/[0.06] text-slate-300 ring-1 ring-white/15 hover:bg-cyan-300/10 hover:text-cyan-100'
+        }`}
+      >
+        👍 {count}
+      </button>
+      <span className="sr-only" role="status" aria-live="polite">
+        {failed ? 'いいねの送信に失敗しました。もう一度お試しください' : ''}
+      </span>
+      {failed && (
+        <p className="text-[11px] text-rose-300">
+          送信に失敗しました。再度押してください
+        </p>
+      )}
+    </div>
   );
 };
 

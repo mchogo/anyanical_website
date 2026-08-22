@@ -6,6 +6,9 @@ import {
   GapWatchTool,
 } from './RelatedTools';
 import { useFavoritesContext } from '../hooks/useFavorites';
+import { FavoriteSaveStatus } from './common/FavoriteSaveStatus';
+import { FavoriteUpsellDialog } from './common/FavoriteUpsellDialog';
+import { IframeTool } from './common/IframeTool';
 import {
   DailyMissionTool,
   GapPredictionTool,
@@ -26,31 +29,11 @@ import { HighLowSprint } from './games/HighLowSprint';
 import { CandleSwipe } from './games/CandleSwipe';
 import { ProfitTower } from './games/ProfitTower';
 import { GameRankingPage } from './GameRankingPage';
+import { TOOL_PAGES, type ToolPageId } from '../config/toolPages';
 import type { MarketPrice } from '../config/markets';
 import type { PriceHistoryPoint } from '../hooks/useHyperliquidMids';
 
-export type ToolPageId =
-  | 'currency-strength'
-  | 'economic-calendar'
-  | 'gap-watch'
-  | 'ea-checklist'
-  | 'strategy'
-  | 'copytrade'
-  | 'community'
-  | 'participation'
-  | 'semi-auto-sign'
-  | 'trade-journal'
-  | 'trader-quiz'
-  | 'member-dashboard'
-  | 'daily-mission'
-  | 'gap-prediction'
-  | 'highlow-sprint'
-  | 'candle-swipe'
-  | 'profit-tower'
-  | 'game-ranking'
-  | 'trade-tarot'
-  | 'anya-method-slides'
-  | 'htf-context';
+export type { ToolPageId };
 
 type ToolPageProps = {
   pageId: ToolPageId;
@@ -60,152 +43,7 @@ type ToolPageProps = {
   canAccessPremium?: boolean;
 };
 
-const toolPages: Array<{
-  id: ToolPageId;
-  title: string;
-  description: string;
-  href: string;
-}> = [
-  {
-    id: 'currency-strength',
-    title: '通貨強弱',
-    description: '主要通貨の強弱とクロスレート',
-    href: '#/tools/currency-strength',
-  },
-  {
-    id: 'economic-calendar',
-    title: '経済指標',
-    description: '日本語・東京時間の指標カレンダー',
-    href: '#/tools/economic-calendar',
-  },
-  {
-    id: 'gap-watch',
-    title: '窓開け監視',
-    description: '週末価格と金曜基準の差',
-    href: '#/tools/gap-watch',
-  },
-  {
-    id: 'ea-checklist',
-    title: 'EAチェック',
-    description: '半裁量EA・全自動EAの稼働前確認',
-    href: '#/tools/ea-checklist',
-  },
-  {
-    id: 'strategy',
-    title: '戦略',
-    description: 'プレミアム、Discord、半裁量EAの活用案内',
-    href: '#/tools/strategy',
-  },
-  {
-    id: 'copytrade',
-    title: 'HFMコピトレ',
-    description: 'Anya Gold Cent / Anya Gold / Anya Wemof Gold のストラテジー情報',
-    href: '#/tools/copytrade',
-  },
-  {
-    id: 'community',
-    title: 'コミュニティ',
-    description: 'ツール、メモ、各種案内のまとめ',
-    href: '#/tools/community',
-  },
-  {
-    id: 'participation',
-    title: 'プレミアム',
-    description: 'noteメンバーシップ、加入手続き、Discord権限付与',
-    href: '#/tools/participation',
-  },
-  {
-    id: 'semi-auto-sign',
-    title: '半裁量サイン',
-    description:
-      'XAUUSD専用のDiscord通知サイン。サイン種別・通知チャンネル・利用開始手順を確認します。',
-    href: '#/tools/semi-auto-sign',
-  },
-  {
-    id: 'trade-journal',
-    title: '損益カレンダー',
-    description:
-      'Discordログインで1口座まで使える日次損益カレンダー。複数口座管理はプレミアムで解放されます。',
-    href: '#/tools/trade-journal',
-  },
-  {
-    id: 'trader-quiz',
-    title: 'トレーダータイプ16診断',
-    description:
-      '12問に答えて4つの軸であなたのトレードスタイルを分析。16タイプから診断結果を表示します。',
-    href: '#/tools/trader-quiz',
-  },
-  {
-    id: 'member-dashboard',
-    title: 'メンバーダッシュボード',
-    description:
-      'Discordログイン状態、今日の相場ミッション、週末ギャップ予想、プレミアム導線をまとめて確認します。',
-    href: '#/tools/member-dashboard',
-  },
-  {
-    id: 'daily-mission',
-    title: '今日の相場ミッション',
-    description:
-      '相場ボード、通貨強弱、経済指標、窓開け監視、振り返りを毎日の確認ルーティンとして管理します。',
-    href: '#/tools/daily-mission',
-  },
-  {
-    id: 'gap-prediction',
-    title: '週末ギャップ予想',
-    description:
-      'GOLD、USDJPY、BTCなどの週末方向感を予想して、週明けに答え合わせするゲームです。',
-    href: '#/tools/gap-prediction',
-  },
-  {
-    id: 'highlow-sprint',
-    title: '60セカンズ・ハイロー',
-    description:
-      'BTC・GOLDのリアルタイム価格が60秒後に上がるか下がるかを予想するミニゲーム。連勝でスコア倍率が上がります。',
-    href: '#/tools/highlow-sprint',
-  },
-  {
-    id: 'candle-swipe',
-    title: 'ローソク足スワイプ道場',
-    description:
-      '実際の過去チャートの続きを右（上がる）/ 左（下がる）スワイプで即断するトレーニングゲームです。',
-    href: '#/tools/candle-swipe',
-  },
-  {
-    id: 'profit-tower',
-    title: '利確タワー',
-    description:
-      '陽線ブロックを積み上げて資金を複利で増やすミニゲーム。重なりがゼロになると崩壊、5段ごとに利確できます。',
-    href: '#/tools/profit-tower',
-  },
-  {
-    id: 'game-ranking',
-    title: 'ゲームランキング',
-    description:
-      '参加中のミニゲームのランキングをまとめて確認し、各ゲームへ遊びに行けます。',
-    href: '#/tools/game-ranking',
-  },
-  {
-    id: 'trade-tarot',
-    title: 'トレードタロット',
-    description:
-      '相場の迷いをカードに尋ねる、夜の占い館。トレーダー版大アルカナ22枚があなたに寄り添います。',
-    href: '#/tools/trade-tarot',
-  },
-  {
-    id: 'anya-method-slides',
-    title: 'アニャニカル解説',
-    description:
-      '環境認識からエントリーパターン①〜③までを音声付きスライドで振り返る学習用まとめ。本編はプレミアム限定です。',
-    href: '#/tools/anya-method-slides',
-  },
-  {
-    id: 'htf-context',
-    title: 'Anyanical Market Dashboard',
-    description:
-      'Anyanical ToolkitのAI環境認識（上目線/下目線/レンジ、上下ターゲット）をカテゴリ別・時間足別(MN1/W1/D1/H4)でまとめて確認します。本編はプレミアム限定です。',
-    href: '#/tools/htf-context',
-  },
-];
+const toolPages = TOOL_PAGES;
 
 const renderTool = (
   pageId: ToolPageId,
@@ -278,15 +116,11 @@ const renderTool = (
 };
 
 const TradeTarotTool = () => (
-  <div className="overflow-hidden rounded-lg border border-white/10 bg-slate-950">
-    <iframe
-      src="/trade-tarot/"
-      title="トレードタロット"
-      className="w-full border-0"
-      style={{ height: '900px' }}
-      loading="lazy"
-    />
-  </div>
+  <IframeTool
+    src="/trade-tarot/"
+    title="トレードタロット"
+    heightClassName="h-[70dvh] sm:h-[900px]"
+  />
 );
 
 const AnyaMethodSlidesTool = ({
@@ -298,15 +132,11 @@ const AnyaMethodSlidesTool = ({
 }) => {
   if (canAccessPremium) {
     return (
-      <div className="overflow-hidden rounded-lg border border-white/10 bg-slate-950">
-        <iframe
-          src="/anya-method-slides/"
-          title="アニャニカル解説"
-          className="w-full border-0"
-          style={{ height: '640px' }}
-          loading="lazy"
-        />
-      </div>
+      <IframeTool
+        src="/anya-method-slides/"
+        title="アニャニカル解説"
+        heightClassName="h-[70dvh] sm:h-[640px]"
+      />
     );
   }
 
@@ -617,57 +447,6 @@ const nextActions: Record<
   ],
 };
 
-const FavUpsellOverlay = ({
-  onClose,
-  isAuthenticated,
-}: {
-  onClose: () => void;
-  isAuthenticated: boolean;
-}) => (
-  <div
-    className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm"
-    onClick={onClose}
-  >
-    <div
-      className="w-full max-w-md rounded-lg border border-amber-300/30 bg-slate-950 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <p className="text-sm font-semibold text-amber-100">Premium feature</p>
-      <h3 className="mt-1 text-xl font-bold text-white">
-        お気に入りはプレミアム限定です
-      </h3>
-      <p className="mt-3 text-sm leading-6 text-slate-400">
-        よく使うページを登録してナビバーからすぐアクセスできます。プレミアム会員向け機能です。
-      </p>
-      <div className="mt-5 flex flex-wrap gap-2">
-        <a
-          href="#/tools/participation"
-          onClick={onClose}
-          className="inline-flex min-h-10 items-center justify-center rounded-full bg-amber-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-amber-100"
-        >
-          プレミアム内容を見る
-        </a>
-        {!isAuthenticated && (
-          <a
-            href="#/login"
-            onClick={onClose}
-            className="inline-flex min-h-10 items-center justify-center rounded-full bg-indigo-400 px-4 text-sm font-bold text-white transition hover:bg-indigo-300"
-          >
-            Discordログイン
-          </a>
-        )}
-        <button
-          type="button"
-          onClick={onClose}
-          className="inline-flex min-h-10 items-center justify-center rounded-full bg-white/[0.04] px-4 text-sm font-bold text-slate-300 ring-1 ring-white/10 transition hover:bg-white/10"
-        >
-          閉じる
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
 export const ToolPage = ({
   pageId,
   prices,
@@ -681,7 +460,8 @@ export const ToolPage = ({
     pageId === 'gap-watch' && !isWeekendMode
       ? '平日は現在値と直近6時間の動きで、短期の偏りを確認します'
       : page.description;
-  const { favorites, toggleFavorite, isAuthenticated } = useFavoritesContext();
+  const { favorites, toggleFavorite, isAuthenticated, saveError, statusMessage, retry } =
+    useFavoritesContext();
   const pageRoute = `tools/${pageId}`;
   const isFavorited = favorites.includes(pageRoute);
   const [showFavUpsell, setShowFavUpsell] = useState(false);
@@ -696,12 +476,11 @@ export const ToolPage = ({
 
   return (
     <main className="animate-fade-in">
-      {showFavUpsell && (
-        <FavUpsellOverlay
-          onClose={() => setShowFavUpsell(false)}
-          isAuthenticated={isAuthenticated}
-        />
-      )}
+      <FavoriteUpsellDialog
+        open={showFavUpsell}
+        onClose={() => setShowFavUpsell(false)}
+        isAuthenticated={isAuthenticated}
+      />
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex max-w-4xl items-start gap-3">
           <div className="flex-1">
@@ -715,19 +494,26 @@ export const ToolPage = ({
               {pageDescription}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleFavClick}
-            aria-label={isFavorited ? 'お気に入りから削除' : 'お気に入りに追加'}
-            title={isFavorited ? 'お気に入りから削除' : 'お気に入りに追加'}
-            className={`mt-7 shrink-0 grid h-10 w-10 place-items-center rounded-full text-xl ring-1 transition ${
-              isFavorited
-                ? 'bg-amber-300/20 text-amber-300 ring-amber-300/40 hover:bg-amber-300/10'
-                : 'bg-white/[0.04] text-slate-600 ring-white/10 hover:bg-amber-300/10 hover:text-amber-300'
-            }`}
-          >
-            {isFavorited ? '★' : '☆'}
-          </button>
+          <div className="mt-7 flex shrink-0 flex-col items-end gap-1">
+            <button
+              type="button"
+              onClick={handleFavClick}
+              aria-label={isFavorited ? 'お気に入りから削除' : 'お気に入りに追加'}
+              title={isFavorited ? 'お気に入りから削除' : 'お気に入りに追加'}
+              className={`grid h-10 w-10 place-items-center rounded-full text-xl ring-1 transition ${
+                isFavorited
+                  ? 'bg-amber-300/20 text-amber-300 ring-amber-300/40 hover:bg-amber-300/10'
+                  : 'bg-white/[0.04] text-slate-600 ring-white/10 hover:bg-amber-300/10 hover:text-amber-300'
+              }`}
+            >
+              {isFavorited ? '★' : '☆'}
+            </button>
+            <FavoriteSaveStatus
+              saveError={saveError}
+              statusMessage={statusMessage}
+              onRetry={retry}
+            />
+          </div>
         </div>
       </section>
 
